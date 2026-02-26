@@ -10,6 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getSummaryAction } from "@/admin/actions/get-summary.action";
+import { summaryKeys } from "@/admin/queryKeys";
 import { useAuthStore } from "@/auth/store/auth.store";
 import {
   Card,
@@ -36,7 +37,7 @@ const METRIC_CARDS = [
     icon: Boxes,
     color: "text-violet-600",
     bg: "bg-violet-50 dark:bg-violet-950/30",
-    href: "/products",
+    href: "/bundles",
   },
   {
     key: "totalSlabs" as const,
@@ -44,7 +45,7 @@ const METRIC_CARDS = [
     icon: Box,
     color: "text-amber-600",
     bg: "bg-amber-50 dark:bg-amber-950/30",
-    href: "/products",
+    href: "/slabs",
   },
   {
     key: "totalBrands" as const,
@@ -82,7 +83,7 @@ const QUICK_ACTIONS = [
 export const DashboardPage = () => {
   const { user } = useAuthStore();
   const { data, isLoading } = useQuery({
-    queryKey: ["summary"],
+    queryKey: summaryKeys.all,
     queryFn: getSummaryAction,
   });
 

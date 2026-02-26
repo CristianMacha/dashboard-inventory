@@ -38,6 +38,11 @@ const ProductFormPage = lazy(() =>
     default: m.ProductFormPage,
   })),
 );
+const ProductDetailPage = lazy(() =>
+  import("./admin/pages/products/ProductDetailPage").then((m) => ({
+    default: m.ProductDetailPage,
+  })),
+);
 const ProductsPage = lazy(() =>
   import("./admin/pages/products/ProductsPage").then((m) => ({
     default: m.ProductsPage,
@@ -63,7 +68,61 @@ const SlabsPage = lazy(() =>
     default: m.SlabsPage,
   })),
 );
-
+const CategoriesPage = lazy(() =>
+  import("./admin/pages/categories/CategoriesPage").then((m) => ({
+    default: m.CategoriesPage,
+  })),
+);
+const BrandsPage = lazy(() =>
+  import("./admin/pages/brands/BrandsPage").then((m) => ({
+    default: m.BrandsPage,
+  })),
+);
+const LevelsPage = lazy(() =>
+  import("./admin/pages/levels/LevelsPage").then((m) => ({
+    default: m.LevelsPage,
+  })),
+);
+const FinishesPage = lazy(() =>
+  import("./admin/pages/finishes/FinishesPage").then((m) => ({
+    default: m.FinishesPage,
+  })),
+);
+const SuppliersPage = lazy(() =>
+  import("./admin/pages/suppliers/SuppliersPage").then((m) => ({
+    default: m.SuppliersPage,
+  })),
+);
+const PurchaseInvoicesPage = lazy(() =>
+  import("./admin/pages/purchase-invoices/PurchaseInvoicesPage").then((m) => ({
+    default: m.PurchaseInvoicesPage,
+  })),
+);
+const PurchaseInvoiceDetailPage = lazy(() =>
+  import("./admin/pages/purchase-invoices/PurchaseInvoiceDetailPage").then(
+    (m) => ({ default: m.PurchaseInvoiceDetailPage }),
+  ),
+);
+const JobsPage = lazy(() =>
+  import("./admin/pages/jobs/JobsPage").then((m) => ({
+    default: m.JobsPage,
+  })),
+);
+const JobDetailPage = lazy(() =>
+  import("./admin/pages/jobs/JobDetailPage").then((m) => ({
+    default: m.JobDetailPage,
+  })),
+);
+const SupplierReturnsPage = lazy(() =>
+  import("./admin/pages/supplier-returns/SupplierReturnsPage").then((m) => ({
+    default: m.SupplierReturnsPage,
+  })),
+);
+const SupplierReturnDetailPage = lazy(() =>
+  import("./admin/pages/supplier-returns/SupplierReturnDetailPage").then(
+    (m) => ({ default: m.SupplierReturnDetailPage }),
+  ),
+);
 
 export const appRouter = createBrowserRouter([
   {
@@ -103,6 +162,14 @@ export const appRouter = createBrowserRouter([
         ),
       },
       {
+        path: "products/:id/detail",
+        element: (
+          <PageSuspense>
+            <ProductDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
         path: "profile",
         element: (
           <PageSuspense>
@@ -131,6 +198,94 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <SlabsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "categories",
+        element: (
+          <PageSuspense>
+            <CategoriesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "brands",
+        element: (
+          <PageSuspense>
+            <BrandsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "finishes",
+        element: (
+          <PageSuspense>
+            <FinishesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "levels",
+        element: (
+          <PageSuspense>
+            <LevelsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "suppliers",
+        element: (
+          <PageSuspense>
+            <SuppliersPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "purchase-invoices",
+        element: (
+          <PageSuspense>
+            <PurchaseInvoicesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "purchase-invoices/:id",
+        element: (
+          <PageSuspense>
+            <PurchaseInvoiceDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "jobs",
+        element: (
+          <PageSuspense>
+            <JobsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "jobs/:id",
+        element: (
+          <PageSuspense>
+            <JobDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "purchasing/supplier-returns",
+        element: (
+          <PageSuspense>
+            <SupplierReturnsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "purchasing/supplier-returns/:id",
+        element: (
+          <PageSuspense>
+            <SupplierReturnDetailPage />
           </PageSuspense>
         ),
       },

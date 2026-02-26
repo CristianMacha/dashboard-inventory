@@ -4,6 +4,8 @@ export interface BundleResponse {
   productName: string;
   supplierId: string;
   supplierName: string;
+  purchaseInvoiceId: string | null;
+  invoiceNumber: string | null;
   lotNumber?: string;
   thicknessCm?: number;
   createdBy: string;
@@ -14,7 +16,8 @@ export interface BundleResponse {
 
 export interface BundleCreate {
   productId: string;
-  supplierId: string;
+  supplierId?: string;
+  purchaseInvoiceId?: string;
   lotNumber?: string;
   thicknessCm?: number;
 }

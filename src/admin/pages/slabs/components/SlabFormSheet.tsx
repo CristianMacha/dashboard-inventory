@@ -36,6 +36,7 @@ import { createSlabAction } from "@/admin/actions/create-slab.action";
 import { updateSlabAction } from "@/admin/actions/update-slab.action";
 import { getBundlesAction } from "@/admin/actions/get-bundles.action";
 import { bundleKeys, slabKeys } from "@/admin/queryKeys";
+import { ApiError } from "@/api/apiClient";
 import type { SlabResponse } from "@/interfaces/slab.response";
 import { SLAB_STATUSES } from "../Columns";
 
@@ -80,6 +81,7 @@ export const SlabFormSheet = ({
     queryKey: bundleKeys.list({ page: 1, limit: 100 }),
     queryFn: () => getBundlesAction({ page: 1, limit: 100 }),
     enabled: open && !editingSlab,
+    staleTime: 5 * 60 * 1000,
   });
 
   const createForm = useForm<CreateSlabFormValues>({
@@ -92,43 +94,48 @@ export const SlabFormSheet = ({
     defaultValues: { status: "AVAILABLE", description: "" },
   });
 
+  // useForm returns stable `reset` refs — destructure to keep deps minimal
+  const { reset: resetCreate } = createForm;
+  const { reset: resetUpdate } = updateForm;
+
   useEffect(() => {
     if (open) {
       if (editingSlab) {
-        updateForm.reset({
+        resetUpdate({
           status: editingSlab.status,
           description: editingSlab.description ?? "",
         });
       } else {
-        createForm.reset(defaultCreateValues);
+        resetCreate(defaultCreateValues);
       }
     }
-  }, [open, editingSlab, createForm, updateForm]);
+  }, [open, editingSlab, resetCreate, resetUpdate]);
 
   const handleClose = () => onOpenChange(false);
 
   const createMutation = useMutation({
     mutationFn: createSlabAction,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: slabKeys.all });
+      void queryClient.invalidateQueries({ queryKey: slabKeys.lists() });
       toast.success("Slab created successfully");
       handleClose();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to create slab");
+      toast.error(error instanceof ApiError ? error.message : "Failed to create slab");
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateSlabFormValues }) =>
       updateSlabAction(id, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: slabKeys.all });
+    onSuccess: (_, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: slabKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: slabKeys.detail(id) });
       toast.success("Slab updated successfully");
       handleClose();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update slab");
+      toast.error(error instanceof ApiError ? error.message : "Failed to update slab");
     },
   });
 

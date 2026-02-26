@@ -20,8 +20,10 @@ export class ErrorBoundary extends Component<
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+    const normalizedError =
+      error instanceof Error ? error : new Error(String(error));
+    return { hasError: true, error: normalizedError };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {

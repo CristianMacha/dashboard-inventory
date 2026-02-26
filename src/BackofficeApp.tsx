@@ -40,9 +40,13 @@ const CheckAuthProvider = ({ children }: PropsWithChildren) => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setFirebaseUser(firebaseUser);
-        void firebaseUser.getIdToken().then((idToken) => {
-          void loginWithIdToken(idToken);
-        });
+        void firebaseUser
+          .getIdToken()
+          .then((idToken) => loginWithIdToken(idToken))
+          .catch((err: unknown) => {
+            console.error("[Auth] Failed to get Firebase ID token:", err);
+            setUnauthenticated();
+          });
       } else {
         setUnauthenticated();
       }

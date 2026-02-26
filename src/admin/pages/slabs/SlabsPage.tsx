@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getSlabsAction } from "@/admin/actions/get-slabs.action";
 import { slabKeys } from "@/admin/queryKeys";
@@ -25,31 +26,22 @@ import { SlabFormSheet } from "./components/SlabFormSheet";
 const DEFAULT_PAGE_SIZE = 10;
 
 export const SlabsPage = () => {
-  const [page, setPage] = useState(1);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editingSlab, setEditingSlab] = useState<SlabResponse | null>(null);
+  const {
+    page,
+    setPage,
+    sheetOpen,
+    editingItem: editingSlab,
+    openCreate,
+    openEdit,
+    handleSheetOpenChange,
+  } = useListPageState<SlabResponse>();
 
   const { data, isLoading } = useQuery({
     queryKey: slabKeys.list({ page, limit: DEFAULT_PAGE_SIZE }),
     queryFn: () => getSlabsAction({ page, limit: DEFAULT_PAGE_SIZE }),
   });
 
-  const openCreate = () => {
-    setEditingSlab(null);
-    setSheetOpen(true);
-  };
-
-  const openEdit = (slab: SlabResponse) => {
-    setEditingSlab(slab);
-    setSheetOpen(true);
-  };
-
-  const handleSheetOpenChange = (open: boolean) => {
-    setSheetOpen(open);
-    if (!open) setEditingSlab(null);
-  };
-
-  const columns = slabColumns(openEdit);
+  const columns = useMemo(() => slabColumns(openEdit), [openEdit]);
 
   return (
     <div className="flex flex-col gap-4">

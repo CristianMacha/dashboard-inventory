@@ -45,13 +45,16 @@ export const ProductsPage = () => {
     [isMobile],
   );
 
-  const queryParams = {
-    page,
-    limit: pageSize,
-    search: filters.search || undefined,
-    brandId: filters.brandIds.length > 0 ? filters.brandIds : undefined,
-    categoryId: filters.categoryIds.length > 0 ? filters.categoryIds : undefined,
-  };
+  const queryParams = useMemo(
+    () => ({
+      page,
+      limit: pageSize,
+      search: filters.search || undefined,
+      brandId: filters.brandIds.length > 0 ? filters.brandIds : undefined,
+      categoryId: filters.categoryIds.length > 0 ? filters.categoryIds : undefined,
+    }),
+    [page, pageSize, filters.search, filters.brandIds, filters.categoryIds],
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: productKeys.list(queryParams),
@@ -66,20 +69,19 @@ export const ProductsPage = () => {
     setPage(1);
   }, []);
 
-  const handleAddBundle = (product: ProductResponse) => {
+  const handleAddBundle = useCallback((product: ProductResponse) => {
     setSelectedProduct(product);
     setBundleSheetOpen(true);
-  };
+  }, []);
 
-  const handleBundleSheetOpenChange = (open: boolean) => {
+  const handleBundleSheetOpenChange = useCallback((open: boolean) => {
     setBundleSheetOpen(open);
     if (!open) setSelectedProduct(null);
-  };
+  }, []);
 
   const columns = useMemo(
     () => productColumns(handleAddBundle),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [handleAddBundle],
   );
 
   return (

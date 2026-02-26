@@ -1,8 +1,20 @@
+import { useMemo } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Outlet, useLocation } from "react-router";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Separator } from "@/components/ui/separator";
+
+// Respect saved cookie preference; if no preference saved yet, default to
+// collapsed on medium screens (< 1024px) where the sidebar eats too much space.
+function getDefaultSidebarOpen() {
+  if (typeof window === "undefined") return true;
+  const cookie = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith("sidebar:state="));
+  if (cookie) return cookie.split("=")[1] === "true";
+  return window.innerWidth >= 1024;
+}
 
 const ROUTE_LABELS: Record<string, string> = {
   "/": "Dashboard",
@@ -20,10 +32,10 @@ function getPageLabel(pathname: string): string {
 
 const AdminLayout = () => {
   const { pathname } = useLocation();
-  const pageLabel = getPageLabel(pathname);
+  const pageLabel = useMemo(() => getPageLabel(pathname), [pathname]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={getDefaultSidebarOpen()}>
       <AppSidebar />
       <main className="bg-background relative flex w-full flex-1 flex-col">
         <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b h-[49px]">

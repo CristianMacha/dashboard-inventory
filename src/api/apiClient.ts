@@ -1,11 +1,24 @@
-import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/auth/store/auth.store";
 import axios from "axios";
+import { env } from "@/lib/env";
+
+export class ApiError extends Error {
+  readonly status: number;
+  readonly data?: unknown;
+
+  constructor(message: string, status: number, data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
 
 type RequestConfigWithRetry = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL as string,
+  baseURL: env.VITE_API_URL,
   withCredentials: true,
 });
 
@@ -36,6 +49,15 @@ apiClient.interceptors.response.use(
       );
     }
 
+    // For non-401 errors with a response, wrap in ApiError to preserve details
+    if (error.response && error.response.status !== 401) {
+      const responseData = error.response.data as Record<string, unknown> | undefined;
+      const message =
+        (typeof responseData?.message === "string" ? responseData.message : null) ??
+        error.message;
+      return Promise.reject(new ApiError(message, error.response.status, error.response.data));
+    }
+
     const is401 =
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -44,7 +66,7 @@ apiClient.interceptors.response.use(
     if (is401) {
       if (isRefreshing) {
         // Another refresh is already in-flight — wait for it to resolve
-        return new Promise<unknown>((resolve, reject) => {
+        return new Promise<AxiosResponse>((resolve, reject) => {
           pendingQueue.push((token) => {
             if (token) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -89,3 +111,4 @@ apiClient.interceptors.response.use(
 );
 
 export { apiClient };
+

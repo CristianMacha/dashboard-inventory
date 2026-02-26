@@ -19,6 +19,28 @@ const initialState = {
   error: null,
 };
 
+/**
+ * Recursively resolve child paths that the backend sends as relative
+ * (e.g. `/finishes`) into absolute paths based on their parent
+ * (e.g. `/products/finishes`).
+ */
+function resolveMenuPaths(items: MenuItem[], parentPath = ""): MenuItem[] {
+  return items.map((item) => {
+    const resolvedPath =
+      item.path && parentPath && !item.path.startsWith(parentPath)
+        ? `${parentPath}${item.path}`
+        : item.path;
+
+    return {
+      ...item,
+      path: resolvedPath,
+      children: item.children
+        ? resolveMenuPaths(item.children, resolvedPath ?? parentPath)
+        : undefined,
+    };
+  });
+}
+
 export const useMenusStore = create<MenusStore>()(
   persist(
     (set) => ({
@@ -27,7 +49,11 @@ export const useMenusStore = create<MenusStore>()(
         set({ status: "loading", error: null });
         try {
           const { menus } = await getMenusAction();
-          set({ items: menus, status: "success", error: null });
+          set({
+            items: resolveMenuPaths(menus),
+            status: "success",
+            error: null,
+          });
         } catch (err) {
           set({
             items: null,

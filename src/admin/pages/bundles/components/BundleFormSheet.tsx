@@ -38,8 +38,9 @@ import {
 import { updateBundleAction } from "@/admin/actions/update-bundle.action";
 import { createBundleWithSlabsAction } from "@/admin/actions/create-bundle-with-slabs.action";
 import { getProductsAction } from "@/admin/actions/get-products.action";
-import { getSuppliersAction } from "@/admin/actions/get-suppliers.action";
-import { bundleKeys, productKeys, slabKeys, summaryKeys, supplierKeys } from "@/admin/queryKeys";
+import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
+import { getPurchaseInvoicesForSelectAction } from "@/admin/actions/get-purchase-invoices-for-select.action";
+import { bundleKeys, productKeys, purchaseInvoiceKeys, slabKeys, summaryKeys, supplierKeys } from "@/admin/queryKeys";
 import type { BundleResponse } from "@/interfaces/bundle.response";
 
 const slabSchema = z.object({
@@ -49,18 +50,31 @@ const slabSchema = z.object({
   description: z.string().optional(),
 });
 
-const bundleFormSchema = z.object({
-  productId: z.string().min(1, "Product is required"),
-  supplierId: z.string().min(1, "Supplier is required"),
-  lotNumber: z.string().optional(),
-  thicknessCm: z.coerce.number().min(0).optional().or(z.literal("")),
-  slabs: z.array(slabSchema).default([]),
-});
+const bundleFormSchema = z
+  .object({
+    productId: z.string().min(1, "Product is required"),
+    linkMode: z.enum(["invoice", "supplier"]),
+    purchaseInvoiceId: z.string().optional(),
+    supplierId: z.string().optional(),
+    lotNumber: z.string().optional(),
+    thicknessCm: z.coerce.number().min(0).optional().or(z.literal("")),
+    slabs: z.array(slabSchema).default([]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.linkMode === "invoice" && !data.purchaseInvoiceId) {
+      ctx.addIssue({ code: "custom", path: ["purchaseInvoiceId"], message: "Purchase invoice is required" });
+    }
+    if (data.linkMode === "supplier" && !data.supplierId) {
+      ctx.addIssue({ code: "custom", path: ["supplierId"], message: "Supplier is required" });
+    }
+  });
 
 type BundleFormValues = z.infer<typeof bundleFormSchema>;
 
 const emptyValues: BundleFormValues = {
   productId: "",
+  linkMode: "invoice",
+  purchaseInvoiceId: "",
   supplierId: "",
   lotNumber: "",
   thicknessCm: "",
@@ -70,11 +84,18 @@ const emptyValues: BundleFormValues = {
 function toFormValues(bundle: BundleResponse): BundleFormValues {
   return {
     productId: bundle.productId,
+    linkMode: bundle.purchaseInvoiceId ? "invoice" : "supplier",
+    purchaseInvoiceId: bundle.purchaseInvoiceId ?? "",
     supplierId: bundle.supplierId,
     lotNumber: bundle.lotNumber ?? "",
     thicknessCm: bundle.thicknessCm ?? "",
     slabs: [],
   };
+}
+
+/** Converts an empty string or nullish value to undefined for optional numeric fields. */
+function emptyToUndefined(value: number | "" | null | undefined): number | undefined {
+  return value !== "" && value != null ? Number(value) : undefined;
 }
 
 interface BundleFormSheetProps {
@@ -101,12 +122,18 @@ export const BundleFormSheet = ({
   });
 
   const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
-    queryKey: supplierKeys.all,
-    queryFn: getSuppliersAction,
+    queryKey: supplierKeys.active,
+    queryFn: getActiveSuppliersAction,
     enabled: open,
   });
 
-  const { control, handleSubmit, reset } = useForm<BundleFormValues>({
+  const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery({
+    queryKey: purchaseInvoiceKeys.select({}),
+    queryFn: () => getPurchaseInvoicesForSelectAction(),
+    enabled: open,
+  });
+
+  const { control, handleSubmit, reset, watch, setValue } = useForm<BundleFormValues>({
     resolver: zodResolver(bundleFormSchema),
     defaultValues: emptyValues,
   });
@@ -115,6 +142,8 @@ export const BundleFormSheet = ({
     control,
     name: "slabs",
   });
+
+  const linkMode = watch("linkMode");
 
   useEffect(() => {
     if (open) {
@@ -149,10 +178,7 @@ export const BundleFormSheet = ({
     mutationFn: ({ id, data }: { id: string; data: BundleFormValues }) =>
       updateBundleAction(id, {
         lotNumber: data.lotNumber || undefined,
-        thicknessCm:
-          data.thicknessCm !== "" && data.thicknessCm != null
-            ? Number(data.thicknessCm)
-            : undefined,
+        thicknessCm: emptyToUndefined(data.thicknessCm),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: bundleKeys.all });
@@ -173,12 +199,11 @@ export const BundleFormSheet = ({
     } else {
       createMutation.mutate({
         productId: values.productId,
-        supplierId: values.supplierId,
+        ...(values.linkMode === "invoice"
+          ? { purchaseInvoiceId: values.purchaseInvoiceId }
+          : { supplierId: values.supplierId }),
         lotNumber: values.lotNumber || undefined,
-        thicknessCm:
-          values.thicknessCm !== "" && values.thicknessCm != null
-            ? Number(values.thicknessCm)
-            : undefined,
+        thicknessCm: emptyToUndefined(values.thicknessCm),
         slabs: values.slabs.map((s) => ({
           code: s.code,
           widthCm: Number(s.widthCm),
@@ -200,8 +225,8 @@ export const BundleFormSheet = ({
             {isEditing
               ? "Lot number and thickness can be updated. Product and supplier are locked."
               : isProductPrefilled
-                ? `Creating bundle for "${prefilledProduct!.name}". Select a supplier and optionally add slabs.`
-                : "Select a product and supplier, then optionally add slabs to this bundle."}
+                ? `Creating bundle for "${prefilledProduct?.name ?? ""}". Link to a purchase invoice or select a supplier directly.`
+                : "Select a product, link to a purchase invoice or supplier, then optionally add slabs."}
           </SheetDescription>
         </SheetHeader>
 
@@ -216,7 +241,7 @@ export const BundleFormSheet = ({
               <Field>
                 <FieldLabel>Product</FieldLabel>
                 <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
-                  {prefilledProduct!.name}
+                  {prefilledProduct?.name}
                 </div>
               </Field>
             ) : (
@@ -256,41 +281,120 @@ export const BundleFormSheet = ({
               />
             )}
 
-            {/* Supplier */}
-            <Controller
-              control={control}
-              name="supplierId"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="supplierId">Supplier</FieldLabel>
-                  <Select
-                    {...field}
-                    onValueChange={field.onChange}
-                    disabled={isLoadingSuppliers || isEditing}
-                  >
-                    <SelectTrigger id="supplierId">
-                      <SelectValue
-                        placeholder={
-                          isLoadingSuppliers
-                            ? "Loading suppliers…"
-                            : "Select a supplier"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {suppliers.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && (
-                    <FieldError>{fieldState.error?.message}</FieldError>
-                  )}
-                </Field>
-              )}
-            />
+            {/* Link mode toggle — only on create */}
+            {!isEditing && (
+              <Controller
+                control={control}
+                name="linkMode"
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel>Link to</FieldLabel>
+                    <div className="flex rounded-md border overflow-hidden text-sm">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          field.onChange("invoice");
+                          setValue("supplierId", "");
+                        }}
+                        className={`flex-1 px-3 py-2 transition-colors ${
+                          field.value === "invoice"
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "bg-background text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        Purchase Invoice
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          field.onChange("supplier");
+                          setValue("purchaseInvoiceId", "");
+                        }}
+                        className={`flex-1 px-3 py-2 transition-colors ${
+                          field.value === "supplier"
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "bg-background text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        Supplier only
+                      </button>
+                    </div>
+                  </Field>
+                )}
+              />
+            )}
+
+            {/* Purchase Invoice select */}
+            {!isEditing && linkMode === "invoice" && (
+              <Controller
+                control={control}
+                name="purchaseInvoiceId"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel htmlFor="purchaseInvoiceId">Purchase Invoice</FieldLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isLoadingInvoices}
+                    >
+                      <SelectTrigger id="purchaseInvoiceId">
+                        <SelectValue
+                          placeholder={
+                            isLoadingInvoices ? "Loading invoices…" : "Select a purchase invoice"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {invoices.map((inv) => (
+                          <SelectItem key={inv.id} value={inv.id}>
+                            {inv.invoiceNumber}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && (
+                      <FieldError>{fieldState.error?.message}</FieldError>
+                    )}
+                  </Field>
+                )}
+              />
+            )}
+
+            {/* Supplier select */}
+            {(isEditing || linkMode === "supplier") && (
+              <Controller
+                control={control}
+                name="supplierId"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel htmlFor="supplierId">Supplier</FieldLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isLoadingSuppliers || isEditing}
+                    >
+                      <SelectTrigger id="supplierId">
+                        <SelectValue
+                          placeholder={
+                            isLoadingSuppliers ? "Loading suppliers…" : "Select a supplier"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suppliers.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && (
+                      <FieldError>{fieldState.error?.message}</FieldError>
+                    )}
+                  </Field>
+                )}
+              />
+            )}
 
             <FieldSeparator>Optional</FieldSeparator>
 
@@ -340,39 +444,25 @@ export const BundleFormSheet = ({
             {/* Slabs section — create mode only */}
             {!isEditing && (
               <>
-                <FieldSeparator>
-                  <span className="flex items-center gap-2">
-                    Slabs
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() =>
-                        append({
-                          code: "",
-                          widthCm: 0,
-                          heightCm: 0,
-                          description: "",
-                        })
-                      }
-                    >
-                      <Plus className="size-3" />
-                      Add
-                    </Button>
-                  </span>
-                </FieldSeparator>
+                <FieldSeparator>Slabs</FieldSeparator>
 
                 {fields.length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-5 text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      append({ code: "", widthCm: 0, heightCm: 0, description: "" })
+                    }
+                    className="w-full rounded-lg border border-dashed p-5 text-center transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
                     <p className="text-sm font-medium text-muted-foreground">
                       No slabs added
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      You can add slabs now or register them separately later.
+                      Click to add the first slab, or leave empty and register them later.
                     </p>
-                  </div>
+                  </button>
                 ) : (
+                  <>
                   <div className="flex flex-col gap-3">
                     {fields.map((fieldItem, index) => (
                       <div
@@ -491,6 +581,19 @@ export const BundleFormSheet = ({
                       </div>
                     ))}
                   </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() =>
+                      append({ code: "", widthCm: 0, heightCm: 0, description: "" })
+                    }
+                  >
+                    <Plus className="size-4" />
+                    Add Slab
+                  </Button>
+                  </>
                 )}
               </>
             )}

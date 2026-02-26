@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Search, X } from "lucide-react";
 
@@ -14,8 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { getCategoriesAction } from "@/admin/actions/get-categories.action";
-import { getBrandsAction } from "@/admin/actions/get-brands.action";
+import { getActiveCategoriesAction } from "@/admin/actions/get-active-categories.action";
+import { getActiveBrandsAction } from "@/admin/actions/get-active-brands.action";
 import { categoryKeys, brandKeys } from "@/admin/queryKeys";
 
 export interface ProductFiltersValue {
@@ -111,32 +112,35 @@ const MultiSelectFilter = ({
 
 export const ProductFilters = ({ filters, onChange }: ProductFiltersProps) => {
   const [searchInput, setSearchInput] = useState(filters.search);
+  const debouncedSearch = useDebounce(searchInput, 400);
 
   const { data: categories = [] } = useQuery({
-    queryKey: categoryKeys.all,
-    queryFn: getCategoriesAction,
+    queryKey: categoryKeys.active,
+    queryFn: getActiveCategoriesAction,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: brands = [] } = useQuery({
-    queryKey: brandKeys.all,
-    queryFn: getBrandsAction,
+    queryKey: brandKeys.active,
+    queryFn: getActiveBrandsAction,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Sync local input when parent clears the search externally
+  // Sync local input when parent resets the search (e.g. "Clear filters").
+  // setState here is intentional: syncs an uncontrolled input with an external reset.
+  // No cascade risk: setSearchInput only fires when filters.search changes (not on every render).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput(filters.search);
   }, [filters.search]);
 
-  // Debounce search → notify parent after 400ms
+  // Notify parent when debounced value settles.
+  // Guard condition prevents re-running after parent updates filters.search to match.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchInput !== filters.search) {
-        onChange({ ...filters, search: searchInput });
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
+    if (debouncedSearch !== filters.search) {
+      onChange({ ...filters, search: debouncedSearch });
+    }
+  }, [debouncedSearch, filters, onChange]);
 
   const handleBrandChange = useCallback(
     (ids: string[]) => onChange({ ...filters, brandIds: ids }),

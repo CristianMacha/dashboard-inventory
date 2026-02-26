@@ -8,3 +8,14 @@ export interface BrandResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface BrandCreate {
+  name: string;
+  description?: string;
+}
+
+export interface BrandUpdate {
+  name?: string;
+  description?: string;
+  isActive?: boolean;
+}

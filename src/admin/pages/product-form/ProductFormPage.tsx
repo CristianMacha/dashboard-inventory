@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Navigate, useParams, useNavigate } from "react-router";
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -39,11 +38,23 @@ import { ArrowLeftIcon } from "lucide-react";
 
 import { createProductAction } from "@/admin/actions/create-product.action";
 import { updateProductAction } from "@/admin/actions/update-product.action";
-import { getCategoriesAction } from "@/admin/actions/get-categories.action";
-import { getBrandsAction } from "@/admin/actions/get-brands.action";
-import { getLevelsAction } from "@/admin/actions/get-levels.action";
-import { getFinishesAction } from "@/admin/actions/get-finishes.action";
-import { productKeys, categoryKeys, brandKeys, levelKeys, finishKeys, summaryKeys } from "@/admin/queryKeys";
+import { getActiveCategoriesAction } from "@/admin/actions/get-active-categories.action";
+import { getActiveBrandsAction } from "@/admin/actions/get-active-brands.action";
+import { getActiveLevelsAction } from "@/admin/actions/get-active-levels.action";
+import { getActiveFinishesAction } from "@/admin/actions/get-active-finishes.action";
+import {
+  productKeys,
+  categoryKeys,
+  brandKeys,
+  levelKeys,
+  finishKeys,
+  summaryKeys,
+} from "@/admin/queryKeys";
+import type { ProductResponse } from "@/interfaces/product.response";
+import type { BrandResponse } from "@/interfaces/brand.response";
+import type { CategoryResponse } from "@/interfaces/category.response";
+import type { LevelResponse } from "@/interfaces/level.response";
+import type { FinishResponse } from "@/interfaces/finish.response";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -56,7 +67,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const defaultFormValues: FormValues = {
+const emptyFormValues: FormValues = {
   name: "",
   categoryId: "",
   levelId: "",
@@ -65,42 +76,104 @@ const defaultFormValues: FormValues = {
   description: "",
 };
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+function productToFormValues(p: ProductResponse): FormValues {
+  return {
+    name: p.name,
+    categoryId: p.category?.id ?? "",
+    brandId: p.brand?.id ?? "",
+    levelId: p.level?.id ?? "",
+    finishId: p.finish?.id ?? "",
+    description: p.description ?? "",
+  };
+}
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+
+// ---------------------------------------------------------------------------
+// Wrapper: loads data, shows loading, then renders the form
+// ---------------------------------------------------------------------------
 export const ProductFormPage = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const isEditing = Boolean(id && id !== "new");
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues,
-  });
-
-  const { control, handleSubmit, reset } = form;
 
   const { data: product, isLoading: isLoadingProduct, isError } = useProduct(
     id || "",
   );
 
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: categoryKeys.all,
-    queryFn: getCategoriesAction,
+    queryKey: categoryKeys.active,
+    queryFn: getActiveCategoriesAction,
   });
 
   const { data: brands = [], isLoading: isLoadingBrands } = useQuery({
-    queryKey: brandKeys.all,
-    queryFn: getBrandsAction,
+    queryKey: brandKeys.active,
+    queryFn: getActiveBrandsAction,
   });
 
   const { data: levels = [], isLoading: isLoadingLevels } = useQuery({
-    queryKey: levelKeys.all,
-    queryFn: getLevelsAction,
+    queryKey: levelKeys.active,
+    queryFn: getActiveLevelsAction,
   });
 
   const { data: finishes = [], isLoading: isLoadingFinishes } = useQuery({
-    queryKey: finishKeys.all,
-    queryFn: getFinishesAction,
+    queryKey: finishKeys.active,
+    queryFn: getActiveFinishesAction,
   });
+
+  if (isEditing && isError) {
+    return <Navigate to="/products" replace />;
+  }
+
+  const isLoading =
+    (isEditing && isLoadingProduct) ||
+    isLoadingCategories ||
+    isLoadingBrands ||
+    isLoadingLevels ||
+    isLoadingFinishes;
+
+  if (isLoading) {
+    return <CustomFullScreenLoading />;
+  }
+
+  return (
+    <ProductForm
+      product={isEditing ? product ?? null : null}
+      brands={brands}
+      categories={categories}
+      levels={levels}
+      finishes={finishes}
+    />
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Form: receives ALL data via props, initializes form with correct defaults
+// ---------------------------------------------------------------------------
+interface ProductFormProps {
+  product: ProductResponse | null;
+  brands: BrandResponse[];
+  categories: CategoryResponse[];
+  levels: LevelResponse[];
+  finishes: FinishResponse[];
+}
+
+const ProductForm = ({
+  product,
+  brands,
+  categories,
+  levels,
+  finishes,
+}: ProductFormProps) => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isEditing = !!product;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: product ? productToFormValues(product) : emptyFormValues,
+  });
+
+  const { control, handleSubmit } = form;
 
   const createMutation = useMutation({
     mutationFn: createProductAction,
@@ -116,12 +189,14 @@ export const ProductFormPage = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id: productId, data }: { id: string; data: FormValues }) =>
-      updateProductAction(productId, data),
+    mutationFn: ({ id, data }: { id: string; data: FormValues }) =>
+      updateProductAction(id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: productKeys.all });
-      if (id) {
-        void queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
+      if (product) {
+        void queryClient.invalidateQueries({
+          queryKey: productKeys.detail(product.id),
+        });
       }
       toast.success("Product updated successfully");
       void navigate("/products");
@@ -133,30 +208,9 @@ export const ProductFormPage = () => {
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  useEffect(() => {
-    if (isEditing && product) {
-      reset({
-        name: product.name,
-        categoryId: product.category?.id ?? "",
-        levelId: product.levelId ?? "",
-        finishId: product.finishId ?? "",
-        brandId: product.brand?.id ?? "",
-        description: product.description ?? "",
-      });
-    }
-  }, [isEditing, product, reset]);
-
-  if (isEditing && isError) {
-    return <Navigate to="/products" replace />;
-  }
-
-  if (isEditing && isLoadingProduct) {
-    return <CustomFullScreenLoading />;
-  }
-
   const onSubmit = (values: FormValues) => {
-    if (isEditing && id) {
-      updateMutation.mutate({ id, data: values });
+    if (isEditing && product) {
+      updateMutation.mutate({ id: product.id, data: values });
     } else {
       createMutation.mutate(values);
     }
@@ -246,19 +300,17 @@ export const ProductFormPage = () => {
                     <Field>
                       <FieldLabel htmlFor="brandId">Brand</FieldLabel>
                       <Select
-                        aria-invalid={fieldState.invalid}
-                        {...field}
+                        value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isLoadingBrands}
+                        name={field.name}
                       >
-                        <SelectTrigger id="brandId">
-                          <SelectValue
-                            placeholder={
-                              isLoadingBrands
-                                ? "Loading brands..."
-                                : "Select brand"
-                            }
-                          />
+                        <SelectTrigger
+                          id="brandId"
+                          ref={field.ref}
+                          onBlur={field.onBlur}
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select brand" />
                         </SelectTrigger>
                         <SelectContent>
                           {brands.map((brand) => (
@@ -281,19 +333,17 @@ export const ProductFormPage = () => {
                     <Field>
                       <FieldLabel htmlFor="categoryId">Category</FieldLabel>
                       <Select
-                        aria-invalid={fieldState.invalid}
-                        {...field}
+                        value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isLoadingCategories}
+                        name={field.name}
                       >
-                        <SelectTrigger id="categoryId">
-                          <SelectValue
-                            placeholder={
-                              isLoadingCategories
-                                ? "Loading categories..."
-                                : "Select category"
-                            }
-                          />
+                        <SelectTrigger
+                          id="categoryId"
+                          ref={field.ref}
+                          onBlur={field.onBlur}
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((category) => (
@@ -316,19 +366,17 @@ export const ProductFormPage = () => {
                     <Field>
                       <FieldLabel htmlFor="levelId">Level</FieldLabel>
                       <Select
-                        aria-invalid={fieldState.invalid}
-                        {...field}
+                        value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isLoadingLevels}
+                        name={field.name}
                       >
-                        <SelectTrigger id="levelId">
-                          <SelectValue
-                            placeholder={
-                              isLoadingLevels
-                                ? "Loading levels..."
-                                : "Select level"
-                            }
-                          />
+                        <SelectTrigger
+                          id="levelId"
+                          ref={field.ref}
+                          onBlur={field.onBlur}
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select level" />
                         </SelectTrigger>
                         <SelectContent>
                           {levels.map((level) => (
@@ -351,19 +399,17 @@ export const ProductFormPage = () => {
                     <Field>
                       <FieldLabel htmlFor="finishId">Finish</FieldLabel>
                       <Select
-                        aria-invalid={fieldState.invalid}
-                        {...field}
+                        value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isLoadingFinishes}
+                        name={field.name}
                       >
-                        <SelectTrigger id="finishId">
-                          <SelectValue
-                            placeholder={
-                              isLoadingFinishes
-                                ? "Loading finishes..."
-                                : "Select finish"
-                            }
-                          />
+                        <SelectTrigger
+                          id="finishId"
+                          ref={field.ref}
+                          onBlur={field.onBlur}
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select finish" />
                         </SelectTrigger>
                         <SelectContent>
                           {finishes.map((finish) => (

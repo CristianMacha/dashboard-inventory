@@ -1,4 +1,4 @@
-export interface IMetricsResponse {
+export interface InventoryMetrics {
   totalProducts: number;
   totalBrands: number;
   totalCategories: number;
@@ -6,6 +6,16 @@ export interface IMetricsResponse {
   totalSlabs: number;
 }
 
+export interface ProjectsMetrics {
+  totalJobs: number;
+}
+
+export interface PurchasingMetrics {
+  totalPurchaseInvoices: number;
+}
+
 export interface ISummaryResponse {
-  metrics: IMetricsResponse;
+  inventory: InventoryMetrics;
+  projects: ProjectsMetrics;
+  purchasing: PurchasingMetrics;
 }

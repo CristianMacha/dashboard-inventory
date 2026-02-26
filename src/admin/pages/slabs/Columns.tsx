@@ -1,22 +1,9 @@
 import { Pencil } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { SlabResponse, SlabStatus } from "@/interfaces/slab.response";
+import type { SlabResponse } from "@/interfaces/slab.response";
 import { Button } from "@/components/ui/button";
-
-export const SLAB_STATUSES: { value: SlabStatus; label: string }[] = [
-  { value: "AVAILABLE", label: "Available" },
-  { value: "RESERVED", label: "Reserved" },
-  { value: "SOLD", label: "Sold" },
-];
-
-const statusStyles: Record<SlabStatus, string> = {
-  AVAILABLE: "bg-green-100 text-green-800 ring-green-200",
-  RESERVED: "bg-yellow-100 text-yellow-800 ring-yellow-200",
-  SOLD: "bg-red-100 text-red-800 ring-red-200",
-};
-
-const pillClasses =
-  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1";
+import { SLAB_STATUS_CONFIG } from "@/lib/slab-status";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 export const slabColumns = (
   onEdit: (slab: SlabResponse) => void,
@@ -24,9 +11,7 @@ export const slabColumns = (
   {
     accessorKey: "code",
     header: "Code",
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.code}</span>
-    ),
+    cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
   },
   {
     accessorKey: "dimensions",
@@ -40,13 +25,8 @@ export const slabColumns = (
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
-      const label =
-        SLAB_STATUSES.find((s) => s.value === status)?.label ?? status;
-      return (
-        <span className={`${pillClasses} ${statusStyles[status]}`}>
-          {label}
-        </span>
-      );
+      const { label, className } = SLAB_STATUS_CONFIG[status];
+      return <StatusBadge label={label} className={className} />;
     },
   },
   {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getBundlesAction } from "@/admin/actions/get-bundles.action";
 import { bundleKeys } from "@/admin/queryKeys";
@@ -25,31 +26,22 @@ import { BundleFormSheet } from "./components/BundleFormSheet";
 const DEFAULT_PAGE_SIZE = 10;
 
 export const BundlesPage = () => {
-  const [page, setPage] = useState(1);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editingBundle, setEditingBundle] = useState<BundleResponse | null>(null);
+  const {
+    page,
+    setPage,
+    sheetOpen,
+    editingItem: editingBundle,
+    openCreate,
+    openEdit,
+    handleSheetOpenChange,
+  } = useListPageState<BundleResponse>();
 
   const { data, isLoading } = useQuery({
     queryKey: bundleKeys.list({ page, limit: DEFAULT_PAGE_SIZE }),
     queryFn: () => getBundlesAction({ page, limit: DEFAULT_PAGE_SIZE }),
   });
 
-  const openCreate = () => {
-    setEditingBundle(null);
-    setSheetOpen(true);
-  };
-
-  const openEdit = (bundle: BundleResponse) => {
-    setEditingBundle(bundle);
-    setSheetOpen(true);
-  };
-
-  const handleSheetOpenChange = (open: boolean) => {
-    setSheetOpen(open);
-    if (!open) setEditingBundle(null);
-  };
-
-  const columns = bundleColumns(openEdit);
+  const columns = useMemo(() => bundleColumns(openEdit), [openEdit]);
 
   return (
     <div className="flex flex-col gap-4">

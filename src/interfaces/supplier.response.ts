@@ -8,3 +8,14 @@ export interface SupplierResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface SupplierCreate {
+  name: string;
+  abbreviation?: string;
+}
+
+export interface SupplierUpdate {
+  name?: string;
+  abbreviation?: string;
+  isActive?: boolean;
+}

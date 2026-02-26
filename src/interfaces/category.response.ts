@@ -9,3 +9,16 @@ export interface CategoryResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CategoryCreate {
+  name: string;
+  abbreviation?: string;
+  description?: string;
+}
+
+export interface CategoryUpdate {
+  name?: string;
+  abbreviation?: string;
+  description?: string;
+  isActive?: boolean;
+}
