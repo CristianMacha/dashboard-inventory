@@ -244,10 +244,7 @@ function NavItem({ item, pathname, depth = 0 }: NavItemProps) {
   // ── 3. No path + children (pure collapsible group inside a section) ───────
   return (
     <SidebarMenuItem>
-      <Collapsible.Root
-        defaultOpen={true}
-        className="group/collapsible w-full"
-      >
+      <Collapsible.Root defaultOpen={true} className="group/collapsible w-full">
         <Collapsible.Trigger asChild>
           <SidebarMenuButton size="sm" isActive={active} tooltip={item.label}>
             {menuIcon(item.icon)}
@@ -291,7 +288,9 @@ const SidebarNav = memo(function SidebarNav({
   items,
   pathname,
 }: SidebarNavProps) {
-  const navItems = items.filter((item) => !DROPDOWN_ONLY_IDS.has(item.id ?? ""));
+  const navItems = items.filter(
+    (item) => !DROPDOWN_ONLY_IDS.has(item.id ?? ""),
+  );
 
   return (
     <>
@@ -300,9 +299,7 @@ const SidebarNav = memo(function SidebarNav({
 
         // Named section (Inventory, Users…) — collapsible group
         if (!item.path && hasChildren) {
-          const sectionActive = (item.children ?? []).some((c) =>
-            isActive(c, pathname),
-          );
+          (item.children ?? []).some((c) => isActive(c, pathname));
 
           return (
             <Collapsible.Root

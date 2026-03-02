@@ -44,7 +44,7 @@ function useBreakpoint(minWidth: number) {
 }
 
 export const SupplierReturnsPage = () => {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState<number>(1);
   const [supplierId, setSupplierId] = useState<string>("");
   const [status, setStatus] = useState<string>("");
 
@@ -60,9 +60,15 @@ export const SupplierReturnsPage = () => {
     [isMd, isLg],
   );
 
-  useEffect(() => {
+  const handleSupplierChange = (value: string) => {
+    setSupplierId(value);
     setPage(1);
-  }, [supplierId, status]);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+    setPage(1);
+  };
 
   const queryParams = useMemo(
     () => ({
@@ -116,7 +122,7 @@ export const SupplierReturnsPage = () => {
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
-        <Select value={supplierId} onValueChange={setSupplierId}>
+        <Select value={supplierId} onValueChange={handleSupplierChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All suppliers" />
           </SelectTrigger>
@@ -129,7 +135,7 @@ export const SupplierReturnsPage = () => {
           </SelectContent>
         </Select>
 
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>

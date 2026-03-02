@@ -289,35 +289,29 @@ export const BundleFormSheet = ({
                 render={({ field }) => (
                   <Field>
                     <FieldLabel>Link to</FieldLabel>
-                    <div className="flex rounded-md border overflow-hidden text-sm">
-                      <button
+                    <div className="flex gap-2">
+                      <Button
                         type="button"
+                        variant={field.value === "invoice" ? "default" : "outline"}
+                        className="flex-1"
                         onClick={() => {
                           field.onChange("invoice");
                           setValue("supplierId", "");
                         }}
-                        className={`flex-1 px-3 py-2 transition-colors ${
-                          field.value === "invoice"
-                            ? "bg-primary text-primary-foreground font-medium"
-                            : "bg-background text-muted-foreground hover:bg-muted"
-                        }`}
                       >
                         Purchase Invoice
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant={field.value === "supplier" ? "default" : "outline"}
+                        className="flex-1"
                         onClick={() => {
                           field.onChange("supplier");
                           setValue("purchaseInvoiceId", "");
                         }}
-                        className={`flex-1 px-3 py-2 transition-colors ${
-                          field.value === "supplier"
-                            ? "bg-primary text-primary-foreground font-medium"
-                            : "bg-background text-muted-foreground hover:bg-muted"
-                        }`}
                       >
                         Supplier only
-                      </button>
+                      </Button>
                     </div>
                   </Field>
                 )}
