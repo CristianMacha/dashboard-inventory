@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/field";
 
 import { updateBundleAction } from "@/admin/actions/update-bundle.action";
+import { linkBundleInvoiceAction } from "@/admin/actions/link-bundle-invoice.action";
 import { createBundleWithSlabsAction } from "@/admin/actions/create-bundle-with-slabs.action";
 import { getProductsAction } from "@/admin/actions/get-products.action";
 import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
@@ -175,11 +176,16 @@ export const BundleFormSheet = ({
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: BundleFormValues }) =>
-      updateBundleAction(id, {
+    mutationFn: async ({ id, data }: { id: string; data: BundleFormValues }) => {
+      await updateBundleAction(id, {
         lotNumber: data.lotNumber || undefined,
         thicknessCm: emptyToUndefined(data.thicknessCm),
-      }),
+      });
+      // Link invoice if mode changed to invoice and an invoice was selected
+      if (data.linkMode === "invoice" && data.purchaseInvoiceId) {
+        await linkBundleInvoiceAction(id, data.purchaseInvoiceId);
+      }
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: bundleKeys.all });
       toast.success("Bundle updated successfully");
@@ -223,7 +229,9 @@ export const BundleFormSheet = ({
           <SheetTitle>{isEditing ? "Edit Bundle" : "New Bundle"}</SheetTitle>
           <SheetDescription>
             {isEditing
-              ? "Lot number and thickness can be updated. Product and supplier are locked."
+              ? editingBundle?.purchaseInvoiceId
+                ? "Lot number and thickness can be updated. Product and supplier are locked."
+                : "Lot number, thickness and purchase invoice can be updated. Supplier is locked."
               : isProductPrefilled
                 ? `Creating bundle for "${prefilledProduct?.name ?? ""}". Link to a purchase invoice or select a supplier directly.`
                 : "Select a product, link to a purchase invoice or supplier, then optionally add slabs."}
@@ -281,8 +289,8 @@ export const BundleFormSheet = ({
               />
             )}
 
-            {/* Link mode toggle — only on create */}
-            {!isEditing && (
+            {/* Link mode toggle — on create, or on edit when no invoice yet */}
+            {(!isEditing || !editingBundle?.purchaseInvoiceId) && (
               <Controller
                 control={control}
                 name="linkMode"
@@ -319,7 +327,7 @@ export const BundleFormSheet = ({
             )}
 
             {/* Purchase Invoice select */}
-            {!isEditing && linkMode === "invoice" && (
+            {(!isEditing || !editingBundle?.purchaseInvoiceId) && linkMode === "invoice" && (
               <Controller
                 control={control}
                 name="purchaseInvoiceId"

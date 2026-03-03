@@ -754,6 +754,36 @@
         ]
       }
     },
+    "/api/v1/products/select": {
+      "get": {
+        "operationId": "GetProductsController_getForSelect",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductSelectOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all products for select dropdowns (id + name)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
     "/api/v1/products/{id}/detail": {
       "get": {
         "description": "Returns a product with all its bundles and their slabs in a single response.",
@@ -1196,6 +1226,16 @@
         "operationId": "GetBundlesController_run",
         "parameters": [
           {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by product",
+            "schema": {
+              "example": "uuid-product",
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -1338,12 +1378,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
           }
         },
         "security": [
@@ -1352,6 +1386,55 @@
           }
         ],
         "summary": "Get slabs with pagination and optional filter by bundle",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
+    "/api/v1/slabs/returnable": {
+      "get": {
+        "operationId": "GetSlabsController_getReturnable",
+        "parameters": [
+          {
+            "name": "purchaseInvoiceId",
+            "required": true,
+            "in": "query",
+            "description": "Purchase invoice UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bundleId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by bundle UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SlabReturnableOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List slabs eligible for a supplier return (AVAILABLE or RESERVED) filtered by purchase invoice",
         "tags": [
           "Slabs"
         ]
@@ -1928,6 +2011,102 @@
         ]
       }
     },
+    "/api/v1/bundles/{id}/link-invoice": {
+      "patch": {
+        "operationId": "LinkBundleInvoiceController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Bundle ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkBundleInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bundle or invoice not found"
+          },
+          "422": {
+            "description": "Bundle already linked, invoice is CANCELLED, or supplier mismatch"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Link a bundle to a purchase invoice (null → invoice)",
+        "tags": [
+          "Bundles"
+        ]
+      }
+    },
+    "/api/v1/bundles/{id}/unlink-invoice": {
+      "patch": {
+        "operationId": "UnlinkBundleInvoiceController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Bundle ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bundle not found"
+          },
+          "422": {
+            "description": "Bundle not linked to any invoice, or has SOLD/RESERVED slabs"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unlink a bundle from its purchase invoice (invoice → null)",
+        "tags": [
+          "Bundles"
+        ]
+      }
+    },
     "/api/v1/purchase-invoices": {
       "post": {
         "operationId": "PurchaseInvoicesController_create",
@@ -2469,6 +2648,69 @@
         ]
       }
     },
+    "/api/v1/purchasing/supplier-returns/select": {
+      "get": {
+        "operationId": "SupplierReturnsController_getForSelect",
+        "parameters": [
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "uuid-supplier",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SENT",
+                "CREDITED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "purchaseInvoiceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "uuid-invoice",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierReturnSelectOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List supplier returns for select dropdowns (DRAFT and SENT by default)",
+        "tags": [
+          "Supplier Returns"
+        ]
+      }
+    },
     "/api/v1/purchasing/supplier-returns/{id}": {
       "get": {
         "operationId": "SupplierReturnsController_getById",
@@ -2844,6 +3086,54 @@
         "tags": [
           "Jobs"
         ]
+      },
+      "patch": {
+        "operationId": "JobsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Job UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update job details (name, client info, dates, tax, notes)",
+        "tags": [
+          "Jobs"
+        ]
       }
     },
     "/api/v1/jobs/{id}/items": {
@@ -2881,6 +3171,56 @@
           }
         ],
         "summary": "Add a slab item to a job",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/items/bulk": {
+      "post": {
+        "operationId": "JobsController_addBulkItems",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Job UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBulkJobItemsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobItemOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add multiple slab items to a job in one operation",
         "tags": [
           "Jobs"
         ]
@@ -3725,6 +4065,23 @@
           "updatedAt"
         ]
       },
+      "ProductSelectOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-product"
+          },
+          "name": {
+            "type": "string",
+            "example": "Marble Calacatta"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "ISlabOutputDto": {
         "type": "object",
         "properties": {
@@ -4256,6 +4613,63 @@
           "heightCm"
         ]
       },
+      "SlabReturnableOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-slab"
+          },
+          "bundleId": {
+            "type": "string",
+            "example": "uuid-bundle"
+          },
+          "lotNumber": {
+            "type": "string",
+            "example": "LOT-001"
+          },
+          "code": {
+            "type": "string",
+            "example": "SLB-003"
+          },
+          "widthCm": {
+            "type": "number",
+            "example": 150.5
+          },
+          "heightCm": {
+            "type": "number",
+            "example": 280
+          },
+          "dimensions": {
+            "type": "string",
+            "example": "150.50 x 280.00 cm"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "RESERVED",
+              "SOLD",
+              "RETURNED"
+            ],
+            "example": "AVAILABLE"
+          },
+          "description": {
+            "type": "string",
+            "example": "Losa sin defectos"
+          }
+        },
+        "required": [
+          "id",
+          "bundleId",
+          "lotNumber",
+          "code",
+          "widthCm",
+          "heightCm",
+          "dimensions",
+          "status"
+        ]
+      },
       "ILevelOutputDto": {
         "type": "object",
         "properties": {
@@ -4656,6 +5070,18 @@
           "updatedAt"
         ]
       },
+      "LinkBundleInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "purchaseInvoiceId": {
+            "type": "string",
+            "example": "uuid-invoice"
+          }
+        },
+        "required": [
+          "purchaseInvoiceId"
+        ]
+      },
       "CreatePurchaseInvoiceDto": {
         "type": "object",
         "properties": {
@@ -5034,7 +5460,14 @@
           "purchaseInvoiceId": {
             "type": "string"
           },
+          "invoiceNumber": {
+            "type": "object",
+            "nullable": true
+          },
           "supplierId": {
+            "type": "string"
+          },
+          "supplierName": {
             "type": "string"
           },
           "returnDate": {
@@ -5071,7 +5504,9 @@
         "required": [
           "id",
           "purchaseInvoiceId",
+          "invoiceNumber",
           "supplierId",
+          "supplierName",
           "returnDate",
           "status",
           "notes",
@@ -5080,6 +5515,49 @@
           "updatedBy",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "SupplierReturnSelectOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-return"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "uuid-supplier"
+          },
+          "purchaseInvoiceId": {
+            "type": "string",
+            "example": "uuid-invoice"
+          },
+          "returnDate": {
+            "type": "string",
+            "example": "2026-01-20"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SENT",
+              "CREDITED",
+              "CANCELLED"
+            ],
+            "example": "DRAFT"
+          },
+          "creditAmount": {
+            "type": "number",
+            "example": 1500
+          }
+        },
+        "required": [
+          "id",
+          "supplierId",
+          "purchaseInvoiceId",
+          "returnDate",
+          "status",
+          "creditAmount"
         ]
       },
       "SupplierReturnItemOutputDto": {
@@ -5136,7 +5614,14 @@
           "purchaseInvoiceId": {
             "type": "string"
           },
+          "invoiceNumber": {
+            "type": "object",
+            "nullable": true
+          },
           "supplierId": {
+            "type": "string"
+          },
+          "supplierName": {
             "type": "string"
           },
           "returnDate": {
@@ -5179,7 +5664,9 @@
         "required": [
           "id",
           "purchaseInvoiceId",
+          "invoiceNumber",
           "supplierId",
+          "supplierName",
           "returnDate",
           "status",
           "notes",
@@ -5382,6 +5869,14 @@
             "type": "string",
             "example": "uuid-slab"
           },
+          "slabCode": {
+            "type": "string",
+            "example": "SLB-001"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Granito Blanco Polar"
+          },
           "description": {
             "type": "string",
             "example": "Granito Blanco Polar - Slab SLB-001"
@@ -5398,6 +5893,8 @@
         "required": [
           "id",
           "slabId",
+          "slabCode",
+          "productName",
           "description",
           "unitPrice",
           "totalPrice"
@@ -5516,6 +6013,44 @@
           "items"
         ]
       },
+      "UpdateJobDto": {
+        "type": "object",
+        "properties": {
+          "projectName": {
+            "type": "string",
+            "example": "Kitchen Renovation - Smith Residence"
+          },
+          "clientName": {
+            "type": "string",
+            "example": "John Smith"
+          },
+          "clientPhone": {
+            "type": "string",
+            "example": "+1-555-0100"
+          },
+          "clientEmail": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "clientAddress": {
+            "type": "string",
+            "example": "123 Main St, City"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Kitchen countertop installation"
+          },
+          "scheduledDate": {
+            "type": "object",
+            "example": "2026-03-15",
+            "nullable": true
+          },
+          "taxAmount": {
+            "type": "number",
+            "example": 200
+          }
+        }
+      },
       "AddJobItemDto": {
         "type": "object",
         "properties": {
@@ -5535,6 +6070,41 @@
         "required": [
           "slabId",
           "unitPrice"
+        ]
+      },
+      "BulkJobItemDto": {
+        "type": "object",
+        "properties": {
+          "slabId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "description": {
+            "type": "string",
+            "example": "Granito Blanco Polar - Slab SLB-001"
+          },
+          "unitPrice": {
+            "type": "number",
+            "example": 350
+          }
+        },
+        "required": [
+          "slabId",
+          "unitPrice"
+        ]
+      },
+      "AddBulkJobItemsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkJobItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "InventoryMetricsDto": {

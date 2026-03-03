@@ -17,6 +17,8 @@ export interface SupplierReturnResponse {
   id: string;
   purchaseInvoiceId: string;
   supplierId: string;
+  supplierName: string;
+  invoiceNumber: string;
   returnDate: string;
   status: SupplierReturnStatus;
   notes?: string;
@@ -36,6 +38,15 @@ export interface SupplierReturnCreate {
   supplierId: string;
   returnDate: string;
   notes?: string;
+}
+
+export interface SupplierReturnSelectResponse {
+  id: string;
+  supplierId: string;
+  purchaseInvoiceId: string;
+  returnDate: string;
+  status: SupplierReturnStatus;
+  creditAmount: number;
 }
 
 export interface ReturnItemCreate {

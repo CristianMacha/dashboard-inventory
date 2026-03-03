@@ -63,6 +63,11 @@ const BundlesPage = lazy(() =>
     default: m.BundlesPage,
   })),
 );
+const BundleDetailPage = lazy(() =>
+  import("./admin/pages/bundles/BundleDetailPage").then((m) => ({
+    default: m.BundleDetailPage,
+  })),
+);
 const SlabsPage = lazy(() =>
   import("./admin/pages/slabs/SlabsPage").then((m) => ({
     default: m.SlabsPage,
@@ -190,6 +195,14 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <BundlesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "bundles/:id",
+        element: (
+          <PageSuspense>
+            <BundleDetailPage />
           </PageSuspense>
         ),
       },

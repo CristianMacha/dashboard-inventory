@@ -14,23 +14,19 @@ const currency = new Intl.NumberFormat("en-US", {
 
 export const supplierReturnColumns: ColumnDef<SupplierReturnResponse>[] = [
   {
-    id: "supplierId",
-    accessorKey: "supplierId",
-    header: "Supplier ID",
+    id: "supplierName",
+    accessorKey: "supplierName",
+    header: "Supplier",
     cell: ({ row }) => (
-      <span className="font-mono text-xs text-muted-foreground">
-        {row.original.supplierId.slice(0, 8)}…
-      </span>
+      <span className="text-sm font-medium">{row.original.supplierName}</span>
     ),
   },
   {
-    id: "purchaseInvoiceId",
-    accessorKey: "purchaseInvoiceId",
-    header: "Invoice ID",
+    id: "invoiceNumber",
+    accessorKey: "invoiceNumber",
+    header: "Invoice",
     cell: ({ row }) => (
-      <span className="font-mono text-xs text-muted-foreground">
-        {row.original.purchaseInvoiceId.slice(0, 8)}…
-      </span>
+      <span className="font-mono text-sm">{row.original.invoiceNumber}</span>
     ),
   },
   {
@@ -38,9 +34,7 @@ export const supplierReturnColumns: ColumnDef<SupplierReturnResponse>[] = [
     accessorKey: "returnDate",
     header: "Return Date",
     cell: ({ row }) => (
-      <span className="text-sm tabular-nums">
-        {formatDate(row.original.returnDate)}
-      </span>
+      <span className="text-sm tabular-nums">{formatDate(row.original.returnDate)}</span>
     ),
   },
   {

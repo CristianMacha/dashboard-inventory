@@ -53,7 +53,7 @@ export const SupplierReturnsPage = () => {
 
   const columnVisibility = useMemo(
     () => ({
-      purchaseInvoiceId: isLg,
+      invoiceNumber: isLg,
       returnDate: isMd,
       createdAt: isLg,
     }),

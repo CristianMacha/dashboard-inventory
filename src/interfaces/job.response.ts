@@ -8,6 +8,8 @@ export type JobStatus =
 export interface JobItem {
   id: string;
   slabId: string;
+  slabCode: string;
+  productName: string;
   description?: string;
   unitPrice: number;
   totalPrice: number;

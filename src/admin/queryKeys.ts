@@ -56,10 +56,20 @@ export const summaryKeys = {
 export const bundleKeys = {
   all: ["bundles"] as const,
   lists: () => [...bundleKeys.all, "list"] as const,
-  list: (params: { page: number; limit: number }) =>
+  list: (params: { page: number; limit: number; productId?: string }) =>
     [...bundleKeys.lists(), params] as const,
   details: () => [...bundleKeys.all, "detail"] as const,
   detail: (id: string) => [...bundleKeys.details(), id] as const,
+};
+
+export const productSelectKeys = {
+  all: ["products", "select"] as const,
+};
+
+export const supplierReturnSelectKeys = {
+  all: ["supplier-returns-select"] as const,
+  list: (params: { supplierId?: string; purchaseInvoiceId?: string; status?: string }) =>
+    [...supplierReturnSelectKeys.all, params] as const,
 };
 
 export const slabKeys = {

@@ -12,10 +12,13 @@ import {
   Loader2,
   MailIcon,
   MapPinIcon,
+  Pencil,
   PhoneIcon,
   Plus,
+  ShoppingCart,
   Trash2,
   UserIcon,
+  X,
 } from "lucide-react";
 
 import {
@@ -67,14 +70,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getJobByIdAction } from "@/admin/actions/get-job-by-id.action";
 import { createJobAction } from "@/admin/actions/create-job.action";
-import { addJobItemAction } from "@/admin/actions/add-job-item.action";
+import { addBulkJobItemsAction, type BulkJobItemDto } from "@/admin/actions/add-bulk-job-items.action";
 import { removeJobItemAction } from "@/admin/actions/remove-job-item.action";
 import { approveJobAction } from "@/admin/actions/approve-job.action";
 import { startJobAction } from "@/admin/actions/start-job.action";
 import { completeJobAction } from "@/admin/actions/complete-job.action";
 import { cancelJobAction } from "@/admin/actions/cancel-job.action";
-import { getSlabsAction } from "@/admin/actions/get-slabs.action";
-import { jobKeys, slabKeys } from "@/admin/queryKeys";
+import { updateJobAction, type JobUpdate } from "@/admin/actions/update-job.action";
+import { getProductsForSelectAction } from "@/admin/actions/get-products-for-select.action";
+import { getBundlesAction } from "@/admin/actions/get-bundles.action";
+import { getBundleByIdAction } from "@/admin/actions/get-bundle-by-id.action";
+import { jobKeys, bundleKeys, productSelectKeys, slabKeys } from "@/admin/queryKeys";
 import { ApiError } from "@/api/apiClient";
 import { JOB_STATUS_CONFIG } from "@/lib/job-status";
 import { formatDate } from "@/lib/format";
@@ -100,15 +106,17 @@ const createSchema = z.object({
 
 type CreateFormValues = z.infer<typeof createSchema>;
 
-// ─── Add-item sheet schema ───────────────────────────────────────────────────
+// ─── Cart item type ───────────────────────────────────────────────────────────
 
-const addItemSchema = z.object({
-  slabId: z.string().min(1, "Slab is required"),
-  description: z.string().optional(),
-  unitPrice: z.coerce.number().min(0, "Must be >= 0"),
-});
-
-type AddItemFormValues = z.infer<typeof addItemSchema>;
+interface CartItem {
+  slabId: string;
+  slabCode: string;
+  dimensions: string;
+  productName: string;
+  bundleLotNumber?: string;
+  unitPrice: number;
+  description: string;
+}
 
 // ─── Status action helpers ───────────────────────────────────────────────────
 
@@ -365,6 +373,7 @@ function CreateJobForm() {
 function JobDetail({ job }: { job: JobDetailResponse }) {
   const queryClient = useQueryClient();
   const [itemSheetOpen, setItemSheetOpen] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
 
   const statusConfig = JOB_STATUS_CONFIG[job.status];
   const actions = getAvailableActions(job.status);
@@ -449,6 +458,10 @@ function JobDetail({ job }: { job: JobDetailResponse }) {
               <ArrowLeftIcon className="size-4" />
               Back
             </Link>
+          </Button>
+          <Button variant="outline" onClick={() => setEditSheetOpen(true)}>
+            <Pencil className="size-4" />
+            Edit
           </Button>
           {actions.map((a) => {
             const isThisActionPending =
@@ -547,25 +560,29 @@ function JobDetail({ job }: { job: JobDetailResponse }) {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">Slab</TableHead>
+                    <TableHead className="font-semibold">Product</TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
                     <TableHead className="font-semibold text-right">Unit Price</TableHead>
-                    <TableHead className="font-semibold text-right">Total</TableHead>
                     {canAddItems && <TableHead className="w-[50px]" />}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {job.items.map((item) => (
                     <TableRow key={item.id}>
+                      <TableCell className="font-mono text-sm font-medium">
+                        {item.slabCode}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {item.productName}
+                      </TableCell>
                       <TableCell className="text-sm">
                         {item.description ?? (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums text-sm">
+                      <TableCell className="text-right tabular-nums text-sm font-medium">
                         {currency.format(item.unitPrice)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium text-sm">
-                        {currency.format(item.totalPrice)}
                       </TableCell>
                       {canAddItems && (
                         <TableCell>
@@ -595,7 +612,234 @@ function JobDetail({ job }: { job: JobDetailResponse }) {
         open={itemSheetOpen}
         onOpenChange={setItemSheetOpen}
       />
+
+      <EditJobSheet
+        job={job}
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+      />
     </div>
+  );
+}
+
+// ─── Edit Job Sheet ───────────────────────────────────────────────────────────
+
+const editSchema = z.object({
+  projectName: z.string().min(1, "Required"),
+  clientName: z.string().min(1, "Required"),
+  clientPhone: z.string().optional(),
+  clientEmail: z.string().email("Invalid email").optional().or(z.literal("")),
+  clientAddress: z.string().optional(),
+  notes: z.string().optional(),
+  scheduledDate: z.string().optional(),
+  taxAmount: z.coerce.number().min(0, "Must be >= 0"),
+});
+
+type EditFormValues = z.infer<typeof editSchema>;
+
+function EditJobSheet({
+  job,
+  open,
+  onOpenChange,
+}: {
+  job: JobDetailResponse;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const { control, handleSubmit, reset } = useForm<EditFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(editSchema) as any,
+    defaultValues: {
+      projectName: job.projectName,
+      clientName: job.clientName,
+      clientPhone: job.clientPhone ?? "",
+      clientEmail: job.clientEmail ?? "",
+      clientAddress: job.clientAddress ?? "",
+      notes: job.notes ?? "",
+      scheduledDate: job.scheduledDate ?? "",
+      taxAmount: job.taxAmount,
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        projectName: job.projectName,
+        clientName: job.clientName,
+        clientPhone: job.clientPhone ?? "",
+        clientEmail: job.clientEmail ?? "",
+        clientAddress: job.clientAddress ?? "",
+        notes: job.notes ?? "",
+        scheduledDate: job.scheduledDate ?? "",
+        taxAmount: job.taxAmount,
+      });
+    }
+  }, [open, job, reset]);
+
+  const mutation = useMutation({
+    mutationFn: (values: EditFormValues) => {
+      const payload: JobUpdate = {
+        projectName: values.projectName,
+        clientName: values.clientName,
+        clientPhone: values.clientPhone || undefined,
+        clientEmail: values.clientEmail || undefined,
+        clientAddress: values.clientAddress || undefined,
+        notes: values.notes || undefined,
+        scheduledDate: values.scheduledDate || undefined,
+        taxAmount: values.taxAmount,
+      };
+      return updateJobAction(job.id, payload);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: jobKeys.detail(job.id) });
+      void queryClient.invalidateQueries({ queryKey: jobKeys.lists() });
+      toast.success("Job updated");
+      onOpenChange(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error instanceof ApiError ? error.message : "Failed to update job");
+    },
+  });
+
+  const onSubmit = (values: EditFormValues) => mutation.mutate(values as EditFormValues);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent>
+        <SheetHeader className="border-b">
+          <SheetTitle>Edit Job</SheetTitle>
+          <SheetDescription>Update project and client information</SheetDescription>
+        </SheetHeader>
+
+        <form
+          id="edit-job-form"
+          className="flex-1 overflow-y-auto p-4"
+          onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+        >
+          <FieldGroup>
+            <Controller
+              control={control}
+              name="projectName"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="edit-projectName">Project Name</FieldLabel>
+                  <Input id="edit-projectName" {...field} />
+                  {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                </Field>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                control={control}
+                name="clientName"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel htmlFor="edit-clientName">Client Name</FieldLabel>
+                    <Input id="edit-clientName" {...field} />
+                    {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="clientPhone"
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel htmlFor="edit-clientPhone">Phone</FieldLabel>
+                    <Input id="edit-clientPhone" type="tel" {...field} placeholder="optional" />
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="clientEmail"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel htmlFor="edit-clientEmail">Email</FieldLabel>
+                    <Input id="edit-clientEmail" type="email" {...field} placeholder="optional" />
+                    {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="taxAmount"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel htmlFor="edit-taxAmount">Tax Amount</FieldLabel>
+                    <Input
+                      id="edit-taxAmount"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                    />
+                    {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                  </Field>
+                )}
+              />
+            </div>
+
+            <Controller
+              control={control}
+              name="clientAddress"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="edit-clientAddress">Address</FieldLabel>
+                  <Input id="edit-clientAddress" {...field} placeholder="optional" />
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="scheduledDate"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="edit-scheduledDate">Scheduled Date</FieldLabel>
+                  <Input id="edit-scheduledDate" type="date" {...field} />
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="notes"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="edit-notes">
+                    Notes <span className="font-normal text-muted-foreground">(optional)</span>
+                  </FieldLabel>
+                  <Textarea id="edit-notes" {...field} rows={3} />
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+
+        <SheetFooter className="flex-row justify-end border-t">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => onOpenChange(false)}
+            disabled={mutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="edit-job-form" disabled={mutation.isPending}>
+            {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
+            {mutation.isPending ? "Saving…" : "Save Changes"}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -612,110 +856,249 @@ function AddSlabSheet({
 }) {
   const queryClient = useQueryClient();
 
-  const { data: slabsData } = useQuery({
-    queryKey: slabKeys.list({ page: 1, limit: 100 }),
-    queryFn: () => getSlabsAction({ page: 1, limit: 100 }),
+  // Browser step state
+  const [productId, setProductId] = useState("");
+  const [bundleId, setBundleId] = useState("");
+
+  // Per-slab fields (unit price / description before adding to cart)
+  const [unitPrice, setUnitPrice] = useState(0);
+  const [description, setDescription] = useState("");
+
+  // Cart
+  const [cart, setCart] = useState<CartItem[]>([]);
+  // Which slab IDs are checked in the current bundle view
+  const [checkedSlabIds, setCheckedSlabIds] = useState<Set<string>>(new Set());
+
+  // Reset everything when sheet opens/closes
+  useEffect(() => {
+    if (open) {
+      setProductId("");
+      setBundleId("");
+      setUnitPrice(0);
+      setDescription("");
+      setCart([]);
+      setCheckedSlabIds(new Set());
+    }
+  }, [open]);
+
+  // Step 1 — products for select
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: productSelectKeys.all,
+    queryFn: getProductsForSelectAction,
     enabled: open,
   });
 
-  const { control, handleSubmit, reset } = useForm<AddItemFormValues>({
-    resolver: zodResolver(addItemSchema),
-    defaultValues: {
-      slabId: "",
-      description: "",
-      unitPrice: 0,
-    },
+  // Step 2 — bundles filtered by product
+  const { data: bundlesData, isLoading: isLoadingBundles } = useQuery({
+    queryKey: bundleKeys.list({ page: 1, limit: 100, productId }),
+    queryFn: () => getBundlesAction({ page: 1, limit: 100, productId }),
+    enabled: !!productId,
   });
 
-  useEffect(() => {
-    if (open) reset();
-  }, [open, reset]);
+  // Step 3 — bundle detail (includes slabs)
+  const { data: bundleDetail, isLoading: isLoadingSlabs } = useQuery({
+    queryKey: bundleKeys.detail(bundleId),
+    queryFn: () => getBundleByIdAction(bundleId),
+    enabled: !!bundleId,
+  });
+
+  const bundles = bundlesData?.data ?? [];
+  const selectedBundle = bundles.find((b) => b.id === bundleId);
+  const cartSlabIds = new Set(cart.map((c) => c.slabId));
+
+  // Available slabs in the current bundle, excluding ones already in cart
+  const availableSlabs = (bundleDetail?.slabs ?? []).filter(
+    (s) => s.status === "AVAILABLE" && !cartSlabIds.has(s.id),
+  );
+
+  // Toggle a slab in the checked set
+  const toggleSlab = (slabId: string) => {
+    setCheckedSlabIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(slabId)) next.delete(slabId);
+      else next.add(slabId);
+      return next;
+    });
+  };
+
+  // Add all checked slabs to cart with current unitPrice / description
+  const addCheckedToCart = () => {
+    if (!bundleDetail || !selectedBundle || checkedSlabIds.size === 0) return;
+    const newItems: CartItem[] = [];
+    for (const slab of bundleDetail.slabs) {
+      if (!checkedSlabIds.has(slab.id)) continue;
+      newItems.push({
+        slabId: slab.id,
+        slabCode: slab.code,
+        dimensions: slab.dimensions,
+        productName: selectedBundle.productName,
+        bundleLotNumber: selectedBundle.lotNumber,
+        unitPrice,
+        description,
+      });
+    }
+    setCart((prev) => [...prev, ...newItems]);
+    setCheckedSlabIds(new Set());
+    setUnitPrice(0);
+    setDescription("");
+  };
+
+  const removeFromCart = (slabId: string) => {
+    setCart((prev) => prev.filter((c) => c.slabId !== slabId));
+  };
+
+  const updateCartItem = (slabId: string, patch: Partial<Pick<CartItem, "unitPrice" | "description">>) => {
+    setCart((prev) =>
+      prev.map((c) => (c.slabId === slabId ? { ...c, ...patch } : c)),
+    );
+  };
 
   const mutation = useMutation({
-    mutationFn: (values: AddItemFormValues) =>
-      addJobItemAction(jobId, {
-        slabId: values.slabId,
-        description: values.description || undefined,
-        unitPrice: values.unitPrice,
-      }),
+    mutationFn: () => {
+      const items: BulkJobItemDto[] = cart.map((c) => ({
+        slabId: c.slabId,
+        unitPrice: c.unitPrice,
+        description: c.description || undefined,
+      }));
+      return addBulkJobItemsAction(jobId, items);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: jobKeys.detail(jobId) });
-      toast.success("Slab added to job");
+      toast.success(`${cart.length} slab${cart.length !== 1 ? "s" : ""} added to job`);
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to add slab");
+      toast.error(error instanceof ApiError ? error.message : "Failed to add slabs");
     },
   });
 
-  const onSubmit = (values: AddItemFormValues) => mutation.mutate(values);
-  const availableSlabs = (slabsData?.data ?? []).filter(
-    (s) => s.status === "AVAILABLE",
-  );
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader className="border-b">
-          <SheetTitle>Add Slab to Job</SheetTitle>
+      <SheetContent className="flex flex-col sm:max-w-lg">
+        <SheetHeader className="border-b pb-4">
+          <SheetTitle className="flex items-center gap-2">
+            Add Slabs to Job
+            {cart.length > 0 && (
+              <span className="inline-flex items-center justify-center size-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold">
+                {cart.length}
+              </span>
+            )}
+          </SheetTitle>
           <SheetDescription>
-            Select an available slab and set its price for this project
+            Browse by product and bundle, check slabs, then add them to the cart
           </SheetDescription>
         </SheetHeader>
 
-        <form
-          id="add-slab-form"
-          className="flex-1 overflow-y-auto p-4"
-          onSubmit={(e) => void handleSubmit(onSubmit)(e)}
-        >
-          <FieldGroup>
-            <Controller
-              control={control}
-              name="slabId"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="slabId">Slab</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="slabId">
-                      <SelectValue placeholder="Select an available slab" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableSlabs.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.code} — {s.dimensions}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && (
-                    <FieldError>{fieldState.error?.message}</FieldError>
-                  )}
-                </Field>
-              )}
-            />
+        <div className="flex-1 overflow-y-auto">
+          {/* ── Browser section ── */}
+          <div className="p-4 space-y-3 border-b">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Browse
+            </p>
 
-            <Controller
-              control={control}
-              name="description"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor="slab-desc">
-                    Description{" "}
-                    <span className="font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Input
-                    id="slab-desc"
-                    {...field}
-                    placeholder="e.g. Granito Blanco Polar - Slab SLB-001"
+            {/* Step 1 — Product */}
+            <Field>
+              <FieldLabel htmlFor="productId">Product</FieldLabel>
+              <Select
+                value={productId}
+                onValueChange={(v) => {
+                  setProductId(v);
+                  setBundleId("");
+                  setCheckedSlabIds(new Set());
+                }}
+                disabled={isLoadingProducts}
+              >
+                <SelectTrigger id="productId">
+                  <SelectValue
+                    placeholder={isLoadingProducts ? "Loading…" : "Select a product"}
                   />
-                </Field>
-              )}
-            />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
 
-            <Controller
-              control={control}
-              name="unitPrice"
-              render={({ field, fieldState }) => (
+            {/* Step 2 — Bundle */}
+            <Field>
+              <FieldLabel htmlFor="bundleId">Bundle</FieldLabel>
+              <Select
+                value={bundleId}
+                onValueChange={(v) => {
+                  setBundleId(v);
+                  setCheckedSlabIds(new Set());
+                }}
+                disabled={!productId || isLoadingBundles}
+              >
+                <SelectTrigger id="bundleId">
+                  <SelectValue
+                    placeholder={
+                      !productId
+                        ? "Select a product first"
+                        : isLoadingBundles
+                          ? "Loading…"
+                          : bundles.length === 0
+                            ? "No bundles for this product"
+                            : "Select a bundle"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {bundles.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.lotNumber ? `Lot ${b.lotNumber}` : b.id.slice(0, 8)}
+                      {" · "}
+                      {b.supplierName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            {/* Step 3 — Slab checkboxes */}
+            {bundleId && (
+              <div className="space-y-2">
+                <FieldLabel>Available Slabs</FieldLabel>
+                {isLoadingSlabs ? (
+                  <p className="text-sm text-muted-foreground py-2">Loading slabs…</p>
+                ) : availableSlabs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">
+                    No available slabs in this bundle
+                  </p>
+                ) : (
+                  <div className="rounded-md border divide-y">
+                    {availableSlabs.map((s) => (
+                      <label
+                        key={s.id}
+                        className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded border-input accent-primary cursor-pointer"
+                          checked={checkedSlabIds.has(s.id)}
+                          onChange={() => toggleSlab(s.id)}
+                        />
+                        <span className="flex-1 text-sm">
+                          <span className="font-medium font-mono">{s.code}</span>
+                          <span className="text-muted-foreground"> · {s.dimensions}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Unit price + description for checked slabs, shown when at least one checked */}
+            {checkedSlabIds.size > 0 && (
+              <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Applied to {checkedSlabIds.size} selected slab{checkedSlabIds.size !== 1 ? "s" : ""}
+                </p>
                 <Field>
                   <FieldLabel htmlFor="unitPrice">Unit Price</FieldLabel>
                   <Input
@@ -723,19 +1106,106 @@ function AddSlabSheet({
                     type="number"
                     min={0}
                     step="0.01"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                    value={unitPrice}
+                    onChange={(e) => setUnitPrice(e.target.valueAsNumber || 0)}
                   />
-                  {fieldState.invalid && (
-                    <FieldError>{fieldState.error?.message}</FieldError>
-                  )}
                 </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
+                <Field>
+                  <FieldLabel htmlFor="slab-desc">
+                    Description{" "}
+                    <span className="font-normal text-muted-foreground">(optional)</span>
+                  </FieldLabel>
+                  <Input
+                    id="slab-desc"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="e.g. Kitchen island counter"
+                  />
+                </Field>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full"
+                  onClick={addCheckedToCart}
+                >
+                  <ShoppingCart className="size-4" />
+                  Add {checkedSlabIds.size} slab{checkedSlabIds.size !== 1 ? "s" : ""} to cart
+                </Button>
+              </div>
+            )}
+          </div>
 
-        <SheetFooter className="flex-row justify-end border-t">
+          {/* ── Cart section ── */}
+          {cart.length > 0 && (
+            <div className="p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Cart ({cart.length})
+              </p>
+              <div className="space-y-2">
+                {cart.map((item) => (
+                  <div
+                    key={item.slabId}
+                    className="rounded-md border bg-card p-3 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-sm space-y-0.5">
+                        <p className="font-medium font-mono leading-none">{item.slabCode}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.productName}
+                          {item.bundleLotNumber ? ` · Lot ${item.bundleLotNumber}` : ""}
+                          {" · "}{item.dimensions}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground hover:text-destructive shrink-0"
+                        onClick={() => removeFromCart(item.slabId)}
+                      >
+                        <X className="size-3.5" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">
+                          Price
+                        </label>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={item.unitPrice}
+                          className="h-7 text-sm mt-0.5"
+                          onChange={(e) =>
+                            updateCartItem(item.slabId, {
+                              unitPrice: e.target.valueAsNumber || 0,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">
+                          Description
+                        </label>
+                        <Input
+                          value={item.description}
+                          className="h-7 text-sm mt-0.5"
+                          placeholder="optional"
+                          onChange={(e) =>
+                            updateCartItem(item.slabId, { description: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <SheetFooter className="flex-row justify-end border-t pt-4 gap-2">
           <Button
             variant="outline"
             type="button"
@@ -744,9 +1214,15 @@ function AddSlabSheet({
           >
             Cancel
           </Button>
-          <Button type="submit" form="add-slab-form" disabled={mutation.isPending}>
+          <Button
+            type="button"
+            disabled={cart.length === 0 || mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
             {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
-            {mutation.isPending ? "Adding…" : "Add Slab"}
+            {mutation.isPending
+              ? "Adding…"
+              : `Add ${cart.length} slab${cart.length !== 1 ? "s" : ""}`}
           </Button>
         </SheetFooter>
       </SheetContent>

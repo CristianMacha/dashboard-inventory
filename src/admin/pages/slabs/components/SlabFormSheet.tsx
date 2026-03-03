@@ -38,7 +38,7 @@ import { getBundlesAction } from "@/admin/actions/get-bundles.action";
 import { bundleKeys, slabKeys } from "@/admin/queryKeys";
 import { ApiError } from "@/api/apiClient";
 import type { SlabResponse } from "@/interfaces/slab.response";
-import { SLAB_STATUSES } from "../Columns";
+import { SLAB_STATUSES } from "@/lib/slab-status";
 
 const createSlabSchema = z.object({
   bundleId: z.string().min(1, "Bundle is required"),

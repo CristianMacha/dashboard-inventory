@@ -5,6 +5,7 @@ import type { PaginatedResult } from "@/interfaces/paginated-result";
 export interface BundlesQueryParams {
   page?: number;
   limit?: number;
+  productId?: string;
 }
 
 export const getBundlesAction = async (

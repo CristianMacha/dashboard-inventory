@@ -33,6 +33,23 @@ export interface BundleWithSlabsCreate extends BundleCreate {
   slabs: SlabInBundle[];
 }
 
+export interface SlabInBundleDetail {
+  id: string;
+  bundleId: string;
+  code: string;
+  widthCm: number;
+  heightCm: number;
+  dimensions: string;
+  status: "AVAILABLE" | "RESERVED" | "SOLD" | "RETURNED";
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BundleDetailResponse extends BundleResponse {
+  slabs: SlabInBundleDetail[];
+}
+
 export interface BundleUpdate {
   lotNumber?: string;
   thicknessCm?: number;

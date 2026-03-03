@@ -1,5 +1,6 @@
-import { Pencil } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Link } from "react-router";
 import type { BundleResponse } from "@/interfaces/bundle.response";
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +32,16 @@ export const bundleColumns = (
     ),
   },
   {
+    accessorKey: "invoiceNumber",
+    header: "Invoice",
+    cell: ({ row }) =>
+      row.original.invoiceNumber ? (
+        <span className="tabular-nums text-sm">{row.original.invoiceNumber}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
     accessorKey: "thicknessCm",
     header: "Thickness",
     cell: ({ row }) =>
@@ -44,14 +55,21 @@ export const bundleColumns = (
     id: "actions",
     header: "",
     cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onEdit(row.original)}
-        aria-label="Edit bundle"
-      >
-        <Pencil className="size-4" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" asChild aria-label="View bundle">
+          <Link to={`/bundles/${row.original.id}`}>
+            <Eye className="size-4" />
+          </Link>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEdit(row.original)}
+          aria-label="Edit bundle"
+        >
+          <Pencil className="size-4" />
+        </Button>
+      </div>
     ),
   },
 ];
