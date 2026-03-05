@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getFinishesAction } from "@/admin/actions/get-finishes.action";
@@ -34,7 +35,7 @@ export const FinishesPage = () => {
     handleSheetOpenChange,
   } = useListPageState<FinishResponse>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: finishKeys.all,
     queryFn: getFinishesAction,
     staleTime: 5 * 60 * 1000,
@@ -86,14 +87,18 @@ export const FinishesPage = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No finishes found. Add your first finish to get started."
-        />
-      </div>
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No finishes found. Add your first finish to get started."
+          />
+        </div>
+      )}
 
       <FinishFormSheet
         open={sheetOpen}

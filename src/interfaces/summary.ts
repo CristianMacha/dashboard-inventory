@@ -14,8 +14,15 @@ export interface PurchasingMetrics {
   totalPurchaseInvoices: number;
 }
 
+export interface AccountingMetrics {
+  totalIngress: number;
+  totalEgress: number;
+  cashBalance: number;
+}
+
 export interface ISummaryResponse {
   inventory: InventoryMetrics;
   projects: ProjectsMetrics;
   purchasing: PurchasingMetrics;
+  accounting: AccountingMetrics;
 }

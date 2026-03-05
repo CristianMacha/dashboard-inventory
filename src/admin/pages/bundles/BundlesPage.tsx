@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Search, X } from "lucide-react";
 import { Link } from "react-router";
 
 import {
@@ -12,12 +12,23 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useListPageState } from "@/admin/hooks/useListPageState";
+import { useDebounce } from "@/hooks/useDebounce";
 
 import { getBundlesAction } from "@/admin/actions/get-bundles.action";
-import { bundleKeys } from "@/admin/queryKeys";
+import { getAllSuppliersAction } from "@/admin/actions/get-all-suppliers.action";
+import { bundleKeys, supplierKeys } from "@/admin/queryKeys";
 import type { BundleResponse } from "@/interfaces/bundle.response";
 
 import { bundleColumns } from "./Columns";
@@ -26,6 +37,10 @@ import { BundleFormSheet } from "./components/BundleFormSheet";
 const DEFAULT_PAGE_SIZE = 10;
 
 export const BundlesPage = () => {
+  const [searchInput, setSearchInput] = useState("");
+  const [supplierId, setSupplierId] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 400);
+
   const {
     page,
     setPage,
@@ -36,10 +51,43 @@ export const BundlesPage = () => {
     handleSheetOpenChange,
   } = useListPageState<BundleResponse>();
 
-  const { data, isLoading } = useQuery({
-    queryKey: bundleKeys.list({ page, limit: DEFAULT_PAGE_SIZE }),
-    queryFn: () => getBundlesAction({ page, limit: DEFAULT_PAGE_SIZE }),
+  const queryParams = useMemo(
+    () => ({
+      page,
+      limit: DEFAULT_PAGE_SIZE,
+      search: debouncedSearch || undefined,
+      supplierId: supplierId || undefined,
+    }),
+    [page, debouncedSearch, supplierId],
+  );
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: bundleKeys.list(queryParams),
+    queryFn: () => getBundlesAction(queryParams),
   });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: supplierKeys.all,
+    queryFn: getAllSuppliersAction,
+  });
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    setPage(1);
+  }, [setPage]);
+
+  const handleSupplierChange = useCallback((value: string) => {
+    setSupplierId(value);
+    setPage(1);
+  }, [setPage]);
+
+  const clearFilters = useCallback(() => {
+    setSearchInput("");
+    setSupplierId("");
+    setPage(1);
+  }, [setPage]);
+
+  const hasFilters = !!debouncedSearch || !!supplierId;
 
   const columns = useMemo(() => bundleColumns(openEdit), [openEdit]);
 
@@ -65,25 +113,61 @@ export const BundlesPage = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data?.data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No bundles found. Add your first bundle to get started."
-        />
-        <div className="p-4 border-t bg-muted">
-          <CustomPagination
-            page={page}
-            totalPages={data?.totalPages ?? 1}
-            totalCount={data?.total ?? 0}
-            pageSize={DEFAULT_PAGE_SIZE}
-            itemLabel="bundles"
-            onPageChange={setPage}
-            disabled={isLoading}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          <Input
+            className="pl-8"
+            placeholder="Search by lot number…"
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
+
+        <Select value={supplierId} onValueChange={handleSupplierChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All suppliers" />
+          </SelectTrigger>
+          <SelectContent>
+            {suppliers.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <X className="size-3.5" />
+            Clear
+          </Button>
+        )}
       </div>
+
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data?.data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No bundles found. Add your first bundle to get started."
+          />
+          <div className="p-4 border-t bg-muted">
+            <CustomPagination
+              page={page}
+              totalPages={data?.totalPages ?? 1}
+              totalCount={data?.total ?? 0}
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemLabel="bundles"
+              onPageChange={setPage}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+      )}
 
       <BundleFormSheet
         open={sheetOpen}

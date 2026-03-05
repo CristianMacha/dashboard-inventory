@@ -62,6 +62,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { getPurchaseInvoiceByIdAction } from "@/admin/actions/get-purchase-invoice-by-id.action";
+import { InvoicePaymentPanel } from "./components/InvoicePaymentPanel";
 import { createPurchaseInvoiceAction } from "@/admin/actions/create-purchase-invoice.action";
 import { addInvoiceItemAction } from "@/admin/actions/add-invoice-item.action";
 import { removeInvoiceItemAction } from "@/admin/actions/remove-invoice-item.action";
@@ -76,7 +77,6 @@ import { INVOICE_STATUS_CONFIG } from "@/lib/purchase-invoice-status";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type {
-  PurchaseInvoiceDetailResponse,
   PurchaseInvoiceStatus,
   InvoiceItemConcept,
 } from "@/interfaces/purchase-invoice.response";
@@ -329,9 +329,17 @@ function CreateInvoiceForm() {
 
 // ─── Detail Mode ─────────────────────────────────────────────────────────────
 
-function InvoiceDetail({ invoice }: { invoice: PurchaseInvoiceDetailResponse }) {
+function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   const queryClient = useQueryClient();
   const [itemSheetOpen, setItemSheetOpen] = useState(false);
+
+  const { data: invoice } = useQuery({
+    queryKey: purchaseInvoiceKeys.detail(invoiceId),
+    queryFn: () => getPurchaseInvoiceByIdAction(invoiceId),
+    staleTime: 0,
+  });
+
+  if (!invoice) return null;
 
   const statusConfig = INVOICE_STATUS_CONFIG[invoice.status];
   const actions = getAvailableActions(invoice.status);
@@ -453,6 +461,7 @@ function InvoiceDetail({ invoice }: { invoice: PurchaseInvoiceDetailResponse }) 
             <InfoItem label="Subtotal" value={currency.format(invoice.subtotal)} />
             <InfoItem label="Tax" value={currency.format(invoice.taxAmount)} />
             <InfoItem label="Total" value={currency.format(invoice.totalAmount)} />
+            <InfoItem label="Paid" value={currency.format(invoice.paidAmount)} />
             <InfoItem label="Items" value={String(invoice.itemCount)} />
           </dl>
         </CardContent>
@@ -539,6 +548,10 @@ function InvoiceDetail({ invoice }: { invoice: PurchaseInvoiceDetailResponse }) 
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {invoice.status !== "DRAFT" && (
+        <InvoicePaymentPanel invoiceId={invoice.id} />
       )}
 
       <AddItemSheet
@@ -856,5 +869,5 @@ export const PurchaseInvoiceDetailPage = () => {
     return null;
   }
 
-  return <InvoiceDetail invoice={invoice} />;
+  return <InvoiceDetail invoiceId={invoice.id} />;
 };

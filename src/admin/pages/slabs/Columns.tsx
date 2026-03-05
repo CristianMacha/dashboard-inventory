@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Pencil, Scissors } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { SlabResponse } from "@/interfaces/slab.response";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,17 @@ export const slabColumns = (
   {
     accessorKey: "code",
     header: "Code",
-    cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{row.original.code}</span>
+        {row.original.isRemnant && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 ring-1 ring-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:ring-orange-800">
+            <Scissors className="size-3" />
+            Remnant
+          </span>
+        )}
+      </div>
+    ),
   },
   {
     accessorKey: "dimensions",

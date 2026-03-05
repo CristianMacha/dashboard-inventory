@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getCategoriesAction } from "@/admin/actions/get-categories.action";
@@ -34,7 +35,7 @@ export const CategoriesPage = () => {
     handleSheetOpenChange,
   } = useListPageState<CategoryResponse>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: categoryKeys.all,
     queryFn: getCategoriesAction,
     staleTime: 5 * 60 * 1000,
@@ -86,14 +87,18 @@ export const CategoriesPage = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No categories found. Add your first category to get started."
-        />
-      </div>
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No categories found. Add your first category to get started."
+          />
+        </div>
+      )}
 
       <CategoryFormSheet
         open={sheetOpen}

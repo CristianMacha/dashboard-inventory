@@ -6,6 +6,8 @@ export interface BundlesQueryParams {
   page?: number;
   limit?: number;
   productId?: string;
+  supplierId?: string;
+  search?: string;
 }
 
 export const getBundlesAction = async (

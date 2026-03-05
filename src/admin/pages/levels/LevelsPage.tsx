@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getLevelsAction } from "@/admin/actions/get-levels.action";
@@ -34,7 +35,7 @@ export const LevelsPage = () => {
     handleSheetOpenChange,
   } = useListPageState<LevelResponse>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: levelKeys.all,
     queryFn: getLevelsAction,
     staleTime: 5 * 60 * 1000,
@@ -86,14 +87,18 @@ export const LevelsPage = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No levels found. Add your first level to get started."
-        />
-      </div>
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No levels found. Add your first level to get started."
+          />
+        </div>
+      )}
 
       <LevelFormSheet
         open={sheetOpen}

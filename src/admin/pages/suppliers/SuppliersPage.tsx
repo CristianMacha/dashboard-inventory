@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getAllSuppliersAction } from "@/admin/actions/get-all-suppliers.action";
@@ -34,7 +35,7 @@ export const SuppliersPage = () => {
     handleSheetOpenChange,
   } = useListPageState<SupplierResponse>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: supplierKeys.all,
     queryFn: getAllSuppliersAction,
     staleTime: 5 * 60 * 1000,
@@ -90,14 +91,18 @@ export const SuppliersPage = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No suppliers found. Add your first supplier to get started."
-        />
-      </div>
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No suppliers found. Add your first supplier to get started."
+          />
+        </div>
+      )}
 
       <SupplierFormSheet
         open={sheetOpen}

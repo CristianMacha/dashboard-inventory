@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, Search, X } from "lucide-react";
 import { Link } from "react-router";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import { getJobsAction } from "@/admin/actions/get-jobs.action";
@@ -37,10 +38,6 @@ export const JobsPage = () => {
   const [status, setStatus] = useState<string>("");
   const debouncedSearch = useDebounce(searchInput, 400);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, status]);
-
   const queryParams = useMemo(
     () => ({
       page,
@@ -51,14 +48,25 @@ export const JobsPage = () => {
     [page, debouncedSearch, status],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: jobKeys.list(queryParams),
     queryFn: () => getJobsAction(queryParams),
   });
 
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    setPage(1);
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setStatus(value);
+    setPage(1);
+  }, []);
+
   const clearFilters = useCallback(() => {
     setSearchInput("");
     setStatus("");
+    setPage(1);
   }, []);
 
   const hasFilters = !!debouncedSearch || !!status;
@@ -94,11 +102,11 @@ export const JobsPage = () => {
             className="pl-8"
             placeholder="Search by project or client…"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
@@ -119,25 +127,29 @@ export const JobsPage = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={jobColumns}
-          data={data?.data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No jobs found. Create your first job to get started."
-        />
-        <div className="p-4 border-t bg-muted">
-          <CustomPagination
-            page={page}
-            totalPages={data?.totalPages ?? 1}
-            totalCount={data?.total ?? 0}
-            pageSize={DEFAULT_PAGE_SIZE}
-            itemLabel="jobs"
-            onPageChange={setPage}
-            disabled={isLoading}
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={jobColumns}
+            data={data?.data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No jobs found. Create your first job to get started."
           />
+          <div className="p-4 border-t bg-muted">
+            <CustomPagination
+              page={page}
+              totalPages={data?.totalPages ?? 1}
+              totalCount={data?.total ?? 0}
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemLabel="jobs"
+              onPageChange={setPage}
+              disabled={isLoading}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

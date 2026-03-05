@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, Search, X } from "lucide-react";
 import { Link } from "react-router";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import { getPurchaseInvoicesAction } from "@/admin/actions/get-purchase-invoices.action";
@@ -39,10 +40,6 @@ export const PurchaseInvoicesPage = () => {
   const [status, setStatus] = useState<string>("");
   const debouncedSearch = useDebounce(searchInput, 400);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, supplierId, status]);
-
   const queryParams = useMemo(
     () => ({
       page,
@@ -54,7 +51,7 @@ export const PurchaseInvoicesPage = () => {
     [page, debouncedSearch, supplierId, status],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: purchaseInvoiceKeys.list(queryParams),
     queryFn: () => getPurchaseInvoicesAction(queryParams),
   });
@@ -64,10 +61,26 @@ export const PurchaseInvoicesPage = () => {
     queryFn: getAllSuppliersAction,
   });
 
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    setPage(1);
+  }, []);
+
+  const handleSupplierChange = useCallback((value: string) => {
+    setSupplierId(value);
+    setPage(1);
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setStatus(value);
+    setPage(1);
+  }, []);
+
   const clearFilters = useCallback(() => {
     setSearchInput("");
     setSupplierId("");
     setStatus("");
+    setPage(1);
   }, []);
 
   const hasFilters = !!debouncedSearch || !!supplierId || !!status;
@@ -103,11 +116,11 @@ export const PurchaseInvoicesPage = () => {
             className="pl-8"
             placeholder="Search by invoice number…"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
-        <Select value={supplierId} onValueChange={setSupplierId}>
+        <Select value={supplierId} onValueChange={handleSupplierChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All suppliers" />
           </SelectTrigger>
@@ -120,7 +133,7 @@ export const PurchaseInvoicesPage = () => {
           </SelectContent>
         </Select>
 
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
@@ -141,25 +154,29 @@ export const PurchaseInvoicesPage = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={purchaseInvoiceColumns}
-          data={data?.data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No invoices found. Create your first purchase invoice to get started."
-        />
-        <div className="p-4 border-t bg-muted">
-          <CustomPagination
-            page={page}
-            totalPages={data?.totalPages ?? 1}
-            totalCount={data?.total ?? 0}
-            pageSize={DEFAULT_PAGE_SIZE}
-            itemLabel="invoices"
-            onPageChange={setPage}
-            disabled={isLoading}
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={purchaseInvoiceColumns}
+            data={data?.data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No invoices found. Create your first purchase invoice to get started."
           />
+          <div className="p-4 border-t bg-muted">
+            <CustomPagination
+              page={page}
+              totalPages={data?.totalPages ?? 1}
+              totalCount={data?.total ?? 0}
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemLabel="invoices"
+              onPageChange={setPage}
+              disabled={isLoading}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

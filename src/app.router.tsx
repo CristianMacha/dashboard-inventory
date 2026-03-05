@@ -128,6 +128,26 @@ const SupplierReturnDetailPage = lazy(() =>
     (m) => ({ default: m.SupplierReturnDetailPage }),
   ),
 );
+const JobPaymentsPage = lazy(() =>
+  import("./admin/pages/job-payments/JobPaymentsPage").then((m) => ({
+    default: m.JobPaymentsPage,
+  })),
+);
+const InvoicePaymentsPage = lazy(() =>
+  import("./admin/pages/invoice-payments/InvoicePaymentsPage").then((m) => ({
+    default: m.InvoicePaymentsPage,
+  })),
+);
+const GeneralPaymentsPage = lazy(() =>
+  import("./admin/pages/general-payments/GeneralPaymentsPage").then((m) => ({
+    default: m.GeneralPaymentsPage,
+  })),
+);
+const CashflowPage = lazy(() =>
+  import("./admin/pages/accounting/CashflowPage").then((m) => ({
+    default: m.CashflowPage,
+  })),
+);
 
 export const appRouter = createBrowserRouter([
   {
@@ -299,6 +319,38 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <SupplierReturnDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "job-payments",
+        element: (
+          <PageSuspense>
+            <JobPaymentsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "invoice-payments",
+        element: (
+          <PageSuspense>
+            <InvoicePaymentsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "general-payments",
+        element: (
+          <PageSuspense>
+            <GeneralPaymentsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "accounting/cashflow",
+        element: (
+          <PageSuspense>
+            <CashflowPage />
           </PageSuspense>
         ),
       },

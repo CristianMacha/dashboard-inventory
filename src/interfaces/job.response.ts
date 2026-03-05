@@ -38,6 +38,7 @@ export interface JobResponse {
 
 export interface JobDetailResponse extends JobResponse {
   items: JobItem[];
+  paidAmount: number;
 }
 
 export interface JobCreate {

@@ -2,7 +2,7 @@ import { Loader2, MoreHorizontal, Pencil } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { LevelResponse } from "@/interfaces/level.response";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { ActiveBadge } from "@/components/ui/status-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,11 +50,7 @@ export const levelColumns = ({
   {
     accessorKey: "isActive",
     header: "Status",
-    cell: ({ row }) => (
-      <Badge variant={row.original.isActive ? "default" : "secondary"}>
-        {row.original.isActive ? "Active" : "Inactive"}
-      </Badge>
-    ),
+    cell: ({ row }) => <ActiveBadge isActive={row.original.isActive} />,
   },
   {
     id: "actions",

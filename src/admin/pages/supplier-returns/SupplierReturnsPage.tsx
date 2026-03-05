@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, X } from "lucide-react";
 import { Link } from "react-router";
@@ -21,27 +21,16 @@ import {
 } from "@/components/ui/select";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 
 import { getSupplierReturnsAction } from "@/admin/actions/get-supplier-returns.action";
 import { getAllSuppliersAction } from "@/admin/actions/get-all-suppliers.action";
 import { supplierReturnKeys, supplierKeys } from "@/admin/queryKeys";
 import { RETURN_STATUSES } from "@/lib/supplier-return-status";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { supplierReturnColumns } from "./Columns";
 
 const DEFAULT_PAGE_SIZE = 10;
-
-function useBreakpoint(minWidth: number) {
-  const [matches, setMatches] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= minWidth : true,
-  );
-  useEffect(() => {
-    const mql = window.matchMedia(`(min-width: ${minWidth}px)`);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [minWidth]);
-  return matches;
-}
 
 export const SupplierReturnsPage = () => {
   const [page, setPage] = useState<number>(1);
@@ -80,7 +69,7 @@ export const SupplierReturnsPage = () => {
     [page, supplierId, status],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: supplierReturnKeys.list(queryParams),
     queryFn: () => getSupplierReturnsAction(queryParams),
   });
@@ -156,26 +145,30 @@ export const SupplierReturnsPage = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={supplierReturnColumns}
-          data={data?.data ?? []}
-          isLoading={isLoading}
-          columnVisibility={columnVisibility}
-          emptyMessage="No supplier returns found. Create your first return to get started."
-        />
-        <div className="p-4 border-t bg-muted">
-          <CustomPagination
-            page={page}
-            totalPages={data?.totalPages ?? 1}
-            totalCount={data?.total ?? 0}
-            pageSize={DEFAULT_PAGE_SIZE}
-            itemLabel="returns"
-            onPageChange={setPage}
-            disabled={isLoading}
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={supplierReturnColumns}
+            data={data?.data ?? []}
+            isLoading={isLoading}
+            columnVisibility={columnVisibility}
+            emptyMessage="No supplier returns found. Create your first return to get started."
           />
+          <div className="p-4 border-t bg-muted">
+            <CustomPagination
+              page={page}
+              totalPages={data?.totalPages ?? 1}
+              totalCount={data?.total ?? 0}
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemLabel="returns"
+              onPageChange={setPage}
+              disabled={isLoading}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

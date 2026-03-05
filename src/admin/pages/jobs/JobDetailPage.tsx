@@ -69,6 +69,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { getJobByIdAction } from "@/admin/actions/get-job-by-id.action";
+import { JobPaymentPanel } from "./components/JobPaymentPanel";
 import { createJobAction } from "@/admin/actions/create-job.action";
 import { addBulkJobItemsAction, type BulkJobItemDto } from "@/admin/actions/add-bulk-job-items.action";
 import { removeJobItemAction } from "@/admin/actions/remove-job-item.action";
@@ -370,10 +371,17 @@ function CreateJobForm() {
 
 // ─── Detail Mode ─────────────────────────────────────────────────────────────
 
-function JobDetail({ job }: { job: JobDetailResponse }) {
+function JobDetail({ jobId }: { jobId: string }) {
   const queryClient = useQueryClient();
   const [itemSheetOpen, setItemSheetOpen] = useState(false);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+
+  const { data: job } = useQuery({
+    queryKey: jobKeys.detail(jobId),
+    queryFn: () => getJobByIdAction(jobId),
+  });
+
+  if (!job) return null;
 
   const statusConfig = JOB_STATUS_CONFIG[job.status];
   const actions = getAvailableActions(job.status);
@@ -528,6 +536,7 @@ function JobDetail({ job }: { job: JobDetailResponse }) {
             <InfoItem label="Subtotal" value={currency.format(job.subtotal)} />
             <InfoItem label="Tax" value={currency.format(job.taxAmount)} />
             <InfoItem label="Total" value={currency.format(job.totalAmount)} />
+            <InfoItem label="Paid" value={currency.format(job.paidAmount)} />
             <InfoItem label="Slabs" value={String(job.itemCount)} />
           </dl>
         </CardContent>
@@ -605,6 +614,10 @@ function JobDetail({ job }: { job: JobDetailResponse }) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {job.status !== "QUOTED" && job.status !== "CANCELLED" && (
+        <JobPaymentPanel jobId={job.id} jobStatus={job.status} />
       )}
 
       <AddSlabSheet
@@ -1302,5 +1315,5 @@ export const JobDetailPage = () => {
     return null;
   }
 
-  return <JobDetail job={job} />;
+  return <JobDetail jobId={job.id} />;
 };

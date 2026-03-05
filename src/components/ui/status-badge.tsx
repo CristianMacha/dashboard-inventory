@@ -15,3 +15,14 @@ export const StatusBadge = ({ label, className }: StatusBadgeProps) => (
     {label}
   </span>
 );
+
+export const ActiveBadge = ({ isActive }: { isActive: boolean }) => (
+  <StatusBadge
+    label={isActive ? "Active" : "Inactive"}
+    className={
+      isActive
+        ? "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-400"
+        : "bg-muted text-muted-foreground"
+    }
+  />
+);

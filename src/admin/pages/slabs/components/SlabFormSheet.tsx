@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Ruler } from "lucide-react";
+import { Loader2, Ruler, Scissors } from "lucide-react";
 
 import {
   Sheet,
@@ -34,11 +34,14 @@ import {
 
 import { createSlabAction } from "@/admin/actions/create-slab.action";
 import { updateSlabAction } from "@/admin/actions/update-slab.action";
+import { createRemnantSlabAction } from "@/admin/actions/create-remnant-slab.action";
 import { getBundlesAction } from "@/admin/actions/get-bundles.action";
 import { bundleKeys, slabKeys } from "@/admin/queryKeys";
 import { ApiError } from "@/api/apiClient";
 import type { SlabResponse } from "@/interfaces/slab.response";
 import { SLAB_STATUSES } from "@/lib/slab-status";
+
+// ─── Schemas ────────────────────────────────────────────────────────────────
 
 const createSlabSchema = z.object({
   bundleId: z.string().min(1, "Bundle is required"),
@@ -49,12 +52,20 @@ const createSlabSchema = z.object({
 });
 
 const updateSlabSchema = z.object({
-  status: z.enum(["AVAILABLE", "RESERVED", "SOLD"] as const),
+  status: z.enum(["AVAILABLE", "RESERVED", "SOLD", "RETURNED"] as const),
+  description: z.string().optional(),
+});
+
+const remnantSlabSchema = z.object({
+  code: z.string().min(1, "Code is required"),
+  widthCm: z.coerce.number().positive("Width must be greater than 0"),
+  heightCm: z.coerce.number().positive("Height must be greater than 0"),
   description: z.string().optional(),
 });
 
 type CreateSlabFormValues = z.infer<typeof createSlabSchema>;
 type UpdateSlabFormValues = z.infer<typeof updateSlabSchema>;
+type RemnantSlabFormValues = z.infer<typeof remnantSlabSchema>;
 
 const defaultCreateValues: CreateSlabFormValues = {
   bundleId: "",
@@ -64,11 +75,15 @@ const defaultCreateValues: CreateSlabFormValues = {
   description: "",
 };
 
+// ─── Props ───────────────────────────────────────────────────────────────────
+
 interface SlabFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingSlab: SlabResponse | null;
 }
+
+// ─── Component ──────────────────────────────────────────────────────────────
 
 export const SlabFormSheet = ({
   open,
@@ -76,6 +91,7 @@ export const SlabFormSheet = ({
   editingSlab,
 }: SlabFormSheetProps) => {
   const queryClient = useQueryClient();
+  const [mode, setMode] = useState<"view" | "remnant">("view");
 
   const { data: bundlesData, isLoading: isLoadingBundles } = useQuery({
     queryKey: bundleKeys.list({ page: 1, limit: 100 }),
@@ -94,12 +110,18 @@ export const SlabFormSheet = ({
     defaultValues: { status: "AVAILABLE", description: "" },
   });
 
-  // useForm returns stable `reset` refs — destructure to keep deps minimal
+  const remnantForm = useForm<RemnantSlabFormValues>({
+    resolver: zodResolver(remnantSlabSchema),
+    defaultValues: { code: "", widthCm: 0, heightCm: 0, description: "" },
+  });
+
   const { reset: resetCreate } = createForm;
   const { reset: resetUpdate } = updateForm;
+  const { reset: resetRemnant } = remnantForm;
 
   useEffect(() => {
     if (open) {
+      setMode("view");
       if (editingSlab) {
         resetUpdate({
           status: editingSlab.status,
@@ -110,6 +132,12 @@ export const SlabFormSheet = ({
       }
     }
   }, [open, editingSlab, resetCreate, resetUpdate]);
+
+  useEffect(() => {
+    if (mode === "remnant") {
+      resetRemnant({ code: "", widthCm: 0, heightCm: 0, description: "" });
+    }
+  }, [mode, resetRemnant]);
 
   const handleClose = () => onOpenChange(false);
 
@@ -139,7 +167,21 @@ export const SlabFormSheet = ({
     },
   });
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const remnantMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: RemnantSlabFormValues }) =>
+      createRemnantSlabAction(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: slabKeys.lists() });
+      toast.success("Remnant slab created successfully");
+      handleClose();
+    },
+    onError: (error: Error) => {
+      toast.error(error instanceof ApiError ? error.message : "Failed to create remnant");
+    },
+  });
+
+  const isSubmitting =
+    createMutation.isPending || updateMutation.isPending || remnantMutation.isPending;
   const bundles = bundlesData?.data ?? [];
 
   const onCreateSubmit = (values: CreateSlabFormValues) => {
@@ -152,27 +194,58 @@ export const SlabFormSheet = ({
     }
   };
 
-  const formId = editingSlab ? "slab-update-form" : "slab-create-form";
+  const onRemnantSubmit = (values: RemnantSlabFormValues) => {
+    if (editingSlab) {
+      remnantMutation.mutate({ id: editingSlab.id, data: values });
+    }
+  };
+
+  // Determine form id based on current mode
+  const formId = editingSlab
+    ? mode === "remnant"
+      ? "slab-remnant-form"
+      : "slab-update-form"
+    : "slab-create-form";
+
+  const isEditingSoldNonRemnant =
+    editingSlab?.status === "SOLD" && !editingSlab?.isRemnant;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-hidden gap-0">
         <SheetHeader className="border-b">
-          <SheetTitle>{editingSlab ? "Edit Slab" : "New Slab"}</SheetTitle>
+          <SheetTitle>
+            {!editingSlab
+              ? "New Slab"
+              : mode === "remnant"
+                ? "Create Remnant"
+                : "Edit Slab"}
+          </SheetTitle>
           <SheetDescription>
-            {editingSlab
-              ? "Update the status or description of this slab."
-              : "Select a bundle and fill in the slab details."}
+            {!editingSlab
+              ? "Select a bundle and fill in the slab details."
+              : mode === "remnant"
+                ? `Creating a remnant from slab ${editingSlab.code}.`
+                : "Update the status or description of this slab."}
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-4">
           {editingSlab ? (
             <>
-              <div className="mb-6 rounded-lg border bg-muted/40 p-3 space-y-2">
+              {/* Slab info summary */}
+              <div className="mb-4 rounded-lg border bg-muted/40 p-3 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Code</span>
-                  <span className="font-medium">{editingSlab.code}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{editingSlab.code}</span>
+                    {editingSlab.isRemnant && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 ring-1 ring-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:ring-orange-800">
+                        <Scissors className="size-3" />
+                        Remnant
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground flex items-center gap-1">
@@ -185,64 +258,182 @@ export const SlabFormSheet = ({
                 </div>
               </div>
 
-              <form
-                id={formId}
-                onSubmit={(e) =>
-                  void updateForm.handleSubmit(onUpdateSubmit)(e)
-                }
-              >
-                <FieldGroup>
-                  <Controller
-                    control={updateForm.control}
-                    name="status"
-                    render={({ field, fieldState }) => (
-                      <Field>
-                        <FieldLabel htmlFor="status">Status</FieldLabel>
-                        <Select {...field} onValueChange={field.onChange}>
-                          <SelectTrigger id="status">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SLAB_STATUSES.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                {s.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {fieldState.invalid && (
-                          <FieldError>{fieldState.error?.message}</FieldError>
-                        )}
-                      </Field>
-                    )}
-                  />
+              {/* Remnant creation form */}
+              {mode === "remnant" ? (
+                <form
+                  id={formId}
+                  onSubmit={(e) =>
+                    void remnantForm.handleSubmit(onRemnantSubmit)(e)
+                  }
+                >
+                  <FieldGroup>
+                    <Controller
+                      control={remnantForm.control}
+                      name="code"
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel htmlFor="remnantCode">Code</FieldLabel>
+                          <Input
+                            id="remnantCode"
+                            {...field}
+                            placeholder="e.g. REM-001"
+                            autoComplete="off"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError>{fieldState.error?.message}</FieldError>
+                          )}
+                        </Field>
+                      )}
+                    />
 
-                  <FieldSeparator>Optional</FieldSeparator>
-
-                  <Controller
-                    control={updateForm.control}
-                    name="description"
-                    render={({ field, fieldState }) => (
-                      <Field>
-                        <FieldLabel htmlFor="description">
-                          Description
-                        </FieldLabel>
-                        <Textarea
-                          id="description"
-                          {...field}
-                          placeholder="Optional description"
-                          className="min-h-[80px] resize-y"
-                        />
-                        {fieldState.invalid && (
-                          <FieldError>{fieldState.error?.message}</FieldError>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Controller
+                        control={remnantForm.control}
+                        name="widthCm"
+                        render={({ field, fieldState }) => (
+                          <Field>
+                            <FieldLabel htmlFor="remnantWidth">Width (cm)</FieldLabel>
+                            <Input
+                              id="remnantWidth"
+                              type="number"
+                              min={0}
+                              step="0.1"
+                              {...field}
+                              placeholder="45.0"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError>{fieldState.error?.message}</FieldError>
+                            )}
+                          </Field>
                         )}
-                      </Field>
-                    )}
-                  />
-                </FieldGroup>
-              </form>
+                      />
+                      <Controller
+                        control={remnantForm.control}
+                        name="heightCm"
+                        render={({ field, fieldState }) => (
+                          <Field>
+                            <FieldLabel htmlFor="remnantHeight">Height (cm)</FieldLabel>
+                            <Input
+                              id="remnantHeight"
+                              type="number"
+                              min={0}
+                              step="0.1"
+                              {...field}
+                              placeholder="30.0"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError>{fieldState.error?.message}</FieldError>
+                            )}
+                          </Field>
+                        )}
+                      />
+                    </div>
+
+                    <FieldSeparator>Optional</FieldSeparator>
+
+                    <Controller
+                      control={remnantForm.control}
+                      name="description"
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel htmlFor="remnantDescription">
+                            Description
+                          </FieldLabel>
+                          <Textarea
+                            id="remnantDescription"
+                            {...field}
+                            placeholder="e.g. Left piece in good condition"
+                            className="min-h-[80px] resize-y"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError>{fieldState.error?.message}</FieldError>
+                          )}
+                        </Field>
+                      )}
+                    />
+                  </FieldGroup>
+                </form>
+              ) : (
+                /* Update status/description form */
+                <form
+                  id={formId}
+                  onSubmit={(e) =>
+                    void updateForm.handleSubmit(onUpdateSubmit)(e)
+                  }
+                >
+                  <FieldGroup>
+                    <Controller
+                      control={updateForm.control}
+                      name="status"
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel htmlFor="status">Status</FieldLabel>
+                          <Select {...field} onValueChange={field.onChange}>
+                            <SelectTrigger id="status">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SLAB_STATUSES.map((s) => (
+                                <SelectItem key={s.value} value={s.value}>
+                                  {s.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {fieldState.invalid && (
+                            <FieldError>{fieldState.error?.message}</FieldError>
+                          )}
+                        </Field>
+                      )}
+                    />
+
+                    <FieldSeparator>Optional</FieldSeparator>
+
+                    <Controller
+                      control={updateForm.control}
+                      name="description"
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel htmlFor="description">
+                            Description
+                          </FieldLabel>
+                          <Textarea
+                            id="description"
+                            {...field}
+                            placeholder="Optional description"
+                            className="min-h-[80px] resize-y"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError>{fieldState.error?.message}</FieldError>
+                          )}
+                        </Field>
+                      )}
+                    />
+                  </FieldGroup>
+                </form>
+              )}
+
+              {/* Remnant shortcut — only for SOLD non-remnant slabs, in view mode */}
+              {isEditingSoldNonRemnant && mode === "view" && (
+                <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/50 dark:bg-orange-950/20">
+                  <p className="text-xs text-orange-700 dark:text-orange-400 mb-2">
+                    This slab is sold. You can register a leftover remnant from it.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-800 dark:text-orange-400"
+                    onClick={() => setMode("remnant")}
+                  >
+                    <Scissors className="size-3.5" />
+                    Create Remnant
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
+            /* Create new slab form */
             <form
               id={formId}
               onSubmit={(e) =>
@@ -377,22 +568,41 @@ export const SlabFormSheet = ({
         </div>
 
         <SheetFooter className="flex-row justify-end border-t">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" form={formId} disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-            {isSubmitting
-              ? "Saving…"
-              : editingSlab
-                ? "Save Changes"
-                : "Create Slab"}
-          </Button>
+          {mode === "remnant" ? (
+            <>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setMode("view")}
+                disabled={isSubmitting}
+              >
+                Back
+              </Button>
+              <Button type="submit" form={formId} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                {isSubmitting ? "Creating…" : "Create Remnant"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" form={formId} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                {isSubmitting
+                  ? "Saving…"
+                  : editingSlab
+                    ? "Save Changes"
+                    : "Create Slab"}
+              </Button>
+            </>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

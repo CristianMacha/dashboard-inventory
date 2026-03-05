@@ -9,10 +9,19 @@ export interface SlabResponse {
   dimensions: string;
   status: SlabStatus;
   description?: string;
+  isRemnant: boolean;
+  parentSlabId?: string;
   createdBy: string;
   updatedBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RemnantSlabCreate {
+  code: string;
+  widthCm: number;
+  heightCm: number;
+  description?: string;
 }
 
 export interface SlabCreate {

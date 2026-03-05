@@ -6,6 +6,9 @@ export interface SlabsQueryParams {
   page?: number;
   limit?: number;
   bundleId?: string;
+  status?: string;
+  search?: string;
+  isRemnant?: boolean;
 }
 
 export const getSlabsAction = async (

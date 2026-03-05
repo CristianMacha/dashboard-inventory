@@ -75,7 +75,7 @@ export const supplierReturnSelectKeys = {
 export const slabKeys = {
   all: ["slabs"] as const,
   lists: () => [...slabKeys.all, "list"] as const,
-  list: (params: { page: number; limit: number; bundleId?: string }) =>
+  list: (params: { page: number; limit: number; bundleId?: string; status?: string; search?: string; isRemnant?: boolean }) =>
     [...slabKeys.lists(), params] as const,
   details: () => [...slabKeys.all, "detail"] as const,
   detail: (id: string) => [...slabKeys.details(), id] as const,
@@ -109,6 +109,55 @@ export const jobKeys = {
   }) => [...jobKeys.lists(), params] as const,
   details: () => [...jobKeys.all, "detail"] as const,
   detail: (id: string) => [...jobKeys.details(), id] as const,
+};
+
+export const invoicePaymentKeys = {
+  all: ["invoice-payments"] as const,
+  lists: () => [...invoicePaymentKeys.all, "list"] as const,
+  list: (params: {
+    invoiceId?: string;
+    paymentMethod?: string;
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    limit?: number;
+  }) => [...invoicePaymentKeys.lists(), params] as const,
+  byInvoice: (invoiceId: string) =>
+    [...invoicePaymentKeys.all, "invoice", invoiceId] as const,
+};
+
+export const jobPaymentKeys = {
+  all: ["job-payments"] as const,
+  lists: () => [...jobPaymentKeys.all, "list"] as const,
+  list: (params: {
+    jobId?: string;
+    paymentMethod?: string;
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    limit?: number;
+  }) => [...jobPaymentKeys.lists(), params] as const,
+  byJob: (jobId: string) => [...jobPaymentKeys.all, "job", jobId] as const,
+};
+
+export const generalPaymentKeys = {
+  all: ["general-payments"] as const,
+  lists: () => [...generalPaymentKeys.all, "list"] as const,
+  list: (params: {
+    type?: string;
+    category?: string;
+    paymentMethod?: string;
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    limit?: number;
+  }) => [...generalPaymentKeys.lists(), params] as const,
+};
+
+export const cashflowKeys = {
+  all: ["cashflow"] as const,
+  summary: (params: { fromDate?: string; toDate?: string }) =>
+    [...cashflowKeys.all, params] as const,
 };
 
 export const supplierReturnKeys = {

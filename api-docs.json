@@ -1229,9 +1229,26 @@
             "name": "productId",
             "required": false,
             "in": "query",
-            "description": "Filter by product",
+            "description": "Filter by product UUID",
             "schema": {
-              "example": "uuid-product",
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by supplier UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by lot number",
+            "schema": {
               "type": "string"
             }
           },
@@ -1342,6 +1359,39 @@
             }
           },
           {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "RESERVED",
+                "SOLD",
+                "RETURNED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by slab code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isRemnant",
+            "required": false,
+            "in": "query",
+            "description": "Filter only remnants (true) or only originals (false)",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -1435,6 +1485,62 @@
           }
         ],
         "summary": "List slabs eligible for a supplier return (AVAILABLE or RESERVED) filtered by purchase invoice",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
+    "/api/v1/slabs/{slabId}/remnant": {
+      "post": {
+        "operationId": "GetSlabsController_createRemnant",
+        "parameters": [
+          {
+            "name": "slabId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRemnantSlabDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Remnant slab created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parent slab not found"
+          },
+          "422": {
+            "description": "Parent slab is not SOLD or is already a remnant"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a remnant slab from a SOLD slab",
         "tags": [
           "Slabs"
         ]
@@ -3414,6 +3520,526 @@
         ]
       }
     },
+    "/api/v1/invoice-payments": {
+      "post": {
+        "operationId": "InvoicePaymentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordInvoicePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment recorded"
+          },
+          "404": {
+            "description": "Invoice not found"
+          },
+          "422": {
+            "description": "Payment exceeds balance or invoice not payable"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a payment for a purchase invoice",
+        "tags": [
+          "Invoice Payments"
+        ]
+      },
+      "get": {
+        "operationId": "InvoicePaymentsController_findPaginated",
+        "parameters": [
+          {
+            "name": "paymentMethod",
+            "required": false,
+            "in": "query",
+            "description": "Filter by payment method",
+            "schema": {
+              "enum": [
+                "CASH",
+                "BANK_TRANSFER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromDate",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toDate",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "query",
+            "description": "Invoice UUID",
+            "schema": {
+
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoicePaymentsPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated payments for a purchase invoice",
+        "tags": [
+          "Invoice Payments"
+        ]
+      }
+    },
+    "/api/v1/invoice-payments/invoice/{invoiceId}": {
+      "get": {
+        "operationId": "InvoicePaymentsController_getByInvoice",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "description": "Invoice UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoicePaymentsWithSummaryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get payments for a purchase invoice",
+        "tags": [
+          "Invoice Payments"
+        ]
+      }
+    },
+    "/api/v1/job-payments": {
+      "post": {
+        "operationId": "JobPaymentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordJobPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment recorded"
+          },
+          "404": {
+            "description": "Job not found"
+          },
+          "422": {
+            "description": "Payment exceeds balance or job not collectible"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a payment received from a client for a job",
+        "tags": [
+          "Job Payments"
+        ]
+      },
+      "get": {
+        "operationId": "JobPaymentsController_findPaginated",
+        "parameters": [
+          {
+            "name": "paymentMethod",
+            "required": false,
+            "in": "query",
+            "description": "Filter by payment method",
+            "schema": {
+              "enum": [
+                "CASH",
+                "BANK_TRANSFER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromDate",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toDate",
+            "required": false,
+            "in": "query",
+            "description": "YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "query",
+            "description": "Job UUID",
+            "schema": {
+
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPaymentsPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated payments for a job",
+        "tags": [
+          "Job Payments"
+        ]
+      }
+    },
+    "/api/v1/job-payments/job/{jobId}": {
+      "get": {
+        "operationId": "JobPaymentsController_getByJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Job UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPaymentsWithSummaryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get payments received for a job",
+        "tags": [
+          "Job Payments"
+        ]
+      }
+    },
+    "/api/v1/accounting/cashflow": {
+      "get": {
+        "operationId": "CashflowController_getCashflow",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "toDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-03-31",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashflowSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get cashflow summary (ingress vs egress)",
+        "tags": [
+          "Accounting"
+        ]
+      }
+    },
+    "/api/v1/general-payments": {
+      "post": {
+        "operationId": "GeneralPaymentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordGeneralPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment recorded"
+          },
+          "422": {
+            "description": "Invalid payment amount"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a general payment (income or expense)",
+        "tags": [
+          "General Payments"
+        ]
+      },
+      "get": {
+        "operationId": "GeneralPaymentsController_findPaginated",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INCOME",
+                "EXPENSE"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SALARY",
+                "RENT",
+                "UTILITIES",
+                "TRANSPORT",
+                "MATERIAL_SALE",
+                "CLIENT_ADVANCE",
+                "SUPPLIER_REFUND",
+                "BANK_FEES",
+                "OTHER_EXPENSE",
+                "OTHER_INCOME"
+              ]
+            }
+          },
+          {
+            "name": "paymentMethod",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CASH",
+                "BANK_TRANSFER"
+              ]
+            }
+          },
+          {
+            "name": "fromDate",
+            "required": false,
+            "in": "query",
+            "description": "Filter payments from this date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toDate",
+            "required": false,
+            "in": "query",
+            "description": "Filter payments up to this date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralPaymentsPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List general payments with optional filters",
+        "tags": [
+          "General Payments"
+        ]
+      }
+    },
     "/api/v1/dashboard/summary": {
       "get": {
         "operationId": "GetDashboardSummaryController_run",
@@ -4123,6 +4749,11 @@
             "type": "string",
             "example": "Losa sin defectos"
           },
+          "parentSlabId": {
+            "type": "object",
+            "example": "uuid-parent-slab",
+            "nullable": true
+          },
           "createdBy": {
             "type": "string",
             "example": "uuid-user"
@@ -4670,6 +5301,32 @@
           "status"
         ]
       },
+      "CreateRemnantSlabDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "REM-001"
+          },
+          "widthCm": {
+            "type": "number",
+            "example": 45
+          },
+          "heightCm": {
+            "type": "number",
+            "example": 30
+          },
+          "description": {
+            "type": "string",
+            "example": "Sobra en buen estado"
+          }
+        },
+        "required": [
+          "code",
+          "widthCm",
+          "heightCm"
+        ]
+      },
       "ILevelOutputDto": {
         "type": "object",
         "properties": {
@@ -5148,6 +5805,10 @@
             "type": "number",
             "example": 5400
           },
+          "paidAmount": {
+            "type": "number",
+            "example": 0
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -5193,6 +5854,7 @@
           "subtotal",
           "taxAmount",
           "totalAmount",
+          "paidAmount",
           "status",
           "notes",
           "createdBy",
@@ -5326,6 +5988,10 @@
             "type": "number",
             "example": 5400
           },
+          "paidAmount": {
+            "type": "number",
+            "example": 0
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -5377,6 +6043,7 @@
           "subtotal",
           "taxAmount",
           "totalAmount",
+          "paidAmount",
           "status",
           "notes",
           "createdBy",
@@ -5816,6 +6483,10 @@
             "type": "number",
             "example": 2700
           },
+          "paidAmount": {
+            "type": "number",
+            "example": 0
+          },
           "createdBy": {
             "type": "string",
             "example": "uuid-user"
@@ -5851,6 +6522,7 @@
           "subtotal",
           "taxAmount",
           "totalAmount",
+          "paidAmount",
           "createdBy",
           "updatedBy",
           "createdAt",
@@ -5964,6 +6636,10 @@
             "type": "number",
             "example": 2700
           },
+          "paidAmount": {
+            "type": "number",
+            "example": 0
+          },
           "createdBy": {
             "type": "string",
             "example": "uuid-user"
@@ -6005,6 +6681,7 @@
           "subtotal",
           "taxAmount",
           "totalAmount",
+          "paidAmount",
           "createdBy",
           "updatedBy",
           "createdAt",
@@ -6107,6 +6784,632 @@
           "items"
         ]
       },
+      "RecordInvoicePaymentDto": {
+        "type": "object",
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "example": "uuid-invoice"
+          },
+          "amount": {
+            "type": "number",
+            "example": 500
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ],
+            "example": "CASH"
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-03"
+          },
+          "reference": {
+            "type": "object",
+            "example": "TRF-001",
+            "nullable": true
+          }
+        },
+        "required": [
+          "invoiceId",
+          "amount",
+          "paymentMethod",
+          "paymentDate"
+        ]
+      },
+      "InvoicePaymentOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-payment"
+          },
+          "invoiceId": {
+            "type": "string",
+            "example": "uuid-invoice"
+          },
+          "amount": {
+            "type": "number",
+            "example": 500
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ],
+            "example": "CASH"
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-03"
+          },
+          "reference": {
+            "type": "object",
+            "example": "TRF-001",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "uuid-user"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-03T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "invoiceId",
+          "amount",
+          "paymentMethod",
+          "paymentDate",
+          "reference",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "InvoicePaymentsWithSummaryDto": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoicePaymentOutputDto"
+            }
+          },
+          "totalPaid": {
+            "type": "number",
+            "example": 500
+          },
+          "remaining": {
+            "type": "number",
+            "example": 1500
+          },
+          "invoiceTotalAmount": {
+            "type": "number",
+            "example": 2000
+          }
+        },
+        "required": [
+          "payments",
+          "totalPaid",
+          "remaining",
+          "invoiceTotalAmount"
+        ]
+      },
+      "InvoicePaymentWithContextOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-payment"
+          },
+          "invoiceId": {
+            "type": "string",
+            "example": "uuid-invoice"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "example": "INV-0042"
+          },
+          "amount": {
+            "type": "number",
+            "example": 500
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ],
+            "example": "CASH"
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-03"
+          },
+          "reference": {
+            "type": "object",
+            "example": "TRF-001",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "uuid-user"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-03T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "invoiceId",
+          "invoiceNumber",
+          "amount",
+          "paymentMethod",
+          "paymentDate",
+          "reference",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "InvoicePaymentsPageDto": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoicePaymentWithContextOutputDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "payments",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "RecordJobPaymentDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "example": "uuid-job"
+          },
+          "amount": {
+            "type": "number",
+            "example": 1200
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ],
+            "example": "BANK_TRANSFER"
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-03"
+          },
+          "reference": {
+            "type": "object",
+            "example": "TRF-002",
+            "nullable": true
+          }
+        },
+        "required": [
+          "jobId",
+          "amount",
+          "paymentMethod",
+          "paymentDate"
+        ]
+      },
+      "JobPaymentOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-payment"
+          },
+          "jobId": {
+            "type": "string",
+            "example": "uuid-job"
+          },
+          "amount": {
+            "type": "number",
+            "example": 1200
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ],
+            "example": "BANK_TRANSFER"
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-03"
+          },
+          "reference": {
+            "type": "object",
+            "example": "TRF-002",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "uuid-user"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-03T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "amount",
+          "paymentMethod",
+          "paymentDate",
+          "reference",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "JobPaymentsWithSummaryDto": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobPaymentOutputDto"
+            }
+          },
+          "totalPaid": {
+            "type": "number",
+            "example": 1200
+          },
+          "remaining": {
+            "type": "number",
+            "example": 1200
+          },
+          "jobTotalAmount": {
+            "type": "number",
+            "example": 2400
+          }
+        },
+        "required": [
+          "payments",
+          "totalPaid",
+          "remaining",
+          "jobTotalAmount"
+        ]
+      },
+      "JobPaymentWithContextOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-payment"
+          },
+          "jobId": {
+            "type": "string",
+            "example": "uuid-job"
+          },
+          "projectName": {
+            "type": "string",
+            "example": "Kitchen Renovation"
+          },
+          "amount": {
+            "type": "number",
+            "example": 1200
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ],
+            "example": "BANK_TRANSFER"
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-03"
+          },
+          "reference": {
+            "type": "object",
+            "example": "TRF-002",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "uuid-user"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-03T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "projectName",
+          "amount",
+          "paymentMethod",
+          "paymentDate",
+          "reference",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "JobPaymentsPageDto": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobPaymentWithContextOutputDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "payments",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "CashflowSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalIngress": {
+            "type": "number",
+            "example": 5000
+          },
+          "totalEgress": {
+            "type": "number",
+            "example": 3000
+          },
+          "cashBalance": {
+            "type": "number",
+            "example": 2000
+          },
+          "jobIncome": {
+            "type": "number",
+            "example": 4000
+          },
+          "generalIncome": {
+            "type": "number",
+            "example": 1000
+          },
+          "invoiceExpenses": {
+            "type": "number",
+            "example": 2500
+          },
+          "generalExpenses": {
+            "type": "number",
+            "example": 500
+          },
+          "fromDate": {
+            "type": "object",
+            "example": "2026-01-01",
+            "nullable": true
+          },
+          "toDate": {
+            "type": "object",
+            "example": "2026-03-31",
+            "nullable": true
+          }
+        },
+        "required": [
+          "totalIngress",
+          "totalEgress",
+          "cashBalance",
+          "jobIncome",
+          "generalIncome",
+          "invoiceExpenses",
+          "generalExpenses",
+          "fromDate",
+          "toDate"
+        ]
+      },
+      "RecordGeneralPaymentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "SALARY",
+              "RENT",
+              "UTILITIES",
+              "TRANSPORT",
+              "MATERIAL_SALE",
+              "CLIENT_ADVANCE",
+              "SUPPLIER_REFUND",
+              "BANK_FEES",
+              "OTHER_EXPENSE",
+              "OTHER_INCOME"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "amount": {
+            "type": "number",
+            "example": 1500,
+            "minimum": 0.01
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ]
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-04"
+          },
+          "reference": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "category",
+          "amount",
+          "paymentMethod",
+          "paymentDate"
+        ]
+      },
+      "GeneralPaymentOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "SALARY",
+              "RENT",
+              "UTILITIES",
+              "TRANSPORT",
+              "MATERIAL_SALE",
+              "CLIENT_ADVANCE",
+              "SUPPLIER_REFUND",
+              "BANK_FEES",
+              "OTHER_EXPENSE",
+              "OTHER_INCOME"
+            ]
+          },
+          "description": {
+            "type": "object",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "example": 1500
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BANK_TRANSFER"
+            ]
+          },
+          "paymentDate": {
+            "type": "string",
+            "example": "2026-03-04"
+          },
+          "reference": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "category",
+          "amount",
+          "paymentMethod",
+          "paymentDate",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "GeneralPaymentsPageDto": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneralPaymentOutputDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "payments",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
       "InventoryMetricsDto": {
         "type": "object",
         "properties": {
@@ -6170,6 +7473,31 @@
           "totalPurchaseInvoices"
         ]
       },
+      "AccountingMetricsDto": {
+        "type": "object",
+        "properties": {
+          "totalIngress": {
+            "type": "number",
+            "description": "Total ingress (job payments)",
+            "example": 5000
+          },
+          "totalEgress": {
+            "type": "number",
+            "description": "Total egress (invoice payments)",
+            "example": 3000
+          },
+          "cashBalance": {
+            "type": "number",
+            "description": "Cash balance (ingress - egress)",
+            "example": 2000
+          }
+        },
+        "required": [
+          "totalIngress",
+          "totalEgress",
+          "cashBalance"
+        ]
+      },
       "DashboardSummaryDto": {
         "type": "object",
         "properties": {
@@ -6196,12 +7524,21 @@
                 "$ref": "#/components/schemas/PurchasingMetricsDto"
               }
             ]
+          },
+          "accounting": {
+            "description": "Accounting metrics",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountingMetricsDto"
+              }
+            ]
           }
         },
         "required": [
           "inventory",
           "projects",
-          "purchasing"
+          "purchasing",
+          "accounting"
         ]
       }
     }

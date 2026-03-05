@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/admin/pages/products/DataTable";
+import { QueryError } from "@/components/ui/query-error";
 import { useListPageState } from "@/admin/hooks/useListPageState";
 
 import { getBrandsAction } from "@/admin/actions/get-brands.action";
@@ -34,7 +35,7 @@ export const BrandsPage = () => {
     handleSheetOpenChange,
   } = useListPageState<BrandResponse>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: brandKeys.all,
     queryFn: getBrandsAction,
     staleTime: 5 * 60 * 1000,
@@ -86,14 +87,18 @@ export const BrandsPage = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data ?? []}
-          isLoading={isLoading}
-          emptyMessage="No brands found. Add your first brand to get started."
-        />
-      </div>
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data ?? []}
+            isLoading={isLoading}
+            emptyMessage="No brands found. Add your first brand to get started."
+          />
+        </div>
+      )}
 
       <BrandFormSheet
         open={sheetOpen}
