@@ -6,6 +6,7 @@ export interface BundleResponse {
   supplierName: string;
   purchaseInvoiceId: string | null;
   invoiceNumber: string | null;
+  imagePublicId: string | null;
   lotNumber?: string;
   thicknessCm?: number;
   createdBy: string;

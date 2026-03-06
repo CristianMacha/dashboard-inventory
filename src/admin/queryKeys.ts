@@ -160,6 +160,24 @@ export const cashflowKeys = {
     [...cashflowKeys.all, params] as const,
 };
 
+export const userKeys = {
+  all: ["users"] as const,
+  lists: () => [...userKeys.all, "list"] as const,
+  list: (params: { page: number; limit: number; search?: string; roleId?: string }) =>
+    [...userKeys.lists(), params] as const,
+};
+
+export const roleKeys = {
+  all: ["roles"] as const,
+  lists: () => [...roleKeys.all, "list"] as const,
+  list: (params: { page: number; limit: number; search?: string }) =>
+    [...roleKeys.lists(), params] as const,
+};
+
+export const permissionKeys = {
+  all: ["permissions"] as const,
+};
+
 export const supplierReturnKeys = {
   all: ["supplier-returns"] as const,
   lists: () => [...supplierReturnKeys.all, "list"] as const,

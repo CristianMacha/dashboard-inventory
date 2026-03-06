@@ -38,7 +38,7 @@ const AdminLayout = () => {
     <SidebarProvider defaultOpen={getDefaultSidebarOpen()}>
       <AppSidebar />
       <main className="bg-background relative flex w-full flex-1 flex-col">
-        <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b h-[49px]">
+        <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b h-[57px]">
           <div className="flex w-full items-center gap-2 px-4 lg:px-6">
             <SidebarTrigger className="-ml-1" />
             {pageLabel && (
@@ -51,7 +51,7 @@ const AdminLayout = () => {
             )}
           </div>
         </header>
-        <div className="px-4 md:px-6 py-4 md:py-6 bg-muted/30 min-h-[calc(100vh-49px)]">
+        <div className="px-4 md:px-6 py-4 md:py-6 bg-muted/30 min-h-[calc(100vh-57px)]">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

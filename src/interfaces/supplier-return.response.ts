@@ -31,6 +31,7 @@ export interface SupplierReturnResponse {
 
 export interface SupplierReturnDetailResponse extends SupplierReturnResponse {
   items: SupplierReturnItem[];
+  hasDocument: boolean;
 }
 
 export interface SupplierReturnCreate {

@@ -23,8 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeftIcon,
   BoxIcon,
@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useProductDetail } from "@/admin/hooks/useProductDetail";
 import type { BundleInDetail, SlabInDetail } from "@/interfaces/product.response";
+import { ProductImageUpload } from "@/admin/components/ProductImageUpload";
 import { SLAB_STATUS_CONFIG } from "@/lib/slab-status";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -297,40 +298,54 @@ export const ProductDetailPage = () => {
         </CardContent>
       </Card>
 
-      <Separator />
+      <Tabs defaultValue="bundles" className="w-full">
+        <TabsList>
+          <TabsTrigger value="bundles">
+            Bundles
+            {totalBundles > 0 && (
+              <span className="ml-1.5 text-xs text-muted-foreground">({totalBundles})</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="images">
+            Images
+            {(product.images?.length ?? 0) > 0 && (
+              <span className="ml-1.5 text-xs text-muted-foreground">({product.images?.length})</span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Bundles Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Bundles</h2>
-          <p className="text-sm text-muted-foreground">
-            {totalBundles === 0
-              ? "No bundles registered for this product"
-              : `${totalBundles} bundle${totalBundles !== 1 ? "s" : ""} · ${totalSlabs} slab${totalSlabs !== 1 ? "s" : ""} total`}
-          </p>
-        </div>
-      </div>
+        <TabsContent value="bundles" className="mt-4 flex flex-col gap-4">
+          {product.bundles.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <PackageIcon className="size-10 mb-3 opacity-30" />
+                <p className="font-medium">No bundles yet</p>
+                <p className="text-sm mt-1">
+                  Go to the Products list and use "Add Bundle" to register inventory.
+                </p>
+                <Button variant="outline" asChild className="mt-4">
+                  <Link to="/products">Go to Products</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            product.bundles.map((bundle, i) => (
+              <BundleCard key={bundle.id} bundle={bundle} index={i} />
+            ))
+          )}
+        </TabsContent>
 
-      {product.bundles.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <PackageIcon className="size-10 mb-3 opacity-30" />
-            <p className="font-medium">No bundles yet</p>
-            <p className="text-sm mt-1">
-              Go to the Products list and use "Add Bundle" to register inventory.
-            </p>
-            <Button variant="outline" asChild className="mt-4">
-              <Link to="/products">Go to Products</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {product.bundles.map((bundle, i) => (
-            <BundleCard key={bundle.id} bundle={bundle} index={i} />
-          ))}
-        </div>
-      )}
+        <TabsContent value="images" className="mt-4">
+          <Card>
+            <CardContent className="pt-4">
+              <ProductImageUpload
+                productId={product.id}
+                images={product.images ?? []}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

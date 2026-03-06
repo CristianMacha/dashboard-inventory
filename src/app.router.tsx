@@ -148,6 +148,16 @@ const CashflowPage = lazy(() =>
     default: m.CashflowPage,
   })),
 );
+const UsersPage = lazy(() =>
+  import("./admin/pages/users/UsersPage").then((m) => ({
+    default: m.UsersPage,
+  })),
+);
+const RolesPage = lazy(() =>
+  import("./admin/pages/roles/RolesPage").then((m) => ({
+    default: m.RolesPage,
+  })),
+);
 
 export const appRouter = createBrowserRouter([
   {
@@ -351,6 +361,22 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <CashflowPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "users",
+        element: (
+          <PageSuspense>
+            <UsersPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "roles",
+        element: (
+          <PageSuspense>
+            <RolesPage />
           </PageSuspense>
         ),
       },

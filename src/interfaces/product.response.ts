@@ -3,6 +3,13 @@ export interface ProductRelation {
   name: string;
 }
 
+export interface ProductImageResponse {
+  id: string;
+  publicId: string;
+  isPrimary: boolean;
+  sortOrder: number;
+}
+
 export interface ProductResponse {
   id: string;
   name: string;
@@ -48,4 +55,5 @@ export interface BundleInDetail {
 
 export interface ProductDetailResponse extends ProductResponse {
   bundles: BundleInDetail[];
+  images: ProductImageResponse[];
 }

@@ -14,7 +14,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useProduct } from "@/admin/hooks/useProduct";
-import { CustomFullScreenLoading } from "@/components/ui/custom/CustomFullScreenLoading";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -132,7 +132,39 @@ export const ProductFormPage = () => {
     isLoadingFinishes;
 
   if (isLoading) {
-    return <CustomFullScreenLoading />;
+    return (
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-5 w-48" />
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-9 w-28" />
+          </div>
+        </div>
+        <div className="rounded-xl border bg-card p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2 flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-1.5">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ))}
+            <div className="md:col-span-2 flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

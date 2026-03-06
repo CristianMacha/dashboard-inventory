@@ -1,4 +1,4 @@
-import { Bell, Palette, Globe } from "lucide-react";
+import { Bell, Globe, Monitor, Moon, Sun } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -7,14 +7,57 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useTheme, type Theme } from "@/hooks/useTheme";
+import { cn } from "@/lib/utils";
 
-const SETTING_SECTIONS = [
-  {
-    icon: Palette,
-    title: "Appearance",
-    description: "Customize the look and feel of the application.",
-    items: ["Theme (light / dark)", "Language & locale"],
-  },
+const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+];
+
+function AppearanceSection() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Sun className="size-4 text-muted-foreground" />
+          <CardTitle className="text-base">Appearance</CardTitle>
+        </div>
+        <CardDescription>Customize the look and feel of the application.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div>
+          <p className="text-sm font-medium mb-3">Theme</p>
+          <div className="grid grid-cols-3 gap-3">
+            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                className={cn(
+                  "flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors hover:bg-accent",
+                  theme === value
+                    ? "border-primary bg-accent"
+                    : "border-border",
+                )}
+              >
+                <Icon className={cn("size-5", theme === value ? "text-primary" : "text-muted-foreground")} />
+                <span className={cn("text-sm font-medium", theme === value ? "text-primary" : "text-muted-foreground")}>
+                  {label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const PLACEHOLDER_SECTIONS = [
   {
     icon: Bell,
     title: "Notifications",
@@ -40,7 +83,9 @@ export const SettingsPage = () => {
       </div>
 
       <div className="flex flex-col gap-4">
-        {SETTING_SECTIONS.map(({ icon: Icon, title, description, items }) => (
+        <AppearanceSection />
+
+        {PLACEHOLDER_SECTIONS.map(({ icon: Icon, title, description, items }) => (
           <Card key={title}>
             <CardHeader>
               <div className="flex items-center gap-2">

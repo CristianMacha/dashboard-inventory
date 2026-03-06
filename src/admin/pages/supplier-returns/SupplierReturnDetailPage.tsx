@@ -60,6 +60,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 import { getSupplierReturnByIdAction } from "@/admin/actions/get-supplier-return-by-id.action";
+import { SupplierReturnDocumentUpload } from "@/admin/components/SupplierReturnDocumentUpload";
 import { createSupplierReturnAction } from "@/admin/actions/create-supplier-return.action";
 import { addReturnItemAction } from "@/admin/actions/add-return-item.action";
 import { removeReturnItemAction } from "@/admin/actions/remove-return-item.action";
@@ -474,6 +475,15 @@ function ReturnDetail({ supplierReturn }: { supplierReturn: SupplierReturnDetail
               <InfoItem label="Notes" value={supplierReturn.notes} />
             )}
           </dl>
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium mb-2">
+              Document
+            </p>
+            <SupplierReturnDocumentUpload
+              returnId={supplierReturn.id}
+              hasDocument={supplierReturn.hasDocument}
+            />
+          </div>
         </CardContent>
       </Card>
 

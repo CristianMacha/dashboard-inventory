@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -59,6 +60,7 @@ import {
 } from "@/components/ui/field";
 
 import { getBundleByIdAction } from "@/admin/actions/get-bundle-by-id.action";
+import { BundleImageUpload } from "@/admin/components/BundleImageUpload";
 import { getSupplierReturnsForSelectAction } from "@/admin/actions/get-supplier-returns-for-select.action";
 import { createSupplierReturnAction } from "@/admin/actions/create-supplier-return.action";
 import { addReturnItemAction } from "@/admin/actions/add-return-item.action";
@@ -552,80 +554,96 @@ export const BundleDetailPage = () => {
         </CardContent>
       </Card>
 
-      {/* Slabs table */}
-      <div>
-        <h2 className="text-lg font-semibold mb-1">Slabs</h2>
-        <p className="text-sm text-muted-foreground mb-3">
-          {bundle.slabs.length === 0
-            ? "No slabs in this bundle"
-            : `${bundle.slabs.length} slab${bundle.slabs.length !== 1 ? "s" : ""}`}
-        </p>
+      <Tabs defaultValue="slabs" className="w-full">
+        <TabsList>
+          <TabsTrigger value="slabs">
+            Slabs
+            {bundle.slabs.length > 0 && (
+              <span className="ml-1.5 text-xs text-muted-foreground">({bundle.slabs.length})</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="image">Image</TabsTrigger>
+        </TabsList>
 
-        {!canReturn && (
-          <p className="text-sm text-amber-600 dark:text-amber-400 mb-3">
-            Link a purchase invoice to enable slab returns.
-          </p>
-        )}
+        <TabsContent value="slabs" className="mt-4">
+          {!canReturn && (
+            <p className="text-sm text-amber-600 dark:text-amber-400 mb-3">
+              Link a purchase invoice to enable slab returns.
+            </p>
+          )}
+          {bundle.slabs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No slabs in this bundle.</p>
+          ) : (
+            <Card className="py-0">
+              <CardContent className="p-0">
+                <div className="rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold">Code</TableHead>
+                        <TableHead className="font-semibold">Dimensions</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Description</TableHead>
+                        <TableHead className="w-0" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bundle.slabs.map((slab) => {
+                        const statusConfig = SLAB_STATUS_CONFIG[slab.status];
+                        const returnable =
+                          canReturn &&
+                          (slab.status === "AVAILABLE" || slab.status === "RESERVED");
+                        return (
+                          <TableRow key={slab.id}>
+                            <TableCell className="font-mono text-sm font-medium">
+                              {slab.code}
+                            </TableCell>
+                            <TableCell className="tabular-nums text-sm">
+                              {slab.dimensions}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={statusConfig.variant}>
+                                {statusConfig.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {slab.description ?? "—"}
+                            </TableCell>
+                            <TableCell>
+                              {returnable && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setReturningSlab(slab)}
+                                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                                >
+                                  <Undo2Icon className="size-3.5" />
+                                  Return
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-        {bundle.slabs.length > 0 && (
-          <Card className="py-0">
-            <CardContent className="p-0">
-              <div className="rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="font-semibold">Code</TableHead>
-                      <TableHead className="font-semibold">Dimensions</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Description</TableHead>
-                      <TableHead className="w-0" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bundle.slabs.map((slab) => {
-                      const statusConfig = SLAB_STATUS_CONFIG[slab.status];
-                      const returnable =
-                        canReturn &&
-                        (slab.status === "AVAILABLE" || slab.status === "RESERVED");
-                      return (
-                        <TableRow key={slab.id}>
-                          <TableCell className="font-mono text-sm font-medium">
-                            {slab.code}
-                          </TableCell>
-                          <TableCell className="tabular-nums text-sm">
-                            {slab.dimensions}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={statusConfig.variant}>
-                              {statusConfig.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {slab.description ?? "—"}
-                          </TableCell>
-                          <TableCell>
-                            {returnable && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setReturningSlab(slab)}
-                                className="gap-1.5 text-muted-foreground hover:text-foreground"
-                              >
-                                <Undo2Icon className="size-3.5" />
-                                Return
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+        <TabsContent value="image" className="mt-4">
+          <Card>
+            <CardContent className="pt-4">
+              <BundleImageUpload
+                bundleId={bundle.id}
+                imagePublicId={bundle.imagePublicId ?? null}
+              />
             </CardContent>
           </Card>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
 
       <LinkInvoiceSheet
         bundleId={bundle.id}

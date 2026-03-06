@@ -43,6 +43,7 @@ export interface PurchaseInvoiceResponse {
 export interface PurchaseInvoiceDetailResponse extends PurchaseInvoiceResponse {
   items: PurchaseInvoiceItem[];
   paidAmount: number;
+  hasDocument: boolean;
 }
 
 export interface PurchaseInvoiceCreate {

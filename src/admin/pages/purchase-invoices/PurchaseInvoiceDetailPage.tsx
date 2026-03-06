@@ -62,6 +62,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { getPurchaseInvoiceByIdAction } from "@/admin/actions/get-purchase-invoice-by-id.action";
+import { InvoiceDocumentUpload } from "@/admin/components/InvoiceDocumentUpload";
 import { InvoicePaymentPanel } from "./components/InvoicePaymentPanel";
 import { createPurchaseInvoiceAction } from "@/admin/actions/create-purchase-invoice.action";
 import { addInvoiceItemAction } from "@/admin/actions/add-invoice-item.action";
@@ -464,6 +465,12 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
             <InfoItem label="Paid" value={currency.format(invoice.paidAmount)} />
             <InfoItem label="Items" value={String(invoice.itemCount)} />
           </dl>
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium mb-2">
+              Document
+            </p>
+            <InvoiceDocumentUpload invoiceId={invoice.id} hasDocument={invoice.hasDocument} />
+          </div>
         </CardContent>
       </Card>
 

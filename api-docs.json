@@ -2,54 +2,65 @@
   "openapi": "3.0.0",
   "paths": {
     "/api/v1/users": {
-      "post": {
-        "operationId": "CreateUserController_handle",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "User created successfully."
-          },
-          "400": {
-            "description": "Invalid request body or role not found."
-          },
-          "409": {
-            "description": "User with this email already exists."
-          }
-        },
-        "summary": "Register a new user",
-        "tags": [
-          "Users"
-        ]
-      },
       "get": {
         "operationId": "GetUsersController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by name or email",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by role UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "List of users",
+            "description": "Paginated list of users with their roles",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserListDto"
-                  }
+                  "$ref": "#/components/schemas/UserPresentationDto"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized. Valid JWT token required."
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires users.read permission."
           }
         },
         "security": [
@@ -57,7 +68,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get all users with their roles",
+        "summary": "Get paginated users with optional search and role filter",
         "tags": [
           "Users"
         ]
@@ -284,17 +295,17 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Authenticated user information",
+            "description": "Authenticated user info with roles and permissions",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserOutputDto"
+                  "$ref": "#/components/schemas/UserAuthPresentationDto"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized. Valid JWT token required."
+            "description": "Unauthorized."
           }
         },
         "security": [
@@ -302,7 +313,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get authenticated user information",
+        "summary": "Get authenticated user profile with permissions",
         "tags": [
           "Users"
         ]
@@ -336,6 +347,70 @@
         "tags": [
           "Users",
           "Menu"
+        ]
+      }
+    },
+    "/api/v1/roles/paginated": {
+      "get": {
+        "operationId": "GetRolesPaginatedController_run",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by role name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of roles with their permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleOutputDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires roles.read permission."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated roles with optional search",
+        "tags": [
+          "Roles"
         ]
       }
     },
@@ -2213,6 +2288,145 @@
         ]
       }
     },
+    "/api/v1/products/{productId}/images": {
+      "post": {
+        "operationId": "UploadProductImageController_run",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file (JPEG, PNG, WebP — max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image uploaded successfully"
+          },
+          "404": {
+            "description": "Product not found"
+          },
+          "422": {
+            "description": "Max images reached"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a product image (max 5 per product)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/v1/products/{productId}/images/{imageId}": {
+      "delete": {
+        "operationId": "DeleteProductImageController_run",
+        "parameters": [
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Image deleted successfully"
+          },
+          "404": {
+            "description": "Image not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a product image",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/v1/bundles/{bundleId}/image": {
+      "post": {
+        "operationId": "UploadBundleImageController_run",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file (JPEG, PNG, WebP — max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image uploaded successfully"
+          },
+          "404": {
+            "description": "Bundle not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload or replace the bundle image",
+        "tags": [
+          "Bundles"
+        ]
+      }
+    },
     "/api/v1/purchase-invoices": {
       "post": {
         "operationId": "PurchaseInvoicesController_create",
@@ -3044,6 +3258,174 @@
           }
         ],
         "summary": "Cancel a supplier return",
+        "tags": [
+          "Supplier Returns"
+        ]
+      }
+    },
+    "/api/v1/purchase-invoices/{invoiceId}/document": {
+      "post": {
+        "operationId": "UploadInvoiceDocumentController_run",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF or image file (max 20MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document uploaded successfully"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload or replace the invoice document",
+        "tags": [
+          "Purchase Invoices"
+        ]
+      }
+    },
+    "/api/v1/purchase-invoices/{invoiceId}/document-url": {
+      "get": {
+        "operationId": "GetInvoiceDocumentUrlController_run",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns signed URL"
+          },
+          "404": {
+            "description": "Invoice or document not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a signed URL for the invoice document (valid 1h)",
+        "tags": [
+          "Purchase Invoices"
+        ]
+      }
+    },
+    "/api/v1/supplier-returns/{returnId}/document": {
+      "post": {
+        "operationId": "UploadSupplierReturnDocumentController_run",
+        "parameters": [
+          {
+            "name": "returnId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF or image file (max 20MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document uploaded successfully"
+          },
+          "404": {
+            "description": "Supplier return not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload or replace the supplier return document",
+        "tags": [
+          "Supplier Returns"
+        ]
+      }
+    },
+    "/api/v1/supplier-returns/{returnId}/document-url": {
+      "get": {
+        "operationId": "GetSupplierReturnDocumentUrlController_run",
+        "parameters": [
+          {
+            "name": "returnId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns signed URL"
+          },
+          "404": {
+            "description": "Supplier return or document not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a signed URL for the supplier return document (valid 1h)",
         "tags": [
           "Supplier Returns"
         ]
@@ -4263,36 +4645,51 @@
       }
     },
     "schemas": {
-      "CreateUserDto": {
+      "UserRolePresentationDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
           "name": {
-            "type": "string"
+            "type": "string",
+            "example": "admin"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "UserPresentationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "example": "john@example.com"
           },
-          "password": {
-            "type": "string"
-          },
-          "roleNames": {
+          "roles": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/UserRolePresentationDto"
             }
           }
         },
         "required": [
+          "id",
           "name",
           "email",
-          "password"
+          "roles"
         ]
-      },
-      "UserListDto": {
-        "type": "object",
-        "properties": {
-
-        }
       },
       "UpdateUserDto": {
         "type": "object",
@@ -4331,11 +4728,50 @@
           "permissions"
         ]
       },
+      "PermissionOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "users.read"
+          },
+          "description": {
+            "type": "string",
+            "example": "Can list users"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "RoleOutputDto": {
         "type": "object",
         "properties": {
-
-        }
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "admin"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionOutputDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "permissions"
+        ]
       },
       "UpdateRoleDto": {
         "type": "object",
@@ -4388,17 +4824,62 @@
           }
         }
       },
-      "PermissionOutputDto": {
+      "UserRoleDto": {
         "type": "object",
         "properties": {
-
-        }
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "admin"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
       },
-      "UserOutputDto": {
+      "UserAuthPresentationDto": {
         "type": "object",
         "properties": {
-
-        }
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRoleDto"
+            }
+          },
+          "permissions": {
+            "example": [
+              "users.read",
+              "roles.read"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "roles",
+          "permissions"
+        ]
       },
       "MenuItemDto": {
         "type": "object",
@@ -4854,6 +5335,33 @@
           "updatedAt"
         ]
       },
+      "ProductImageOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "publicId": {
+            "type": "string",
+            "example": "products/abc123"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "example": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "publicId",
+          "isPrimary",
+          "sortOrder"
+        ]
+      },
       "ProductDetailOutputDto": {
         "type": "object",
         "properties": {
@@ -4906,6 +5414,12 @@
             "items": {
               "$ref": "#/components/schemas/BundleInProductDetailDto"
             }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageOutputDto"
+            }
           }
         },
         "required": [
@@ -4918,7 +5432,8 @@
           "updatedBy",
           "createdAt",
           "updatedAt",
-          "bundles"
+          "bundles",
+          "images"
         ]
       },
       "CreateBrandDto": {
@@ -5176,6 +5691,11 @@
           "invoiceNumber": {
             "type": "object",
             "example": "INV-2026-001",
+            "nullable": true
+          },
+          "imagePublicId": {
+            "type": "object",
+            "example": "bundles/abc123",
             "nullable": true
           },
           "createdBy": {
@@ -5691,6 +6211,11 @@
             "example": "INV-2026-001",
             "nullable": true
           },
+          "imagePublicId": {
+            "type": "object",
+            "example": "bundles/abc123",
+            "nullable": true
+          },
           "slabs": {
             "type": "array",
             "items": {
@@ -6152,6 +6677,10 @@
           "notes": {
             "type": "string"
           },
+          "documentPath": {
+            "type": "object",
+            "nullable": true
+          },
           "creditAmount": {
             "type": "number"
           },
@@ -6305,6 +6834,10 @@
           },
           "notes": {
             "type": "string"
+          },
+          "documentPath": {
+            "type": "object",
+            "nullable": true
           },
           "creditAmount": {
             "type": "number"
