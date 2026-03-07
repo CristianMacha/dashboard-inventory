@@ -26,11 +26,13 @@ export interface PurchaseInvoiceResponse {
   id: string;
   invoiceNumber: string;
   supplierId: string;
+  supplierName: string;
   invoiceDate: string;
   dueDate?: string;
   subtotal: number;
   taxAmount: number;
   totalAmount: number;
+  paidAmount: number;
   status: PurchaseInvoiceStatus;
   notes?: string;
   itemCount: number;
@@ -42,7 +44,6 @@ export interface PurchaseInvoiceResponse {
 
 export interface PurchaseInvoiceDetailResponse extends PurchaseInvoiceResponse {
   items: PurchaseInvoiceItem[];
-  paidAmount: number;
   hasDocument: boolean;
 }
 

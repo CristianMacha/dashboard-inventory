@@ -248,6 +248,12 @@ export const GeneralPaymentsPage = () => {
 
   const watchedType = useWatch({ control, name: "type" });
 
+  // Categories for the filter bar — filtered by the `type` filter state
+  const filterCategories = GENERAL_PAYMENT_CATEGORIES.filter(
+    (c) => !type || c.type === type,
+  );
+
+  // Categories for the form — filtered by the form's watched type
   const availableCategories = GENERAL_PAYMENT_CATEGORIES.filter(
     (c) => !watchedType || c.type === watchedType,
   );
@@ -325,7 +331,7 @@ export const GeneralPaymentsPage = () => {
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
-            {availableCategories.map((c) => (
+            {filterCategories.map((c) => (
               <SelectItem key={c.value} value={c.value}>
                 {c.label}
               </SelectItem>

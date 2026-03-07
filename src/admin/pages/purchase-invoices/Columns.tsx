@@ -21,6 +21,16 @@ export const purchaseInvoiceColumns: ColumnDef<PurchaseInvoiceResponse>[] = [
     ),
   },
   {
+    accessorKey: "supplierName",
+    header: "Supplier",
+    size: 200,
+    cell: ({ row }) => (
+      <span className="text-sm truncate block max-w-[200px]">
+        {row.original.supplierName}
+      </span>
+    ),
+  },
+  {
     accessorKey: "invoiceDate",
     header: "Date",
     cell: ({ row }) => (

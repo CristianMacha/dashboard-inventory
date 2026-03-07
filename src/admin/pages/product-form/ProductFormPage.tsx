@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { createProductAction } from "@/admin/actions/create-product.action";
 import { updateProductAction } from "@/admin/actions/update-product.action";
@@ -63,6 +64,7 @@ const formSchema = z.object({
   finishId: z.string().min(1, "Finish is required"),
   brandId: z.string().optional(),
   description: z.string().optional(),
+  isOnline: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -74,6 +76,7 @@ const emptyFormValues: FormValues = {
   finishId: "",
   brandId: "",
   description: "",
+  isOnline: true,
 };
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
@@ -85,6 +88,7 @@ function productToFormValues(p: ProductResponse): FormValues {
     levelId: p.level?.id ?? "",
     finishId: p.finish?.id ?? "",
     description: p.description ?? "",
+    isOnline: p.isOnline,
   };
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
@@ -473,6 +477,24 @@ const ProductForm = ({
                       {fieldState.invalid && (
                         <FieldError>{fieldState.error?.message}</FieldError>
                       )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="isOnline"
+                  render={({ field }) => (
+                    <Field className="md:col-span-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="isOnline"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <FieldLabel htmlFor="isOnline" className="mb-0 cursor-pointer">
+                          Show in online catalog
+                        </FieldLabel>
+                      </div>
                     </Field>
                   )}
                 />

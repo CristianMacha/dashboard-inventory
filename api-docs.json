@@ -1383,6 +1383,55 @@
         ]
       }
     },
+    "/api/v1/bundles/select": {
+      "get": {
+        "operationId": "GetBundlesSelectController_run",
+        "parameters": [
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by supplier UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "unlinked",
+            "required": false,
+            "in": "query",
+            "description": "Only return bundles not linked to any invoice",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IBundleOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get bundles for select/dropdown (no pagination)",
+        "tags": [
+          "Bundles"
+        ]
+      }
+    },
     "/api/v1/slabs": {
       "post": {
         "operationId": "CreateSlabController_run",
@@ -1444,6 +1493,7 @@
                 "AVAILABLE",
                 "RESERVED",
                 "SOLD",
+                "RETURNING",
                 "RETURNED"
               ]
             }
@@ -2192,59 +2242,6 @@
         ]
       }
     },
-    "/api/v1/bundles/{id}/link-invoice": {
-      "patch": {
-        "operationId": "LinkBundleInvoiceController_run",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Bundle ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LinkBundleInvoiceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Bundle or invoice not found"
-          },
-          "422": {
-            "description": "Bundle already linked, invoice is CANCELLED, or supplier mismatch"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Link a bundle to a purchase invoice (null → invoice)",
-        "tags": [
-          "Bundles"
-        ]
-      }
-    },
     "/api/v1/bundles/{id}/unlink-invoice": {
       "patch": {
         "operationId": "UnlinkBundleInvoiceController_run",
@@ -2424,6 +2421,108 @@
         "summary": "Upload or replace the bundle image",
         "tags": [
           "Bundles"
+        ]
+      }
+    },
+    "/api/v1/catalog/products": {
+      "get": {
+        "operationId": "GetCatalogProductsController_run",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "levelId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "finishId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brandId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated catalog products."
+          }
+        },
+        "summary": "Get public product catalog (no auth required)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/products/{id}": {
+      "get": {
+        "operationId": "GetCatalogProductDetailController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Product UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product detail with bundles and available slabs."
+          },
+          "404": {
+            "description": "Product not found or not public."
+          }
+        },
+        "summary": "Get public product detail with available bundles (no auth required)",
+        "tags": [
+          "Catalog"
         ]
       }
     },
@@ -5131,6 +5230,10 @@
             "type": "boolean",
             "example": true
           },
+          "isOnline": {
+            "type": "boolean",
+            "example": false
+          },
           "brand": {
             "$ref": "#/components/schemas/ProductBrandDto"
           },
@@ -5164,6 +5267,7 @@
           "id",
           "name",
           "isActive",
+          "isOnline",
           "level",
           "finish",
           "createdBy",
@@ -5222,6 +5326,7 @@
               "AVAILABLE",
               "RESERVED",
               "SOLD",
+              "RETURNING",
               "RETURNED"
             ],
             "example": "AVAILABLE"
@@ -5381,6 +5486,10 @@
             "type": "boolean",
             "example": true
           },
+          "isOnline": {
+            "type": "boolean",
+            "example": false
+          },
           "brand": {
             "$ref": "#/components/schemas/ProductBrandDto"
           },
@@ -5426,6 +5535,7 @@
           "id",
           "name",
           "isActive",
+          "isOnline",
           "level",
           "finish",
           "createdBy",
@@ -5536,6 +5646,10 @@
           "isActive": {
             "type": "boolean",
             "example": true
+          },
+          "isOnline": {
+            "type": "boolean",
+            "example": false
           }
         }
       },
@@ -5609,6 +5723,7 @@
               "AVAILABLE",
               "RESERVED",
               "SOLD",
+              "RETURNING",
               "RETURNED"
             ],
             "description": "New status for the slab",
@@ -5801,6 +5916,7 @@
               "AVAILABLE",
               "RESERVED",
               "SOLD",
+              "RETURNING",
               "RETURNED"
             ],
             "example": "AVAILABLE"
@@ -6185,6 +6301,14 @@
             "type": "string",
             "example": "uuid-bundle"
           },
+          "productId": {
+            "type": "string",
+            "example": "uuid-product"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Granito Blanco Polar"
+          },
           "supplierId": {
             "type": "string",
             "example": "uuid-supplier"
@@ -6241,6 +6365,8 @@
         },
         "required": [
           "id",
+          "productId",
+          "productName",
           "supplierId",
           "supplierName",
           "lotNumber",
@@ -6250,18 +6376,6 @@
           "updatedBy",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "LinkBundleInvoiceDto": {
-        "type": "object",
-        "properties": {
-          "purchaseInvoiceId": {
-            "type": "string",
-            "example": "uuid-invoice"
-          }
-        },
-        "required": [
-          "purchaseInvoiceId"
         ]
       },
       "CreatePurchaseInvoiceDto": {
@@ -6308,6 +6422,10 @@
           "supplierId": {
             "type": "string",
             "example": "uuid-supplier"
+          },
+          "supplierName": {
+            "type": "string",
+            "example": "Proveedor ABC"
           },
           "invoiceDate": {
             "type": "string",
@@ -6374,6 +6492,7 @@
           "id",
           "invoiceNumber",
           "supplierId",
+          "supplierName",
           "invoiceDate",
           "dueDate",
           "subtotal",
@@ -6492,6 +6611,10 @@
             "type": "string",
             "example": "uuid-supplier"
           },
+          "supplierName": {
+            "type": "string",
+            "example": "Proveedor ABC"
+          },
           "invoiceDate": {
             "type": "string",
             "example": "2026-01-15"
@@ -6563,6 +6686,7 @@
           "id",
           "invoiceNumber",
           "supplierId",
+          "supplierName",
           "invoiceDate",
           "dueDate",
           "subtotal",

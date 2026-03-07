@@ -60,6 +60,9 @@ export const bundleKeys = {
     [...bundleKeys.lists(), params] as const,
   details: () => [...bundleKeys.all, "detail"] as const,
   detail: (id: string) => [...bundleKeys.details(), id] as const,
+  selects: () => [...bundleKeys.all, "select"] as const,
+  select: (params: { supplierId?: string; unlinked?: boolean }) =>
+    [...bundleKeys.selects(), params] as const,
 };
 
 export const productSelectKeys = {

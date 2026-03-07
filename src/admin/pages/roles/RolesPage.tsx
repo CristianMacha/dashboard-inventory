@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { Search, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 
 import {
   Breadcrumb,
@@ -35,6 +35,7 @@ export const RolesPage = () => {
     setPage,
     sheetOpen,
     editingItem: editingRole,
+    openCreate,
     openEdit,
     handleSheetOpenChange,
   } = useListPageState<RoleResponse>();
@@ -104,6 +105,11 @@ export const RolesPage = () => {
             Clear
           </Button>
         )}
+
+        <Button size="sm" onClick={openCreate}>
+          <Plus className="size-4" />
+          New Role
+        </Button>
       </div>
 
       {isError ? (

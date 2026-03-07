@@ -360,7 +360,7 @@ export const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <SidebarHeader className="flex flex-col gap-2 p-2 border-b">
+        <SidebarHeader className="flex flex-col justify-center p-2 border-b h-[57px] shrink-0">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton

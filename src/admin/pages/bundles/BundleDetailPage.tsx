@@ -8,7 +8,6 @@ import {
   ArrowLeftIcon,
   CalendarIcon,
   Layers2Icon,
-  LinkIcon,
   Loader2,
   PackageIcon,
   ReceiptIcon,
@@ -64,9 +63,7 @@ import { BundleImageUpload } from "@/admin/components/BundleImageUpload";
 import { getSupplierReturnsForSelectAction } from "@/admin/actions/get-supplier-returns-for-select.action";
 import { createSupplierReturnAction } from "@/admin/actions/create-supplier-return.action";
 import { addReturnItemAction } from "@/admin/actions/add-return-item.action";
-import { getPurchaseInvoicesForSelectAction } from "@/admin/actions/get-purchase-invoices-for-select.action";
-import { linkBundleInvoiceAction } from "@/admin/actions/link-bundle-invoice.action";
-import { bundleKeys, purchaseInvoiceKeys, supplierReturnSelectKeys } from "@/admin/queryKeys";
+import { bundleKeys, supplierReturnSelectKeys } from "@/admin/queryKeys";
 import { formatDate } from "@/lib/format";
 import { ApiError } from "@/api/apiClient";
 import type { SlabInBundleDetail } from "@/interfaces/bundle.response";
@@ -94,11 +91,6 @@ const returnSlabSchema = z.object({
   unitCost: z.coerce.number().positive("Must be greater than 0"),
 });
 type ReturnSlabValues = z.infer<typeof returnSlabSchema>;
-
-const linkInvoiceSchema = z.object({
-  purchaseInvoiceId: z.string().min(1, "Select an invoice"),
-});
-type LinkInvoiceValues = z.infer<typeof linkInvoiceSchema>;
 
 // ---------------------------------------------------------------------------
 
@@ -138,131 +130,6 @@ function InfoItem({
         {value ?? <span className="text-muted-foreground font-normal">—</span>}
       </dd>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Link Invoice Sheet
-// ---------------------------------------------------------------------------
-
-interface LinkInvoiceSheetProps {
-  bundleId: string;
-  supplierId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-}
-
-function LinkInvoiceSheet({
-  bundleId,
-  supplierId,
-  open,
-  onOpenChange,
-  onSuccess,
-}: LinkInvoiceSheetProps) {
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<LinkInvoiceValues>({
-    resolver: zodResolver(linkInvoiceSchema),
-    defaultValues: { purchaseInvoiceId: "" },
-  });
-
-  const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery({
-    queryKey: purchaseInvoiceKeys.select({ supplierId }),
-    queryFn: () => getPurchaseInvoicesForSelectAction({ supplierId }),
-    enabled: open,
-  });
-
-  const linkMutation = useMutation({
-    mutationFn: (values: LinkInvoiceValues) =>
-      linkBundleInvoiceAction(bundleId, values.purchaseInvoiceId),
-    onSuccess: () => {
-      toast.success("Invoice linked successfully");
-      reset();
-      onOpenChange(false);
-      onSuccess();
-    },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to link invoice");
-    },
-  });
-
-  return (
-    <Sheet
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) reset();
-        onOpenChange(v);
-      }}
-    >
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Link Purchase Invoice</SheetTitle>
-          <SheetDescription>
-            Select an invoice from this supplier to link to the bundle. Only non-cancelled invoices
-            are shown.
-          </SheetDescription>
-        </SheetHeader>
-
-        <form
-          onSubmit={handleSubmit((values) => linkMutation.mutate(values))}
-          className="flex flex-col gap-4 p-4"
-        >
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="purchaseInvoiceId">Purchase Invoice</FieldLabel>
-              <Controller
-                name="purchaseInvoiceId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={isLoadingInvoices}
-                  >
-                    <SelectTrigger id="purchaseInvoiceId">
-                      <SelectValue
-                        placeholder={
-                          isLoadingInvoices
-                            ? "Loading invoices…"
-                            : invoices.length === 0
-                              ? "No invoices for this supplier"
-                              : "Select an invoice"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {invoices.map((inv) => (
-                        <SelectItem key={inv.id} value={inv.id}>
-                          {inv.invoiceNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FieldError>{errors.purchaseInvoiceId?.message}</FieldError>
-            </Field>
-          </FieldGroup>
-
-          <Button
-            type="submit"
-            disabled={linkMutation.isPending || invoices.length === 0}
-            className="w-full"
-          >
-            {linkMutation.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <LinkIcon className="size-4" />
-            )}
-            Link Invoice
-          </Button>
-        </form>
-      </SheetContent>
-    </Sheet>
   );
 }
 
@@ -439,7 +306,6 @@ export const BundleDetailPage = () => {
   const queryClient = useQueryClient();
 
   const [returningSlab, setReturningSlab] = useState<SlabInBundleDetail | null>(null);
-  const [linkInvoiceOpen, setLinkInvoiceOpen] = useState(false);
 
   const {
     data: bundle,
@@ -508,12 +374,6 @@ export const BundleDetailPage = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {!canReturn && (
-            <Button variant="outline" onClick={() => setLinkInvoiceOpen(true)}>
-              <LinkIcon className="size-4" />
-              Link Invoice
-            </Button>
-          )}
           <Button variant="outline" asChild>
             <Link to="/bundles">
               <ArrowLeftIcon className="size-4" />
@@ -566,11 +426,6 @@ export const BundleDetailPage = () => {
         </TabsList>
 
         <TabsContent value="slabs" className="mt-4">
-          {!canReturn && (
-            <p className="text-sm text-amber-600 dark:text-amber-400 mb-3">
-              Link a purchase invoice to enable slab returns.
-            </p>
-          )}
           {bundle.slabs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No slabs in this bundle.</p>
           ) : (
@@ -644,14 +499,6 @@ export const BundleDetailPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <LinkInvoiceSheet
-        bundleId={bundle.id}
-        supplierId={bundle.supplierId}
-        open={linkInvoiceOpen}
-        onOpenChange={setLinkInvoiceOpen}
-        onSuccess={handleRefresh}
-      />
 
       <ReturnSlabSheet
         slab={returningSlab}

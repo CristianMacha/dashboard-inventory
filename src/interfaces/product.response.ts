@@ -15,6 +15,7 @@ export interface ProductResponse {
   name: string;
   description?: string;
   isActive: boolean;
+  isOnline: boolean;
   brand?: ProductRelation;
   category?: ProductRelation;
   level?: ProductRelation;

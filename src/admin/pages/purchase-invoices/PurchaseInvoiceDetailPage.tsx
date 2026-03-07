@@ -71,7 +71,7 @@ import { receiveInvoiceAction } from "@/admin/actions/receive-invoice.action";
 import { payInvoiceAction } from "@/admin/actions/pay-invoice.action";
 import { cancelInvoiceAction } from "@/admin/actions/cancel-invoice.action";
 import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
-import { getBundlesAction } from "@/admin/actions/get-bundles.action";
+import { getBundlesSelectAction } from "@/admin/actions/get-bundles-select.action";
 import { purchaseInvoiceKeys, supplierKeys, bundleKeys } from "@/admin/queryKeys";
 import { ApiError } from "@/api/apiClient";
 import { INVOICE_STATUS_CONFIG } from "@/lib/purchase-invoice-status";
@@ -340,19 +340,14 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
     staleTime: 0,
   });
 
-  if (!invoice) return null;
-
-  const statusConfig = INVOICE_STATUS_CONFIG[invoice.status];
-  const actions = getAvailableActions(invoice.status);
-
   const statusMutation = useMutation({
     mutationFn: async (action: "receive" | "pay" | "cancel") => {
-      if (action === "receive") return receiveInvoiceAction(invoice.id);
-      if (action === "pay") return payInvoiceAction(invoice.id);
-      return cancelInvoiceAction(invoice.id);
+      if (action === "receive") return receiveInvoiceAction(invoiceId);
+      if (action === "pay") return payInvoiceAction(invoiceId);
+      return cancelInvoiceAction(invoiceId);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: purchaseInvoiceKeys.detail(invoice.id) });
+      void queryClient.invalidateQueries({ queryKey: purchaseInvoiceKeys.detail(invoiceId) });
       void queryClient.invalidateQueries({ queryKey: purchaseInvoiceKeys.lists() });
       toast.success("Invoice status updated");
     },
@@ -362,10 +357,10 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
   });
 
   const removeMutation = useMutation({
-    mutationFn: (itemId: string) => removeInvoiceItemAction(invoice.id, itemId),
+    mutationFn: (itemId: string) => removeInvoiceItemAction(invoiceId, itemId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: purchaseInvoiceKeys.detail(invoice.id),
+        queryKey: purchaseInvoiceKeys.detail(invoiceId),
       });
       void queryClient.invalidateQueries({ queryKey: bundleKeys.lists() });
       toast.success("Item removed");
@@ -374,6 +369,11 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       toast.error(error instanceof ApiError ? error.message : "Failed to remove item");
     },
   });
+
+  if (!invoice) return null;
+
+  const statusConfig = INVOICE_STATUS_CONFIG[invoice.status];
+  const actions = getAvailableActions(invoice.status);
 
   return (
     <div className="flex flex-col gap-4">
@@ -450,6 +450,7 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       <Card>
         <CardContent className="pt-4 pb-4">
           <dl className="flex flex-wrap gap-x-6 gap-y-3">
+            <InfoItem label="Supplier" value={invoice.supplierName} />
             <InfoItem
               label="Invoice Date"
               value={formatDate(invoice.invoiceDate)}
@@ -564,6 +565,7 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
 
       <AddItemSheet
         invoiceId={invoice.id}
+        supplierId={invoice.supplierId}
         open={itemSheetOpen}
         onOpenChange={setItemSheetOpen}
       />
@@ -575,23 +577,25 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
 
 function AddItemSheet({
   invoiceId,
+  supplierId,
   open,
   onOpenChange,
 }: {
   invoiceId: string;
+  supplierId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const queryClient = useQueryClient();
 
   const { data: bundlesData } = useQuery({
-    queryKey: bundleKeys.list({ page: 1, limit: 100 }),
-    queryFn: () => getBundlesAction({ page: 1, limit: 100 }),
+    queryKey: bundleKeys.select({ supplierId, unlinked: true }),
+    queryFn: () => getBundlesSelectAction({ supplierId, unlinked: true }),
     enabled: open,
   });
 
-  const { control, handleSubmit, reset, setValue, getValues } = useForm<AddItemFormValues>({
-    resolver: zodResolver(addItemSchema),
+  const { control, handleSubmit, reset, setValue, getValues } = useForm<AddItemFormValues, unknown, AddItemFormValues>({
+    resolver: zodResolver(addItemSchema) as never,
     defaultValues: {
       bundleId: "",
       concept: "",
@@ -628,7 +632,7 @@ function AddItemSheet({
   });
 
   const onSubmit = (values: AddItemFormValues) => mutation.mutate(values);
-  const bundles = bundlesData?.data ?? [];
+  const bundles = bundlesData ?? [];
 
   const handleBundleChange = (bundleId: string, onChange: (v: string) => void) => {
     const prevBundleId = getValues("bundleId");

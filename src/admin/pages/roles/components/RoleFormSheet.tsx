@@ -25,6 +25,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 
+import { createRoleAction } from "@/admin/actions/create-role.action";
 import { updateRoleAction } from "@/admin/actions/update-role.action";
 import { getPermissionsAction } from "@/admin/actions/get-permissions.action";
 import { roleKeys, permissionKeys } from "@/admin/queryKeys";
@@ -76,15 +77,32 @@ export const RoleFormSheet = ({
   const { reset } = form;
 
   useEffect(() => {
-    if (open && editingRole) {
+    if (!open) return;
+    if (editingRole) {
       reset({
         name: editingRole.name,
         permissionNames: editingRole.permissions.map((p) => p.name),
       });
+    } else {
+      reset({ name: "", permissionNames: [] });
     }
   }, [open, editingRole, reset]);
 
+  const isEditing = !!editingRole;
   const handleClose = () => onOpenChange(false);
+
+  const createMutation = useMutation({
+    mutationFn: (values: RoleFormValues) =>
+      createRoleAction({ name: values.name, permissions: values.permissionNames }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: roleKeys.lists() });
+      toast.success("Role created successfully");
+      handleClose();
+    },
+    onError: (error: Error) => {
+      toast.error(error instanceof ApiError ? error.message : "Failed to create role");
+    },
+  });
 
   const updateMutation = useMutation({
     mutationFn: (values: RoleFormValues) =>
@@ -102,10 +120,14 @@ export const RoleFormSheet = ({
     },
   });
 
-  const isSubmitting = updateMutation.isPending;
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (values: RoleFormValues) => {
-    updateMutation.mutate(values);
+    if (isEditing) {
+      updateMutation.mutate(values);
+    } else {
+      createMutation.mutate(values);
+    }
   };
 
   const grouped = groupByModule(permissions);
@@ -114,8 +136,12 @@ export const RoleFormSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-hidden gap-0">
         <SheetHeader className="border-b">
-          <SheetTitle>Edit Role</SheetTitle>
-          <SheetDescription>Update the role name and its permissions.</SheetDescription>
+          <SheetTitle>{isEditing ? "Edit Role" : "New Role"}</SheetTitle>
+          <SheetDescription>
+            {isEditing
+              ? "Update the role name and its permissions."
+              : "Create a new role and assign permissions."}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -249,7 +275,7 @@ export const RoleFormSheet = ({
           </Button>
           <Button type="submit" form="role-form" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-            {isSubmitting ? "Saving…" : "Save Changes"}
+            {isSubmitting ? "Saving…" : isEditing ? "Save Changes" : "Create Role"}
           </Button>
         </SheetFooter>
       </SheetContent>

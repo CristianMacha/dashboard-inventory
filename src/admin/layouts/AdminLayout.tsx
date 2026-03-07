@@ -30,6 +30,24 @@ function getPageLabel(pathname: string): string {
   return "";
 }
 
+function MainHeader({ pageLabel }: { pageLabel: string }) {
+  return (
+    <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 sticky top-0 z-10 flex h-[57px] shrink-0 items-center gap-2 border-b">
+      <div className="flex w-full items-center gap-2 px-4 lg:px-6">
+        <SidebarTrigger className="-ml-1" />
+        {pageLabel && (
+          <>
+            <Separator orientation="vertical" className="h-4 shrink-0" />
+            <span className="text-sm font-medium text-foreground/80 truncate">
+              {pageLabel}
+            </span>
+          </>
+        )}
+      </div>
+    </header>
+  );
+}
+
 const AdminLayout = () => {
   const { pathname } = useLocation();
   const pageLabel = useMemo(() => getPageLabel(pathname), [pathname]);
@@ -38,20 +56,8 @@ const AdminLayout = () => {
     <SidebarProvider defaultOpen={getDefaultSidebarOpen()}>
       <AppSidebar />
       <main className="bg-background relative flex w-full flex-1 flex-col">
-        <header className="bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b h-[57px]">
-          <div className="flex w-full items-center gap-2 px-4 lg:px-6">
-            <SidebarTrigger className="-ml-1" />
-            {pageLabel && (
-              <>
-                <Separator orientation="vertical" className="h-4 shrink-0" />
-                <span className="text-sm font-medium text-foreground/80 truncate">
-                  {pageLabel}
-                </span>
-              </>
-            )}
-          </div>
-        </header>
-        <div className="px-4 md:px-6 py-4 md:py-6 bg-muted/30 min-h-[calc(100vh-57px)]">
+        <MainHeader pageLabel={pageLabel} />
+        <div className="px-4 md:px-6 py-4 md:py-6 bg-muted/30 flex-1">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
