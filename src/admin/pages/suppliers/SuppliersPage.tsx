@@ -36,7 +36,7 @@ export const SuppliersPage = () => {
   } = useListPageState<SupplierResponse>();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: supplierKeys.all,
+    queryKey: supplierKeys.list(),
     queryFn: getAllSuppliersAction,
     staleTime: 5 * 60 * 1000,
   });
@@ -49,7 +49,7 @@ export const SuppliersPage = () => {
         isActive: !supplier.isActive,
       }),
     onSuccess: (_, supplier) => {
-      void queryClient.invalidateQueries({ queryKey: supplierKeys.all });
+      void queryClient.invalidateQueries({ queryKey: supplierKeys.lists() });
       toast.success(
         `Supplier ${supplier.isActive ? "deactivated" : "activated"} successfully`,
       );

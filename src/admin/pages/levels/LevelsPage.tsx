@@ -36,7 +36,7 @@ export const LevelsPage = () => {
   } = useListPageState<LevelResponse>();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: levelKeys.all,
+    queryKey: levelKeys.list(),
     queryFn: getLevelsAction,
     staleTime: 5 * 60 * 1000,
   });
@@ -45,7 +45,7 @@ export const LevelsPage = () => {
     mutationFn: (level: LevelResponse) =>
       updateLevelAction(level.id, { isActive: !level.isActive }),
     onSuccess: (_, level) => {
-      void queryClient.invalidateQueries({ queryKey: levelKeys.all });
+      void queryClient.invalidateQueries({ queryKey: levelKeys.lists() });
       toast.success(
         `Level ${level.isActive ? "deactivated" : "activated"} successfully`,
       );

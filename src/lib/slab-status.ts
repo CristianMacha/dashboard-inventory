@@ -4,6 +4,7 @@ export const SLAB_STATUSES: { value: SlabStatus; label: string }[] = [
   { value: "AVAILABLE", label: "Available" },
   { value: "RESERVED", label: "Reserved" },
   { value: "SOLD", label: "Sold" },
+  { value: "RETURNING", label: "Returning" },
   { value: "RETURNED", label: "Returned" },
 ];
 
@@ -24,6 +25,11 @@ export const SLAB_STATUS_CONFIG: Record<
   SOLD: {
     label: "Sold",
     className: "bg-muted text-muted-foreground ring-1 ring-border",
+  },
+  RETURNING: {
+    label: "Returning",
+    className:
+      "bg-orange-100 text-orange-800 ring-1 ring-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:ring-orange-800",
   },
   RETURNED: {
     label: "Returned",

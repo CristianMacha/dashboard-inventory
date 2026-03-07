@@ -11,12 +11,13 @@ export const productColumns = (
   {
     accessorKey: "name",
     header: "Name",
+    size: 280,
     cell: ({ row }) => {
       return (
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-[280px]">
           <p className="font-medium truncate">{row.original.name}</p>
           {row.original.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
               {row.original.description}
             </p>
           )}

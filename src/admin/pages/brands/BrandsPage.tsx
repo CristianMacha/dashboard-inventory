@@ -36,7 +36,7 @@ export const BrandsPage = () => {
   } = useListPageState<BrandResponse>();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: brandKeys.all,
+    queryKey: brandKeys.list(),
     queryFn: getBrandsAction,
     staleTime: 5 * 60 * 1000,
   });
@@ -45,7 +45,7 @@ export const BrandsPage = () => {
     mutationFn: (brand: BrandResponse) =>
       updateBrandAction(brand.id, { isActive: !brand.isActive }),
     onSuccess: (_, brand) => {
-      void queryClient.invalidateQueries({ queryKey: brandKeys.all });
+      void queryClient.invalidateQueries({ queryKey: brandKeys.lists() });
       toast.success(
         `Brand ${brand.isActive ? "deactivated" : "activated"} successfully`,
       );

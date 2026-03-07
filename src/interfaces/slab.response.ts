@@ -1,4 +1,4 @@
-export type SlabStatus = "AVAILABLE" | "RESERVED" | "SOLD" | "RETURNED";
+export type SlabStatus = "AVAILABLE" | "RESERVED" | "SOLD" | "RETURNED" | "RETURNING";
 
 export interface SlabResponse {
   id: string;

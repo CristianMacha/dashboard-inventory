@@ -36,7 +36,7 @@ export const FinishesPage = () => {
   } = useListPageState<FinishResponse>();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: finishKeys.all,
+    queryKey: finishKeys.list(),
     queryFn: getFinishesAction,
     staleTime: 5 * 60 * 1000,
   });
@@ -45,7 +45,7 @@ export const FinishesPage = () => {
     mutationFn: (finish: FinishResponse) =>
       updateFinishAction(finish.id, { isActive: !finish.isActive }),
     onSuccess: (_, finish) => {
-      void queryClient.invalidateQueries({ queryKey: finishKeys.all });
+      void queryClient.invalidateQueries({ queryKey: finishKeys.lists() });
       toast.success(
         `Finish ${finish.isActive ? "deactivated" : "activated"} successfully`,
       );

@@ -35,8 +35,13 @@ export const bundleColumns = (
     accessorKey: "invoiceNumber",
     header: "Invoice",
     cell: ({ row }) =>
-      row.original.invoiceNumber ? (
-        <span className="tabular-nums text-sm">{row.original.invoiceNumber}</span>
+      row.original.invoiceNumber && row.original.purchaseInvoiceId ? (
+        <Link
+          to={`/purchase-invoices/${row.original.purchaseInvoiceId}`}
+          className="tabular-nums text-sm text-primary hover:underline"
+        >
+          {row.original.invoiceNumber}
+        </Link>
       ) : (
         <span className="text-muted-foreground">—</span>
       ),

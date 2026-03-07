@@ -77,7 +77,15 @@ export function DataTable<TData, TValue>({
           table.getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
+                <TableCell
+                  key={cell.id}
+                  style={
+                    cell.column.columnDef.size
+                      ? { width: cell.column.columnDef.size, maxWidth: cell.column.columnDef.size }
+                      : undefined
+                  }
+                  className={cell.column.columnDef.size ? "overflow-hidden" : undefined}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}

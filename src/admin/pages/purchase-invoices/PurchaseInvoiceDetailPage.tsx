@@ -367,6 +367,7 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       void queryClient.invalidateQueries({
         queryKey: purchaseInvoiceKeys.detail(invoice.id),
       });
+      void queryClient.invalidateQueries({ queryKey: bundleKeys.lists() });
       toast.success("Item removed");
     },
     onError: (error: Error) => {
@@ -617,6 +618,7 @@ function AddItemSheet({
       void queryClient.invalidateQueries({
         queryKey: purchaseInvoiceKeys.detail(invoiceId),
       });
+      void queryClient.invalidateQueries({ queryKey: bundleKeys.lists() });
       toast.success("Item added");
       onOpenChange(false);
     },

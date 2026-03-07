@@ -36,7 +36,7 @@ export const CategoriesPage = () => {
   } = useListPageState<CategoryResponse>();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: categoryKeys.all,
+    queryKey: categoryKeys.list(),
     queryFn: getCategoriesAction,
     staleTime: 5 * 60 * 1000,
   });
@@ -45,7 +45,7 @@ export const CategoriesPage = () => {
     mutationFn: (category: CategoryResponse) =>
       updateCategoryAction(category.id, { isActive: !category.isActive }),
     onSuccess: (_, category) => {
-      void queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      void queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
       toast.success(
         `Category ${category.isActive ? "deactivated" : "activated"} successfully`,
       );
