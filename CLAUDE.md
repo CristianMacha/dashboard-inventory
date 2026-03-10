@@ -60,8 +60,8 @@ Most CRUD pages follow a shared pattern:
 
 - **Page component** — `useQuery` for data, `useMutation` for actions, `useListPageState` for sheet/pagination state.
 - **Columns file** — `ColumnDef[]` for `@tanstack/react-table`, receives callbacks (`onEdit`, `onToggleActive`) as props.
-- **FormSheet component** — shadcn `<Sheet>` with `react-hook-form` + Zod, resets on `open` change, single submit handler that branches create/update.
-- **`useListPageState<T>()`** (`src/admin/hooks/useListPageState.ts`) — encapsulates `page`, `sheetOpen`, `editingItem`, and open/close handlers.
+- **FormSheet component** — shadcn `<Sheet>` with `react-hook-form` + Zod, resets on `open` change via `useEffect`, single submit handler that branches create/update based on whether `editingItem` is null.
+- **`useListPageState<T>()`** (`src/admin/hooks/useListPageState.ts`) — encapsulates `page`, `sheetOpen`, `editingItem`, and `openCreate` / `openEdit` / `handleSheetOpenChange` handlers.
 
 ### Forms
 
@@ -83,7 +83,37 @@ Forms use `react-hook-form` with `zodResolver` and the custom `<Field>` / `<Fiel
 | `src/admin/queryKeys.ts` | Centralized TanStack Query key factories |
 | `src/lib/firebase.ts` | Firebase app + auth instance |
 | `src/interfaces/paginated-result.ts` | Generic `PaginatedResult<T>` for all list endpoints |
+| `api-docs.json` | OpenAPI spec — source of truth for all backend endpoints and DTOs |
 
-### Sidebar
+### Sidebar & Layout
 
-`AppSidebar` renders menu items from `useMenusStore`. Icon names from the backend are resolved via `ICON_MAP` (Lucide). Items with `id` in `DROPDOWN_ONLY_IDS` (`settings`, `profile`) are excluded from the sidebar and shown only in the user dropdown footer.
+- `AppSidebar` renders menu items from `useMenusStore`. Icon names from the backend are resolved via `ICON_MAP` (Lucide). Items with `id` in `DROPDOWN_ONLY_IDS` (`settings`, `profile`) are excluded from the sidebar and shown only in the user dropdown footer.
+- `AdminLayout` wraps every admin page: `SidebarProvider` → `AppSidebar` + `<main>` with a sticky header and scrollable content area.
+- The sidebar header (`SidebarHeader`) and the main sticky header both use `h-[57px]` to stay visually aligned.
+
+### API docs
+
+`api-docs.json` at the project root is the OpenAPI spec for the backend. Always check it before implementing new actions or interfaces to ensure the request/response shapes are correct. **Do not use `Read` or `Grep` to read `.pen` files.**
+
+### Interfaces
+
+TypeScript interfaces in `src/interfaces/` mirror backend DTOs. Keep them in sync with `api-docs.json` when the API changes. Key files:
+
+| Interface file | Covers |
+|---|---|
+| `user.response.ts` | `UserResponse`, `RoleResponse`, `PermissionResponse` |
+| `product.response.ts` | `ProductResponse`, `ProductDetailResponse`, `ProductImageResponse` |
+| `purchase-invoice.response.ts` | `PurchaseInvoiceResponse`, `PurchaseInvoiceDetailResponse` |
+| `bundle.response.ts` | `BundleResponse`, `BundleDetailResponse`, `SlabInBundleDetail` |
+| `supplier-return.response.ts` | `SupplierReturnResponse`, `ReturnItemReason` |
+| `general-payment.response.ts` | `GeneralPaymentResponse` |
+| `job.response.ts` | `JobResponse`, `JobDetailResponse` |
+
+### Status configs
+
+Reusable status → label/style maps live in `src/lib/`:
+
+- `src/lib/purchase-invoice-status.ts` — `INVOICE_STATUS_CONFIG`
+- `src/lib/job-status.ts` — `JOB_STATUS_CONFIG`
+
+Use `<StatusBadge>` from `src/components/ui/status-badge.tsx` for all status displays.

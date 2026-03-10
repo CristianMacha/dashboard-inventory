@@ -136,6 +136,7 @@ export function JobPaymentPanel({
         queryClient.refetchQueries({ queryKey: jobPaymentKeys.byJob(jobId) }),
       ]);
       void queryClient.invalidateQueries({ queryKey: jobKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: jobPaymentKeys.lists() });
       toast.success("Payment recorded");
       setSheetOpen(false);
     },
