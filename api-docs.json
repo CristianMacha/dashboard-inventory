@@ -4521,6 +4521,982 @@
         ]
       }
     },
+    "/api/v1/workshop/tools": {
+      "post": {
+        "operationId": "ToolsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateToolDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tool created successfully"
+          },
+          "409": {
+            "description": "Tool name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new tool",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      },
+      "get": {
+        "operationId": "ToolsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToolDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of tools",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      }
+    },
+    "/api/v1/workshop/tools/{id}": {
+      "get": {
+        "operationId": "ToolsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tool by id",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      },
+      "patch": {
+        "operationId": "ToolsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateToolDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool updated successfully"
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a tool",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      },
+      "delete": {
+        "operationId": "ToolsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tool deleted successfully"
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a tool",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      }
+    },
+    "/api/v1/workshop/tools/{id}/image": {
+      "post": {
+        "operationId": "ToolsController_uploadImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image (JPEG, PNG, WebP — max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image uploaded successfully"
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload or replace the tool image",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      },
+      "delete": {
+        "operationId": "ToolsController_deleteImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Image deleted successfully"
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the tool image",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      }
+    },
+    "/api/v1/workshop/tools/{id}/status": {
+      "post": {
+        "operationId": "ToolsController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeToolStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status changed and movement recorded"
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change tool status and record movement",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      }
+    },
+    "/api/v1/workshop/tools/{id}/movements": {
+      "get": {
+        "operationId": "ToolsController_getMovements",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToolMovementDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get movement history for a tool",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      }
+    },
+    "/api/v1/workshop/materials": {
+      "post": {
+        "operationId": "MaterialsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaterialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Material created successfully"
+          },
+          "409": {
+            "description": "Material name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new material",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      },
+      "get": {
+        "operationId": "MaterialsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of materials",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      }
+    },
+    "/api/v1/workshop/materials/{id}": {
+      "get": {
+        "operationId": "MaterialsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Material not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get material by id",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      },
+      "patch": {
+        "operationId": "MaterialsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMaterialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Material updated successfully"
+          },
+          "404": {
+            "description": "Material not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a material",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      },
+      "delete": {
+        "operationId": "MaterialsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Material deleted successfully"
+          },
+          "404": {
+            "description": "Material not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a material",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      }
+    },
+    "/api/v1/workshop/materials/{id}/image": {
+      "post": {
+        "operationId": "MaterialsController_uploadImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image (JPEG, PNG, WebP — max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image uploaded successfully"
+          },
+          "404": {
+            "description": "Material not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload or replace the material image",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      },
+      "delete": {
+        "operationId": "MaterialsController_deleteImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Image deleted successfully"
+          },
+          "404": {
+            "description": "Material not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the material image",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      }
+    },
+    "/api/v1/workshop/materials/{id}/movements": {
+      "post": {
+        "operationId": "MaterialsController_registerMovement",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterMaterialMovementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Movement registered"
+          },
+          "404": {
+            "description": "Material not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a material movement (entry, exit or adjustment)",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      },
+      "get": {
+        "operationId": "MaterialsController_getMovements",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialMovementDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated movement history for a material",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      }
+    },
+    "/api/v1/workshop/materials/{id}/stock": {
+      "get": {
+        "operationId": "MaterialsController_getStock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "currentStock": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current calculated stock for a material",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      }
+    },
+    "/api/v1/workshop/categories": {
+      "post": {
+        "operationId": "WorkshopCategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkshopCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created successfully"
+          },
+          "409": {
+            "description": "Category name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a workshop category",
+        "tags": [
+          "Workshop - Categories"
+        ]
+      },
+      "get": {
+        "operationId": "WorkshopCategoriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkshopCategoryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all workshop categories",
+        "tags": [
+          "Workshop - Categories"
+        ]
+      }
+    },
+    "/api/v1/workshop/categories/{id}": {
+      "patch": {
+        "operationId": "WorkshopCategoriesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkshopCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated successfully"
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a workshop category",
+        "tags": [
+          "Workshop - Categories"
+        ]
+      }
+    },
+    "/api/v1/workshop/suppliers": {
+      "post": {
+        "operationId": "WorkshopSuppliersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkshopSupplierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Supplier created successfully"
+          },
+          "409": {
+            "description": "Supplier name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a workshop supplier",
+        "tags": [
+          "Workshop - Suppliers"
+        ]
+      },
+      "get": {
+        "operationId": "WorkshopSuppliersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkshopSupplierDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all workshop suppliers",
+        "tags": [
+          "Workshop - Suppliers"
+        ]
+      }
+    },
+    "/api/v1/workshop/suppliers/{id}": {
+      "patch": {
+        "operationId": "WorkshopSuppliersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkshopSupplierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier updated successfully"
+          },
+          "404": {
+            "description": "Supplier not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a workshop supplier",
+        "tags": [
+          "Workshop - Suppliers"
+        ]
+      }
+    },
     "/api/v1/dashboard/summary": {
       "get": {
         "operationId": "GetDashboardSummaryController_run",
@@ -8066,6 +9042,523 @@
           "limit",
           "totalPages"
         ]
+      },
+      "CreateToolDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Taladro de impacto"
+          },
+          "description": {
+            "type": "string",
+            "example": "Taladro de 18V con batería"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "supplierId": {
+            "type": "string"
+          },
+          "purchasePrice": {
+            "type": "number",
+            "example": 150
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ToolDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "in_use",
+              "in_repair",
+              "retired"
+            ]
+          },
+          "categoryId": {
+            "type": "object"
+          },
+          "supplierId": {
+            "type": "object"
+          },
+          "imagePublicId": {
+            "type": "object"
+          },
+          "purchasePrice": {
+            "type": "object"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "createdBy",
+          "updatedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateToolDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "in_use",
+              "in_repair",
+              "retired"
+            ]
+          },
+          "categoryId": {
+            "type": "object"
+          },
+          "supplierId": {
+            "type": "object"
+          },
+          "purchasePrice": {
+            "type": "object"
+          }
+        }
+      },
+      "ChangeToolStatusDto": {
+        "type": "object",
+        "properties": {
+          "newStatus": {
+            "type": "string",
+            "enum": [
+              "available",
+              "in_use",
+              "in_repair",
+              "retired"
+            ]
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Associated job ID"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "newStatus"
+        ]
+      },
+      "ToolMovementDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "toolId": {
+            "type": "string"
+          },
+          "previousStatus": {
+            "type": "string",
+            "enum": [
+              "available",
+              "in_use",
+              "in_repair",
+              "retired"
+            ]
+          },
+          "newStatus": {
+            "type": "string",
+            "enum": [
+              "available",
+              "in_use",
+              "in_repair",
+              "retired"
+            ]
+          },
+          "jobId": {
+            "type": "object"
+          },
+          "notes": {
+            "type": "object"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "toolId",
+          "previousStatus",
+          "newStatus",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "CreateMaterialDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Cemento Portland"
+          },
+          "unit": {
+            "type": "string",
+            "example": "kg"
+          },
+          "description": {
+            "type": "string"
+          },
+          "minStock": {
+            "type": "number",
+            "example": 5
+          },
+          "unitPrice": {
+            "type": "number",
+            "example": 12.5
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "supplierId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "unit"
+        ]
+      },
+      "MaterialDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "currentStock": {
+            "type": "number"
+          },
+          "minStock": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "object"
+          },
+          "categoryId": {
+            "type": "object"
+          },
+          "supplierId": {
+            "type": "object"
+          },
+          "imagePublicId": {
+            "type": "object"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "unit",
+          "currentStock",
+          "minStock",
+          "createdBy",
+          "updatedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateMaterialDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "minStock": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "object"
+          },
+          "categoryId": {
+            "type": "object"
+          },
+          "supplierId": {
+            "type": "object"
+          }
+        }
+      },
+      "RegisterMaterialMovementDto": {
+        "type": "object",
+        "properties": {
+          "delta": {
+            "type": "number",
+            "description": "Signed quantity: positive = entry, negative = exit/adjustment",
+            "example": 50
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "compra",
+              "uso_job",
+              "devolucion",
+              "ajuste_inventario",
+              "otro"
+            ]
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Associated job ID"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "delta",
+          "reason"
+        ]
+      },
+      "MaterialMovementDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "delta": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "compra",
+              "uso_job",
+              "devolucion",
+              "ajuste_inventario",
+              "otro"
+            ]
+          },
+          "jobId": {
+            "type": "object"
+          },
+          "notes": {
+            "type": "object"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "materialId",
+          "delta",
+          "reason",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "CreateWorkshopCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Herramientas eléctricas"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "WorkshopCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateWorkshopCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          }
+        }
+      },
+      "CreateWorkshopSupplierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ferretería Central"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1-555-0100"
+          },
+          "email": {
+            "type": "string",
+            "example": "contacto@ferreteria.com"
+          },
+          "address": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "WorkshopSupplierDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object"
+          },
+          "email": {
+            "type": "object"
+          },
+          "address": {
+            "type": "object"
+          },
+          "notes": {
+            "type": "object"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateWorkshopSupplierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object"
+          },
+          "email": {
+            "type": "object"
+          },
+          "address": {
+            "type": "object"
+          },
+          "notes": {
+            "type": "object"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
       },
       "InventoryMetricsDto": {
         "type": "object",

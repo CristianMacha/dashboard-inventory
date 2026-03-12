@@ -181,6 +181,38 @@ export const permissionKeys = {
   all: ["permissions"] as const,
 };
 
+export const workshopToolKeys = {
+  all: ["workshop-tools"] as const,
+  lists: () => [...workshopToolKeys.all, "list"] as const,
+  list: (params: { page: number; limit: number }) =>
+    [...workshopToolKeys.lists(), params] as const,
+  details: () => [...workshopToolKeys.all, "detail"] as const,
+  detail: (id: string) => [...workshopToolKeys.details(), id] as const,
+  movements: (id: string) => [...workshopToolKeys.all, "movements", id] as const,
+};
+
+export const workshopMaterialKeys = {
+  all: ["workshop-materials"] as const,
+  lists: () => [...workshopMaterialKeys.all, "list"] as const,
+  list: (params: { page: number; limit: number }) =>
+    [...workshopMaterialKeys.lists(), params] as const,
+  details: () => [...workshopMaterialKeys.all, "detail"] as const,
+  detail: (id: string) => [...workshopMaterialKeys.details(), id] as const,
+  movements: (id: string) => [...workshopMaterialKeys.all, "movements", id] as const,
+};
+
+export const workshopCategoryKeys = {
+  all: ["workshop-categories"] as const,
+  lists: () => [...workshopCategoryKeys.all, "list"] as const,
+  list: () => [...workshopCategoryKeys.lists()] as const,
+};
+
+export const workshopSupplierKeys = {
+  all: ["workshop-suppliers"] as const,
+  lists: () => [...workshopSupplierKeys.all, "list"] as const,
+  list: () => [...workshopSupplierKeys.lists()] as const,
+};
+
 export const supplierReturnKeys = {
   all: ["supplier-returns"] as const,
   lists: () => [...supplierReturnKeys.all, "list"] as const,

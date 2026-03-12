@@ -158,6 +158,36 @@ const RolesPage = lazy(() =>
     default: m.RolesPage,
   })),
 );
+const WorkshopToolsPage = lazy(() =>
+  import("./admin/pages/workshop-tools/WorkshopToolsPage").then((m) => ({
+    default: m.WorkshopToolsPage,
+  })),
+);
+const WorkshopToolDetailPage = lazy(() =>
+  import("./admin/pages/workshop-tools/WorkshopToolDetailPage").then((m) => ({
+    default: m.WorkshopToolDetailPage,
+  })),
+);
+const WorkshopMaterialsPage = lazy(() =>
+  import("./admin/pages/workshop-materials/WorkshopMaterialsPage").then((m) => ({
+    default: m.WorkshopMaterialsPage,
+  })),
+);
+const WorkshopMaterialDetailPage = lazy(() =>
+  import("./admin/pages/workshop-materials/WorkshopMaterialDetailPage").then((m) => ({
+    default: m.WorkshopMaterialDetailPage,
+  })),
+);
+const WorkshopCategoriesPage = lazy(() =>
+  import("./admin/pages/workshop-categories/WorkshopCategoriesPage").then((m) => ({
+    default: m.WorkshopCategoriesPage,
+  })),
+);
+const WorkshopSuppliersPage = lazy(() =>
+  import("./admin/pages/workshop-suppliers/WorkshopSuppliersPage").then((m) => ({
+    default: m.WorkshopSuppliersPage,
+  })),
+);
 
 export const appRouter = createBrowserRouter([
   {
@@ -377,6 +407,54 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <RolesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/tools",
+        element: (
+          <PageSuspense>
+            <WorkshopToolsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/tools/:id",
+        element: (
+          <PageSuspense>
+            <WorkshopToolDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/materials",
+        element: (
+          <PageSuspense>
+            <WorkshopMaterialsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/materials/:id",
+        element: (
+          <PageSuspense>
+            <WorkshopMaterialDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/categories",
+        element: (
+          <PageSuspense>
+            <WorkshopCategoriesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/suppliers",
+        element: (
+          <PageSuspense>
+            <WorkshopSuppliersPage />
           </PageSuspense>
         ),
       },
