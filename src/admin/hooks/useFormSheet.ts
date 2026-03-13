@@ -3,7 +3,7 @@ import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } fro
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 
 interface UseFormSheetOptions<TValues extends FieldValues, TResponse> {
   open: boolean;
@@ -62,10 +62,8 @@ export function useFormSheet<TValues extends FieldValues, TResponse>({
       toast.success(`${entityName} created successfully`);
       onClose();
     },
-    onError: (error: Error) => {
-      toast.error(
-        error instanceof ApiError ? error.message : `Failed to create ${entityName.toLowerCase()}`,
-      );
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, `Failed to create ${entityName.toLowerCase()}`));
     },
   });
 
@@ -77,10 +75,8 @@ export function useFormSheet<TValues extends FieldValues, TResponse>({
       toast.success(`${entityName} updated successfully`);
       onClose();
     },
-    onError: (error: Error) => {
-      toast.error(
-        error instanceof ApiError ? error.message : `Failed to update ${entityName.toLowerCase()}`,
-      );
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, `Failed to update ${entityName.toLowerCase()}`));
     },
   });
 

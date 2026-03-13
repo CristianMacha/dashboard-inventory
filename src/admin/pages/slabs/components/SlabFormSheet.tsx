@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ import {
 import { updateSlabAction } from "@/admin/actions/update-slab.action";
 import { createRemnantSlabAction } from "@/admin/actions/create-remnant-slab.action";
 import { slabKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { SlabResponse } from "@/interfaces/slab.response";
 
 // ─── Schemas ────────────────────────────────────────────────────────────────
@@ -67,23 +67,25 @@ export const SlabFormSheet = ({
 
   const updateForm = useForm<UpdateSlabFormValues>({
     resolver: zodResolver(updateSlabSchema),
-    defaultValues: { description: "" },
+    defaultValues: { description: editingSlab?.description ?? "" },
   });
 
   const remnantForm = useForm<RemnantSlabFormValues>({
-    resolver: zodResolver(remnantSlabSchema),
+    resolver: zodResolver(remnantSlabSchema) as Resolver<RemnantSlabFormValues>,
     defaultValues: { code: "", widthCm: 0, heightCm: 0, description: "" },
   });
 
   const { reset: resetUpdate } = updateForm;
   const { reset: resetRemnant } = remnantForm;
 
+  // Reset state and forms whenever the sheet opens or the editing slab changes
   useEffect(() => {
-    if (open && editingSlab) {
+    if (open) {
       setMode("view");
-      resetUpdate({ description: editingSlab.description ?? "" });
+      resetUpdate({ description: editingSlab?.description ?? "" });
+      resetRemnant({ code: "", widthCm: 0, heightCm: 0, description: "" });
     }
-  }, [open, editingSlab, resetUpdate]);
+  }, [open, editingSlab, resetUpdate, resetRemnant]);
 
   const handleClose = () => onOpenChange(false);
 
@@ -96,8 +98,8 @@ export const SlabFormSheet = ({
       toast.success("Slab updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update slab");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update slab"));
     },
   });
 
@@ -109,8 +111,8 @@ export const SlabFormSheet = ({
       toast.success("Remnant slab created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create remnant");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create remnant"));
     },
   });
 

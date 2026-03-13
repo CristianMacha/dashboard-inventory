@@ -6,7 +6,7 @@ import { ImagePlus, Pencil, Loader2, Trash2 } from "lucide-react";
 import { uploadWorkshopToolImageAction, deleteWorkshopToolImageAction } from "@/admin/actions/upload-workshop-tool-image.action";
 import { workshopToolKeys } from "@/admin/queryKeys";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 
 interface WorkshopToolImageUploadProps {
   toolId: string;
@@ -34,7 +34,7 @@ export const WorkshopToolImageUpload = ({
     },
     onError: (err: Error) => {
       setPreviewUrl(null);
-      toast.error(err instanceof ApiError ? err.message : "Failed to upload image");
+      toast.error(getErrorMessage(err, "Failed to upload image"));
     },
   });
 
@@ -47,7 +47,7 @@ export const WorkshopToolImageUpload = ({
       toast.success("Image deleted");
     },
     onError: (err: Error) => {
-      toast.error(err instanceof ApiError ? err.message : "Failed to delete image");
+      toast.error(getErrorMessage(err, "Failed to delete image"));
     },
   });
 

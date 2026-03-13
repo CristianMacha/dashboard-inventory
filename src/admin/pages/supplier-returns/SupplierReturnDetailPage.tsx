@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -70,8 +70,13 @@ import { cancelSupplierReturnAction } from "@/admin/actions/cancel-supplier-retu
 import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
 import { getSlabsAction } from "@/admin/actions/get-slabs.action";
 import { getPurchaseInvoicesForSelectAction } from "@/admin/actions/get-purchase-invoices-for-select.action";
-import { supplierReturnKeys, supplierKeys, slabKeys, purchaseInvoiceKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import {
+  supplierReturnKeys,
+  supplierKeys,
+  slabKeys,
+  purchaseInvoiceKeys,
+} from "@/admin/queryKeys";
+import { getErrorMessage } from "@/api/apiClient";
 import { RETURN_STATUS_CONFIG } from "@/lib/supplier-return-status";
 import { formatDate } from "@/lib/format";
 import type {
@@ -102,11 +107,19 @@ function getAvailableActions(status: SupplierReturnStatus) {
   }[] = [];
 
   if (status === "DRAFT") {
-    actions.push({ label: "Send to Supplier", variant: "default", action: "send" });
+    actions.push({
+      label: "Send to Supplier",
+      variant: "default",
+      action: "send",
+    });
     actions.push({ label: "Cancel", variant: "destructive", action: "cancel" });
   }
   if (status === "SENT") {
-    actions.push({ label: "Mark as Credited", variant: "default", action: "credit" });
+    actions.push({
+      label: "Mark as Credited",
+      variant: "default",
+      action: "credit",
+    });
     actions.push({ label: "Cancel", variant: "destructive", action: "cancel" });
   }
 
@@ -131,7 +144,7 @@ const addItemSchema = z.object({
   bundleId: z.string().min(1, "Bundle is required"),
   reason: z.string().min(1, "Reason is required"),
   description: z.string().optional(),
-  unitCost: z.coerce.number().min(0, "Must be >= 0"),
+  unitCost: z.number().min(0, "Must be >= 0"),
 });
 
 type AddItemFormValues = z.infer<typeof addItemSchema>;
@@ -147,7 +160,7 @@ function CreateReturnForm() {
     queryFn: getActiveSuppliersAction,
   });
 
-  const { control, handleSubmit, watch, setValue } = useForm<CreateFormValues>({
+  const { control, handleSubmit, setValue } = useForm<CreateFormValues>({
     resolver: zodResolver(createSchema),
     defaultValues: {
       supplierId: "",
@@ -157,23 +170,30 @@ function CreateReturnForm() {
     },
   });
 
-  const watchedSupplierId = watch("supplierId");
+  const watchedSupplierId = useWatch({ control, name: "supplierId" });
 
   const { data: invoices = [] } = useQuery({
-    queryKey: purchaseInvoiceKeys.select({ supplierId: watchedSupplierId || undefined }),
-    queryFn: () => getPurchaseInvoicesForSelectAction({ supplierId: watchedSupplierId || undefined }),
+    queryKey: purchaseInvoiceKeys.select({
+      supplierId: watchedSupplierId || undefined,
+    }),
+    queryFn: () =>
+      getPurchaseInvoicesForSelectAction({
+        supplierId: watchedSupplierId || undefined,
+      }),
     enabled: !!watchedSupplierId,
   });
 
   const mutation = useMutation({
     mutationFn: createSupplierReturnAction,
     onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: supplierReturnKeys.lists() });
+      void queryClient.invalidateQueries({
+        queryKey: supplierReturnKeys.lists(),
+      });
       toast.success("Supplier return created");
       void navigate(`/purchasing/supplier-returns/${result.id}`);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create return");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create return"));
     },
   });
 
@@ -261,7 +281,9 @@ function CreateReturnForm() {
                   name="purchaseInvoiceId"
                   render={({ field, fieldState }) => (
                     <Field>
-                      <FieldLabel htmlFor="purchaseInvoiceId">Purchase Invoice</FieldLabel>
+                      <FieldLabel htmlFor="purchaseInvoiceId">
+                        Purchase Invoice
+                      </FieldLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
@@ -273,15 +295,16 @@ function CreateReturnForm() {
                               !watchedSupplierId
                                 ? "Select a supplier first"
                                 : invoices.length === 0
-                                ? "No invoices for this supplier"
-                                : "Select a purchase invoice"
+                                  ? "No invoices for this supplier"
+                                  : "Select a purchase invoice"
                             }
                           />
                         </SelectTrigger>
                         <SelectContent>
                           {invoices.map((inv) => (
                             <SelectItem key={inv.id} value={inv.id}>
-                              {inv.invoiceNumber} — {formatDate(inv.invoiceDate)}
+                              {inv.invoiceNumber} —{" "}
+                              {formatDate(inv.invoiceDate)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -315,7 +338,9 @@ function CreateReturnForm() {
                   <Field>
                     <FieldLabel htmlFor="notes">
                       Notes{" "}
-                      <span className="font-normal text-muted-foreground">(optional)</span>
+                      <span className="font-normal text-muted-foreground">
+                        (optional)
+                      </span>
                     </FieldLabel>
                     <Textarea
                       id="notes"
@@ -333,7 +358,9 @@ function CreateReturnForm() {
                 <Link to="/purchasing/supplier-returns">Cancel</Link>
               </Button>
               <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
+                {mutation.isPending && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
                 {mutation.isPending ? "Creating…" : "Create Return"}
               </Button>
             </div>
@@ -346,7 +373,11 @@ function CreateReturnForm() {
 
 // ─── Detail Mode ─────────────────────────────────────────────────────────────
 
-function ReturnDetail({ supplierReturn }: { supplierReturn: SupplierReturnDetailResponse }) {
+function ReturnDetail({
+  supplierReturn,
+}: {
+  supplierReturn: SupplierReturnDetailResponse;
+}) {
   const queryClient = useQueryClient();
   const [slabSheetOpen, setSlabSheetOpen] = useState(false);
 
@@ -356,31 +387,35 @@ function ReturnDetail({ supplierReturn }: { supplierReturn: SupplierReturnDetail
   const statusMutation = useMutation({
     mutationFn: async (action: "send" | "credit" | "cancel") => {
       if (action === "send") return sendSupplierReturnAction(supplierReturn.id);
-      if (action === "credit") return creditSupplierReturnAction(supplierReturn.id);
+      if (action === "credit")
+        return creditSupplierReturnAction(supplierReturn.id);
       return cancelSupplierReturnAction(supplierReturn.id);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: supplierReturnKeys.detail(supplierReturn.id),
       });
-      void queryClient.invalidateQueries({ queryKey: supplierReturnKeys.lists() });
+      void queryClient.invalidateQueries({
+        queryKey: supplierReturnKeys.lists(),
+      });
       toast.success("Return status updated");
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update status");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update status"));
     },
   });
 
   const removeMutation = useMutation({
-    mutationFn: (itemId: string) => removeReturnItemAction(supplierReturn.id, itemId),
+    mutationFn: (itemId: string) =>
+      removeReturnItemAction(supplierReturn.id, itemId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: supplierReturnKeys.detail(supplierReturn.id),
       });
       toast.success("Item removed");
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to remove item");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to remove item"));
     },
   });
 
@@ -419,7 +454,10 @@ function ReturnDetail({ supplierReturn }: { supplierReturn: SupplierReturnDetail
               <h1 className="text-2xl font-bold leading-tight">
                 Supplier Return
               </h1>
-              <StatusBadge label={statusConfig.label} className={statusConfig.className} />
+              <StatusBadge
+                label={statusConfig.label}
+                className={statusConfig.className}
+              />
             </div>
             {supplierReturn.notes && (
               <p className="text-sm text-muted-foreground mt-0.5">
@@ -469,8 +507,14 @@ function ReturnDetail({ supplierReturn }: { supplierReturn: SupplierReturnDetail
               value={formatDate(supplierReturn.createdAt)}
               icon={<CalendarIcon className="size-3 shrink-0" />}
             />
-            <InfoItem label="Credit Amount" value={currency.format(supplierReturn.creditAmount)} />
-            <InfoItem label="Items" value={String(supplierReturn.items.length)} />
+            <InfoItem
+              label="Credit Amount"
+              value={currency.format(supplierReturn.creditAmount)}
+            />
+            <InfoItem
+              label="Items"
+              value={String(supplierReturn.items.length)}
+            />
             {supplierReturn.notes && (
               <InfoItem label="Notes" value={supplierReturn.notes} />
             )}
@@ -517,8 +561,12 @@ function ReturnDetail({ supplierReturn }: { supplierReturn: SupplierReturnDetail
                     <TableHead className="font-semibold">Slab ID</TableHead>
                     <TableHead className="font-semibold">Reason</TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="font-semibold text-right">Unit Cost</TableHead>
-                    <TableHead className="font-semibold text-right">Total</TableHead>
+                    <TableHead className="font-semibold text-right">
+                      Unit Cost
+                    </TableHead>
+                    <TableHead className="font-semibold text-right">
+                      Total
+                    </TableHead>
                     {supplierReturn.status === "DRAFT" && (
                       <TableHead className="w-[50px]" />
                     )}
@@ -598,7 +646,7 @@ function AddSlabSheet({
     enabled: open,
   });
 
-  const { control, handleSubmit, reset, watch } = useForm<AddItemFormValues>({
+  const { control, handleSubmit, reset } = useForm<AddItemFormValues>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
       slabId: "",
@@ -614,15 +662,19 @@ function AddSlabSheet({
   }, [open, reset]);
 
   // Auto-fill bundleId when slab is selected
-  const selectedSlabId = watch("slabId");
-  const slabs = slabsData?.data ?? [];
+  const selectedSlabId = useWatch({ control, name: "slabId" });
+  const slabs = useMemo(() => slabsData?.data ?? [], [slabsData?.data]);
 
   useEffect(() => {
     if (selectedSlabId) {
       const slab = slabs.find((s) => s.id === selectedSlabId);
       if (slab) {
         // bundleId comes from the slab
-        reset((prev) => ({ ...prev, slabId: selectedSlabId, bundleId: slab.bundleId }));
+        reset((prev) => ({
+          ...prev,
+          slabId: selectedSlabId,
+          bundleId: slab.bundleId,
+        }));
       }
     }
   }, [selectedSlabId, slabs, reset]);
@@ -643,8 +695,8 @@ function AddSlabSheet({
       toast.success("Slab added");
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to add slab");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to add slab"));
     },
   });
 
@@ -724,7 +776,9 @@ function AddSlabSheet({
                 <Field>
                   <FieldLabel htmlFor="item-desc">
                     Description{" "}
-                    <span className="font-normal text-muted-foreground">(optional)</span>
+                    <span className="font-normal text-muted-foreground">
+                      (optional)
+                    </span>
                   </FieldLabel>
                   <Input
                     id="item-desc"
@@ -747,7 +801,9 @@ function AddSlabSheet({
                     min={0}
                     step="0.01"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                    onChange={(e) =>
+                      field.onChange(e.target.valueAsNumber || 0)
+                    }
                   />
                   {fieldState.invalid && (
                     <FieldError>{fieldState.error?.message}</FieldError>
@@ -767,7 +823,11 @@ function AddSlabSheet({
           >
             Cancel
           </Button>
-          <Button type="submit" form="add-slab-form" disabled={mutation.isPending}>
+          <Button
+            type="submit"
+            form="add-slab-form"
+            disabled={mutation.isPending}
+          >
             {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
             {mutation.isPending ? "Adding…" : "Add Slab"}
           </Button>

@@ -1,3 +1,4 @@
+import { usePageParam } from "@/admin/hooks/usePageParam";
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, X } from "lucide-react";
@@ -33,7 +34,7 @@ import { supplierReturnColumns } from "./Columns";
 const DEFAULT_PAGE_SIZE = 10;
 
 export const SupplierReturnsPage = () => {
-  const [page, setPage] = useState<number>(1);
+  const { page, setPage } = usePageParam();
   const [supplierId, setSupplierId] = useState<string>("");
   const [status, setStatus] = useState<string>("");
 

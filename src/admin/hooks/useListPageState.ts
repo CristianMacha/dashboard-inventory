@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { usePageParam } from "./usePageParam";
 
 type ListPageState<T> = {
   page: number;
@@ -11,7 +12,7 @@ type ListPageState<T> = {
 };
 
 export function useListPageState<T>(): ListPageState<T> {
-  const [page, setPage] = useState(1);
+  const { page, setPage } = usePageParam();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<T | null>(null);
 

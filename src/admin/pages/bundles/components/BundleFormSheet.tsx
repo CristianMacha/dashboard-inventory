@@ -4,6 +4,7 @@ import {
   Controller,
   useFieldArray,
   useForm,
+  useWatch,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,12 +43,13 @@ import { getProductsAction } from "@/admin/actions/get-products.action";
 import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
 import { getPurchaseInvoicesForSelectAction } from "@/admin/actions/get-purchase-invoices-for-select.action";
 import { bundleKeys, productKeys, purchaseInvoiceKeys, slabKeys, summaryKeys, supplierKeys } from "@/admin/queryKeys";
+import { getErrorMessage } from "@/api/apiClient";
 import type { BundleResponse } from "@/interfaces/bundle.response";
 
 const slabSchema = z.object({
   code: z.string().min(1, "Code is required"),
-  widthCm: z.coerce.number().positive("Must be > 0"),
-  heightCm: z.coerce.number().positive("Must be > 0"),
+  widthCm: z.number().positive("Must be > 0"),
+  heightCm: z.number().positive("Must be > 0"),
   description: z.string().optional(),
 });
 
@@ -58,8 +60,8 @@ const bundleFormSchema = z
     purchaseInvoiceId: z.string().optional(),
     supplierId: z.string().optional(),
     lotNumber: z.string().optional(),
-    thicknessCm: z.coerce.number().min(0).optional().or(z.literal("")),
-    slabs: z.array(slabSchema).default([]),
+    thicknessCm: z.number().min(0).optional(),
+    slabs: z.array(slabSchema),
   })
   .superRefine((data, ctx) => {
     if (data.linkMode === "invoice" && !data.purchaseInvoiceId) {
@@ -78,7 +80,7 @@ const emptyValues: BundleFormValues = {
   purchaseInvoiceId: "",
   supplierId: "",
   lotNumber: "",
-  thicknessCm: "",
+  thicknessCm: undefined,
   slabs: [],
 };
 
@@ -89,15 +91,16 @@ function toFormValues(bundle: BundleResponse): BundleFormValues {
     purchaseInvoiceId: bundle.purchaseInvoiceId ?? "",
     supplierId: bundle.supplierId,
     lotNumber: bundle.lotNumber ?? "",
-    thicknessCm: bundle.thicknessCm ?? "",
+    thicknessCm: bundle.thicknessCm ?? undefined,
     slabs: [],
   };
 }
 
-/** Converts an empty string or nullish value to undefined for optional numeric fields. */
-function emptyToUndefined(value: number | "" | null | undefined): number | undefined {
-  return value !== "" && value != null ? Number(value) : undefined;
+/** Converts a nullish value to undefined for optional numeric fields. */
+function emptyToUndefined(value: number | null | undefined): number | undefined {
+  return value != null ? value : undefined;
 }
+
 
 interface BundleFormSheetProps {
   open: boolean;
@@ -134,7 +137,7 @@ export const BundleFormSheet = ({
     enabled: open,
   });
 
-  const { control, handleSubmit, reset, watch, setValue } = useForm<BundleFormValues>({
+  const { control, handleSubmit, reset, setValue } = useForm<BundleFormValues>({
     resolver: zodResolver(bundleFormSchema),
     defaultValues: emptyValues,
   });
@@ -144,7 +147,7 @@ export const BundleFormSheet = ({
     name: "slabs",
   });
 
-  const linkMode = watch("linkMode");
+  const linkMode = useWatch({ control, name: "linkMode" });
 
   useEffect(() => {
     if (open) {
@@ -170,8 +173,8 @@ export const BundleFormSheet = ({
       toast.success("Bundle created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create bundle");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create bundle"));
     },
   });
 
@@ -191,8 +194,8 @@ export const BundleFormSheet = ({
       toast.success("Bundle updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update bundle");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update bundle"));
     },
   });
 
@@ -258,7 +261,9 @@ export const BundleFormSheet = ({
                 name="productId"
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="productId">Product</FieldLabel>
+                    <FieldLabel htmlFor="productId">
+                      Product{isLoadingProducts && <Loader2 className="inline-block ml-1.5 size-3 animate-spin text-muted-foreground" />}
+                    </FieldLabel>
                     <Select
                       {...field}
                       onValueChange={field.onChange}
@@ -333,7 +338,9 @@ export const BundleFormSheet = ({
                 name="purchaseInvoiceId"
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="purchaseInvoiceId">Purchase Invoice</FieldLabel>
+                    <FieldLabel htmlFor="purchaseInvoiceId">
+                      Purchase Invoice{isLoadingInvoices && <Loader2 className="inline-block ml-1.5 size-3 animate-spin text-muted-foreground" />}
+                    </FieldLabel>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
@@ -369,7 +376,9 @@ export const BundleFormSheet = ({
                 name="supplierId"
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="supplierId">Supplier</FieldLabel>
+                    <FieldLabel htmlFor="supplierId">
+                      Supplier{isLoadingSuppliers && <Loader2 className="inline-block ml-1.5 size-3 animate-spin text-muted-foreground" />}
+                    </FieldLabel>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
@@ -434,6 +443,11 @@ export const BundleFormSheet = ({
                     step="0.1"
                     {...field}
                     value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === "" ? undefined : e.target.valueAsNumber,
+                      )
+                    }
                     placeholder="e.g. 2.0"
                   />
                   {fieldState.invalid && (
@@ -525,6 +539,7 @@ export const BundleFormSheet = ({
                                   min={0}
                                   step="0.1"
                                   {...field}
+                                  onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
                                   placeholder="120.5"
                                 />
                                 {fieldState.invalid && (
@@ -549,6 +564,7 @@ export const BundleFormSheet = ({
                                   min={0}
                                   step="0.1"
                                   {...field}
+                                  onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
                                   placeholder="240.0"
                                 />
                                 {fieldState.invalid && (

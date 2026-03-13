@@ -117,13 +117,11 @@ export const ProductFilters = ({ filters, onChange }: ProductFiltersProps) => {
   const { data: categories = [] } = useQuery({
     queryKey: categoryKeys.active,
     queryFn: getActiveCategoriesAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const { data: brands = [] } = useQuery({
     queryKey: brandKeys.active,
     queryFn: getActiveBrandsAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   // Sync local input when parent resets the search (e.g. "Clear filters").

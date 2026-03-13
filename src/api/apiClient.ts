@@ -15,6 +15,15 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Extracts a user-friendly error message from any thrown value.
+ * ApiError messages come from the backend and are safe to show directly.
+ * All other errors fall back to the provided fallback string.
+ */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
+}
+
 type RequestConfigWithRetry = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const apiClient = axios.create({

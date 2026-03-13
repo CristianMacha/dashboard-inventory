@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getCashflowAction } from "@/admin/actions/get-cashflow.action";
 import { cashflowKeys } from "@/admin/queryKeys";
+import { QueryError } from "@/components/ui/query-error";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -82,7 +83,7 @@ export const CashflowPage = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: cashflowKeys.summary({
       fromDate: fromDate || undefined,
       toDate: toDate || undefined,
@@ -163,6 +164,8 @@ export const CashflowPage = () => {
           </Button>
         )}
       </div>
+
+      {isError && <QueryError onRetry={() => void refetch()} />}
 
       {/* Balance highlight */}
       <Card

@@ -1,9 +1,11 @@
+import { getErrorMessage } from "@/api/apiClient";
+import { usePageParam } from "@/admin/hooks/usePageParam";
 import { useState, useMemo, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { Loader2, PlusIcon, X } from "lucide-react";
 import { toast } from "sonner";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, Controller, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -174,7 +176,7 @@ export const GeneralPaymentsPage = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Filters
-  const [page, setPage] = useState(1);
+  const { page, setPage } = usePageParam();
   const [type, setType] = useState("");
   const [category, setCategory] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -238,8 +240,7 @@ export const GeneralPaymentsPage = () => {
 
   // Form
   const { control, handleSubmit, reset, setValue } = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       type: "EXPENSE",
       paymentDate: new Date().toISOString().split("T")[0],
@@ -267,12 +268,11 @@ export const GeneralPaymentsPage = () => {
       setSheetOpen(false);
       reset();
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to record payment");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to record payment"));
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = (values: FormValues) => {
     createMutation.mutate({
       type: values.type,

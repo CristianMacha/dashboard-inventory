@@ -73,7 +73,7 @@ import { cancelInvoiceAction } from "@/admin/actions/cancel-invoice.action";
 import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
 import { getBundlesSelectAction } from "@/admin/actions/get-bundles-select.action";
 import { purchaseInvoiceKeys, supplierKeys, bundleKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import { INVOICE_STATUS_CONFIG } from "@/lib/purchase-invoice-status";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -169,8 +169,8 @@ function CreateInvoiceForm() {
       toast.success("Invoice created successfully");
       void navigate(`/purchase-invoices/${result.id}`);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create invoice");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create invoice"));
     },
   });
 
@@ -351,8 +351,8 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       void queryClient.invalidateQueries({ queryKey: purchaseInvoiceKeys.lists() });
       toast.success("Invoice status updated");
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update status");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update status"));
     },
   });
 
@@ -365,8 +365,8 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       void queryClient.invalidateQueries({ queryKey: bundleKeys.lists() });
       toast.success("Item removed");
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to remove item");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to remove item"));
     },
   });
 
@@ -626,8 +626,8 @@ function AddItemSheet({
       toast.success("Item added");
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to add item");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to add item"));
     },
   });
 

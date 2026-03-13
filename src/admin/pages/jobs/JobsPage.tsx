@@ -1,3 +1,4 @@
+import { usePageParam } from "@/admin/hooks/usePageParam";
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, Search, X } from "lucide-react";
@@ -33,7 +34,7 @@ import { jobColumns } from "./Columns";
 const DEFAULT_PAGE_SIZE = 10;
 
 export const JobsPage = () => {
-  const [page, setPage] = useState(1);
+  const { page, setPage } = usePageParam();
   const [searchInput, setSearchInput] = useState("");
   const [status, setStatus] = useState<string>("");
   const debouncedSearch = useDebounce(searchInput, 400);

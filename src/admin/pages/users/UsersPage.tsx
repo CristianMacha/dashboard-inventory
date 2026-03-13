@@ -53,7 +53,6 @@ export const UsersPage = () => {
   const { data: rolesData } = useQuery({
     queryKey: roleKeys.all,
     queryFn: getRolesAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const queryParams = useMemo(

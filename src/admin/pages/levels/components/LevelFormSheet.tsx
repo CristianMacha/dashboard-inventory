@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ import {
 import { createLevelAction } from "@/admin/actions/create-level.action";
 import { updateLevelAction } from "@/admin/actions/update-level.action";
 import { levelKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { LevelResponse } from "@/interfaces/level.response";
 
 const levelFormSchema = z.object({
@@ -68,7 +68,7 @@ export const LevelFormSheet = ({
   const isEditing = !!editingLevel;
 
   const form = useForm<LevelFormValues>({
-    resolver: zodResolver(levelFormSchema),
+    resolver: zodResolver(levelFormSchema) as Resolver<LevelFormValues>,
     defaultValues: emptyValues,
   });
 
@@ -89,8 +89,8 @@ export const LevelFormSheet = ({
       toast.success("Level created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create level");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create level"));
     },
   });
 
@@ -102,8 +102,8 @@ export const LevelFormSheet = ({
       toast.success("Level updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update level");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update level"));
     },
   });
 

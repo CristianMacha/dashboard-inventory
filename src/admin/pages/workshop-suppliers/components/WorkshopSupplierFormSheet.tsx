@@ -28,7 +28,7 @@ import {
 import { createWorkshopSupplierAction } from "@/admin/actions/create-workshop-supplier.action";
 import { updateWorkshopSupplierAction } from "@/admin/actions/update-workshop-supplier.action";
 import { workshopSupplierKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopSupplierResponse } from "@/interfaces/workshop-supplier.response";
 
 const supplierFormSchema = z.object({
@@ -94,8 +94,8 @@ export const WorkshopSupplierFormSheet = ({
       toast.success("Supplier created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create supplier");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create supplier"));
     },
   });
 
@@ -113,8 +113,8 @@ export const WorkshopSupplierFormSheet = ({
       toast.success("Supplier updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update supplier");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update supplier"));
     },
   });
 

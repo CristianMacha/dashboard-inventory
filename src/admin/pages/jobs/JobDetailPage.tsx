@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ import { getProductsForSelectAction } from "@/admin/actions/get-products-for-sel
 import { getBundlesAction } from "@/admin/actions/get-bundles.action";
 import { getBundleByIdAction } from "@/admin/actions/get-bundle-by-id.action";
 import { jobKeys, bundleKeys, productSelectKeys, slabKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import { JOB_STATUS_CONFIG } from "@/lib/job-status";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -170,8 +170,8 @@ function CreateJobForm() {
       toast.success("Job created successfully");
       void navigate(`/jobs/${result.id}`);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create job");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create job"));
     },
   });
 
@@ -381,40 +381,40 @@ function JobDetail({ jobId }: { jobId: string }) {
     queryFn: () => getJobByIdAction(jobId),
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async (action: "approve" | "start" | "complete" | "cancel") => {
+      if (action === "approve") return approveJobAction(jobId);
+      if (action === "start") return startJobAction(jobId);
+      if (action === "complete") return completeJobAction(jobId);
+      return cancelJobAction(jobId);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: jobKeys.detail(jobId) });
+      void queryClient.invalidateQueries({ queryKey: jobKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: slabKeys.all });
+      toast.success("Job status updated");
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update status"));
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (itemId: string) => removeJobItemAction(jobId, itemId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: jobKeys.detail(jobId) });
+      toast.success("Item removed");
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to remove item"));
+    },
+  });
+
   if (!job) return null;
 
   const statusConfig = JOB_STATUS_CONFIG[job.status];
   const actions = getAvailableActions(job.status);
   const canAddItems = job.status === "QUOTED";
-
-  const statusMutation = useMutation({
-    mutationFn: async (action: "approve" | "start" | "complete" | "cancel") => {
-      if (action === "approve") return approveJobAction(job.id);
-      if (action === "start") return startJobAction(job.id);
-      if (action === "complete") return completeJobAction(job.id);
-      return cancelJobAction(job.id);
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.detail(job.id) });
-      void queryClient.invalidateQueries({ queryKey: jobKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: slabKeys.all });
-      toast.success("Job status updated");
-    },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update status");
-    },
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: (itemId: string) => removeJobItemAction(job.id, itemId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.detail(job.id) });
-      toast.success("Item removed");
-    },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to remove item");
-    },
-  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -621,6 +621,7 @@ function JobDetail({ jobId }: { jobId: string }) {
       )}
 
       <AddSlabSheet
+        key={itemSheetOpen ? "open" : "closed"}
         jobId={job.id}
         open={itemSheetOpen}
         onOpenChange={setItemSheetOpen}
@@ -662,8 +663,7 @@ function EditJobSheet({
   const queryClient = useQueryClient();
 
   const { control, handleSubmit, reset } = useForm<EditFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(editSchema) as any,
+    resolver: zodResolver(editSchema) as Resolver<EditFormValues>,
     defaultValues: {
       projectName: job.projectName,
       clientName: job.clientName,
@@ -711,12 +711,12 @@ function EditJobSheet({
       toast.success("Job updated");
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update job");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update job"));
     },
   });
 
-  const onSubmit = (values: EditFormValues) => mutation.mutate(values as EditFormValues);
+  const onSubmit = (values: EditFormValues) => mutation.mutate(values);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -882,17 +882,6 @@ function AddSlabSheet({
   // Which slab IDs are checked in the current bundle view
   const [checkedSlabIds, setCheckedSlabIds] = useState<Set<string>>(new Set());
 
-  // Reset everything when sheet opens/closes
-  useEffect(() => {
-    if (open) {
-      setProductId("");
-      setBundleId("");
-      setUnitPrice(0);
-      setDescription("");
-      setCart([]);
-      setCheckedSlabIds(new Set());
-    }
-  }, [open]);
 
   // Step 1 — products for select
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
@@ -980,8 +969,8 @@ function AddSlabSheet({
       toast.success(`${cart.length} slab${cart.length !== 1 ? "s" : ""} added to job`);
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to add slabs");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to add slabs"));
     },
   });
 

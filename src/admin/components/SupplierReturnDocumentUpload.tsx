@@ -9,7 +9,7 @@ import {
   getSupplierReturnDocumentUrlAction,
 } from "@/admin/actions/upload-supplier-return-document.action";
 import { supplierReturnKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 
 interface SupplierReturnDocumentUploadProps {
   returnId: string;
@@ -40,7 +40,7 @@ export const SupplierReturnDocumentUpload = ({
       toast.success("Document uploaded");
     },
     onError: (err: Error) => {
-      toast.error(err instanceof ApiError ? err.message : "Failed to upload document");
+      toast.error(getErrorMessage(err, "Failed to upload document"));
     },
   });
 

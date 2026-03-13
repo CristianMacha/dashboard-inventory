@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/api/apiClient";
 import { Navigate, useParams, useNavigate } from "react-router";
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -79,7 +80,6 @@ const emptyFormValues: FormValues = {
   isOnline: true,
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 function productToFormValues(p: ProductResponse): FormValues {
   return {
     name: p.name,
@@ -91,7 +91,6 @@ function productToFormValues(p: ProductResponse): FormValues {
     isOnline: p.isOnline,
   };
 }
-/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
 // ---------------------------------------------------------------------------
 // Wrapper: loads data, shows loading, then renders the form
@@ -219,8 +218,8 @@ const ProductForm = ({
       toast.success("Product created successfully");
       void navigate("/products");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create product");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create product"));
     },
   });
 
@@ -237,8 +236,8 @@ const ProductForm = ({
       toast.success("Product updated successfully");
       void navigate("/products");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update product");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update product"));
     },
   });
 

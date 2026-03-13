@@ -40,7 +40,7 @@ import { getWorkshopToolMovementsAction } from "@/admin/actions/get-workshop-too
 import { changeWorkshopToolStatusAction } from "@/admin/actions/change-workshop-tool-status.action";
 import { workshopToolKeys } from "@/admin/queryKeys";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import { WorkshopToolFormSheet } from "./components/WorkshopToolFormSheet";
 import type { WorkshopToolStatus } from "@/interfaces/workshop-tool.response";
 
@@ -142,8 +142,8 @@ export const WorkshopToolDetailPage = () => {
       setSelectedStatus("");
       setStatusNotes("");
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update status");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update status"));
     },
   });
 
@@ -209,7 +209,7 @@ export const WorkshopToolDetailPage = () => {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
             <ArrowLeftIcon className="size-4" />
             Back
           </Button>

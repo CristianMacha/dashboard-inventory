@@ -19,7 +19,7 @@ import { useListPageState } from "@/admin/hooks/useListPageState";
 import { getWorkshopSuppliersAction } from "@/admin/actions/get-workshop-suppliers.action";
 import { updateWorkshopSupplierAction } from "@/admin/actions/update-workshop-supplier.action";
 import { workshopSupplierKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopSupplierResponse } from "@/interfaces/workshop-supplier.response";
 
 import { workshopSupplierColumns } from "./Columns";
@@ -39,7 +39,6 @@ export const WorkshopSuppliersPage = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: workshopSupplierKeys.list(),
     queryFn: getWorkshopSuppliersAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const toggleActiveMutation = useMutation({
@@ -51,8 +50,8 @@ export const WorkshopSuppliersPage = () => {
         `Supplier ${supplier.isActive ? "deactivated" : "activated"} successfully`,
       );
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update supplier status");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update supplier status"));
     },
   });
 

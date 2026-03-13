@@ -28,7 +28,7 @@ import {
 import { createWorkshopCategoryAction } from "@/admin/actions/create-workshop-category.action";
 import { updateWorkshopCategoryAction } from "@/admin/actions/update-workshop-category.action";
 import { workshopCategoryKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopCategoryResponse } from "@/interfaces/workshop-category.response";
 
 const categoryFormSchema = z.object({
@@ -85,8 +85,8 @@ export const WorkshopCategoryFormSheet = ({
       toast.success("Category created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create category");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create category"));
     },
   });
 
@@ -101,8 +101,8 @@ export const WorkshopCategoryFormSheet = ({
       toast.success("Category updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update category");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update category"));
     },
   });
 

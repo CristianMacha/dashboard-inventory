@@ -26,7 +26,7 @@ import {
 import { createSupplierAction } from "@/admin/actions/create-supplier.action";
 import { updateSupplierAction } from "@/admin/actions/update-supplier.action";
 import { supplierKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { SupplierResponse } from "@/interfaces/supplier.response";
 
 const supplierFormSchema = z.object({
@@ -84,8 +84,8 @@ export const SupplierFormSheet = ({
       toast.success("Supplier created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create supplier");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create supplier"));
     },
   });
 
@@ -97,8 +97,8 @@ export const SupplierFormSheet = ({
       toast.success("Supplier updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update supplier");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update supplier"));
     },
   });
 

@@ -20,7 +20,7 @@ import { useListPageState } from "@/admin/hooks/useListPageState";
 import { getWorkshopToolsAction } from "@/admin/actions/get-workshop-tools.action";
 import { deleteWorkshopToolAction } from "@/admin/actions/delete-workshop-tool.action";
 import { workshopToolKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopToolResponse } from "@/interfaces/workshop-tool.response";
 
 import { workshopToolColumns } from "./Columns";
@@ -44,7 +44,6 @@ export const WorkshopToolsPage = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: workshopToolKeys.list({ page, limit: PAGE_LIMIT }),
     queryFn: () => getWorkshopToolsAction({ page, limit: PAGE_LIMIT }),
-    staleTime: 5 * 60 * 1000,
   });
 
   const deleteMutation = useMutation({
@@ -53,8 +52,8 @@ export const WorkshopToolsPage = () => {
       void queryClient.invalidateQueries({ queryKey: workshopToolKeys.lists() });
       toast.success(`Tool "${tool.name}" deleted successfully`);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to delete tool");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to delete tool"));
     },
   });
 

@@ -1,3 +1,4 @@
+import { usePageParam } from "@/admin/hooks/usePageParam";
 import { useState, useMemo, useCallback } from "react";
 import { Summary } from "./components/Summary";
 import { ProductFilters } from "./components/ProductFilters";
@@ -17,6 +18,7 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { CustomPagination } from "@/components/ui/custom/CustomPagination";
+import { QueryError } from "@/components/ui/query-error";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -31,7 +33,7 @@ const DEFAULT_FILTERS: ProductFiltersValue = {
 };
 
 export const ProductsPage = () => {
-  const [page, setPage] = useState(1);
+  const { page, setPage } = usePageParam();
   const [filters, setFilters] = useState<ProductFiltersValue>(DEFAULT_FILTERS);
   const pageSize = DEFAULT_PAGE_SIZE;
   const isMobile = useIsMobile();
@@ -56,7 +58,7 @@ export const ProductsPage = () => {
     [page, pageSize, filters.search, filters.brandIds, filters.categoryIds],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: productKeys.list(queryParams),
     queryFn: () => getProductsAction(queryParams),
   });
@@ -110,27 +112,31 @@ export const ProductsPage = () => {
 
       <ProductFilters filters={filters} onChange={handleFiltersChange} />
 
-      <div className="overflow-x-auto rounded-md border">
-        <DataTable
-          columns={columns}
-          data={data?.data ?? []}
-          columnVisibility={columnVisibility}
-          tableClassName={isMobile ? undefined : "min-w-[600px]"}
-          isLoading={isLoading}
-          emptyMessage="No products found. Try adjusting your filters."
-        />
-        <div className="p-4 border-t bg-muted">
-          <CustomPagination
-            page={page}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            pageSize={pageSize}
-            itemLabel="products"
-            onPageChange={setPage}
-            disabled={isLoading}
+      {isError ? (
+        <QueryError onRetry={() => void refetch()} />
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <DataTable
+            columns={columns}
+            data={data?.data ?? []}
+            columnVisibility={columnVisibility}
+            tableClassName={isMobile ? undefined : "min-w-[600px]"}
+            isLoading={isLoading}
+            emptyMessage="No products found. Try adjusting your filters."
           />
+          <div className="p-4 border-t bg-muted">
+            <CustomPagination
+              page={page}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              pageSize={pageSize}
+              itemLabel="products"
+              onPageChange={setPage}
+              disabled={isLoading}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <BundleFormSheet
         open={bundleSheetOpen}

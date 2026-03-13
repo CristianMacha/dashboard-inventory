@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BackOfficeApp } from "./BackOfficeApp";
+import { BackOfficeApp } from "./BackofficeApp";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(

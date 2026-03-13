@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/api/apiClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -38,7 +39,6 @@ export const CategoriesPage = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: categoryKeys.list(),
     queryFn: getCategoriesAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const toggleActiveMutation = useMutation({
@@ -50,8 +50,8 @@ export const CategoriesPage = () => {
         `Category ${category.isActive ? "deactivated" : "activated"} successfully`,
       );
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update category status");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update category status"));
     },
   });
 

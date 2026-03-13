@@ -1,3 +1,4 @@
+import { usePageParam } from "@/admin/hooks/usePageParam";
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -112,7 +113,7 @@ const invoicePaymentColumns: ColumnDef<InvoicePaymentResponse>[] = [
 const DEFAULT_PAGE_SIZE = 10;
 
 export const InvoicePaymentsPage = () => {
-  const [page, setPage] = useState(1);
+  const { page, setPage } = usePageParam();
   const [paymentMethod, setPaymentMethod] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");

@@ -29,7 +29,7 @@ import { createRoleAction } from "@/admin/actions/create-role.action";
 import { updateRoleAction } from "@/admin/actions/update-role.action";
 import { getPermissionsAction } from "@/admin/actions/get-permissions.action";
 import { roleKeys, permissionKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { RoleResponse, PermissionResponse } from "@/interfaces/user.response";
 
 const roleFormSchema = z.object({
@@ -65,7 +65,6 @@ export const RoleFormSheet = ({
   const { data: permissions = [], isLoading: permissionsLoading } = useQuery({
     queryKey: permissionKeys.all,
     queryFn: getPermissionsAction,
-    staleTime: 5 * 60 * 1000,
     enabled: open,
   });
 
@@ -99,8 +98,8 @@ export const RoleFormSheet = ({
       toast.success("Role created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create role");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create role"));
     },
   });
 
@@ -115,8 +114,8 @@ export const RoleFormSheet = ({
       toast.success("Role updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update role");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update role"));
     },
   });
 

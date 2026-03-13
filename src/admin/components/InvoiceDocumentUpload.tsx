@@ -9,7 +9,7 @@ import {
   getInvoiceDocumentUrlAction,
 } from "@/admin/actions/upload-invoice-document.action";
 import { purchaseInvoiceKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 
 interface InvoiceDocumentUploadProps {
   invoiceId: string;
@@ -40,7 +40,7 @@ export const InvoiceDocumentUpload = ({
       toast.success("Document uploaded");
     },
     onError: (err: Error) => {
-      toast.error(err instanceof ApiError ? err.message : "Failed to upload document");
+      toast.error(getErrorMessage(err, "Failed to upload document"));
     },
   });
 

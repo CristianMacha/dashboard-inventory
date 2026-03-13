@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -65,7 +65,7 @@ import { createSupplierReturnAction } from "@/admin/actions/create-supplier-retu
 import { addReturnItemAction } from "@/admin/actions/add-return-item.action";
 import { bundleKeys, supplierReturnSelectKeys } from "@/admin/queryKeys";
 import { formatDate } from "@/lib/format";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { SlabInBundleDetail } from "@/interfaces/bundle.response";
 import type { ReturnItemReason } from "@/interfaces/supplier-return.response";
 
@@ -162,8 +162,7 @@ function ReturnSlabSheet({
     reset,
     formState: { errors },
   } = useForm<ReturnSlabValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(returnSlabSchema) as any,
+    resolver: zodResolver(returnSlabSchema) as Resolver<ReturnSlabValues>,
     defaultValues: { reason: "DEFECTIVE", unitCost: 0 },
   });
 
@@ -209,8 +208,8 @@ function ReturnSlabSheet({
       onOpenChange(false);
       onSuccess();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to add slab to return");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to add slab to return"));
     },
   });
 
@@ -235,7 +234,7 @@ function ReturnSlabSheet({
         </SheetHeader>
 
         <form
-          onSubmit={handleSubmit((values) => addItemMutation.mutate(values as ReturnSlabValues))}
+          onSubmit={(e) => { void handleSubmit((values) => addItemMutation.mutate(values))(e); }}
           className="flex flex-col gap-4 p-4"
         >
           <FieldGroup>

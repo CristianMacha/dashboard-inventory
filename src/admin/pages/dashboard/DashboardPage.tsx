@@ -21,6 +21,7 @@ import { useAuthStore } from "@/auth/store/auth.store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { QueryError } from "@/components/ui/query-error";
 import { JOB_STATUS_CONFIG } from "@/lib/job-status";
 import { formatDate } from "@/lib/format";
 
@@ -161,12 +162,12 @@ function SectionHeader({
 export const DashboardPage = () => {
   const { user } = useAuthStore();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: summaryKeys.all,
     queryFn: getSummaryAction,
   });
 
-  const { data: recentJobsData, isLoading: jobsLoading } = useQuery({
+  const { data: recentJobsData, isLoading: jobsLoading, isError: jobsError, refetch: refetchJobs } = useQuery({
     queryKey: jobKeys.list({ page: 1, limit: 5 }),
     queryFn: () => getJobsAction({ page: 1, limit: 5 }),
   });
@@ -201,6 +202,9 @@ export const DashboardPage = () => {
       {/* Overview metrics */}
       <div>
         <SectionHeader icon={TrendingUp} title="Overview" />
+        {isError ? (
+          <QueryError onRetry={() => void refetch()} />
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {METRIC_CARDS.map(({ key, label, icon: Icon, color, bg, href }) => (
             <Link key={key} to={href}>
@@ -228,6 +232,7 @@ export const DashboardPage = () => {
             </Link>
           ))}
         </div>
+        )}
       </div>
 
       {/* Cashflow summary */}
@@ -391,6 +396,9 @@ export const DashboardPage = () => {
           linkTo="/jobs"
           linkLabel="View all"
         />
+        {jobsError ? (
+          <QueryError onRetry={() => void refetchJobs()} />
+        ) : (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -479,6 +487,7 @@ export const DashboardPage = () => {
             </table>
           </div>
         </Card>
+        )}
       </div>
     </div>
   );

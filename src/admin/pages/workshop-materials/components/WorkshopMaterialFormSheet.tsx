@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ import { getWorkshopCategoriesAction } from "@/admin/actions/get-workshop-catego
 import { getWorkshopSuppliersAction } from "@/admin/actions/get-workshop-suppliers.action";
 import { workshopMaterialKeys, workshopCategoryKeys, workshopSupplierKeys } from "@/admin/queryKeys";
 import { WorkshopMaterialImageUpload } from "@/admin/components/WorkshopMaterialImageUpload";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopMaterialResponse } from "@/interfaces/workshop-material.response";
 
 const materialFormSchema = z.object({
@@ -95,7 +95,7 @@ export const WorkshopMaterialFormSheet = ({
   const handleClose = () => onOpenChange(false);
 
   const form = useForm<MaterialFormValues>({
-    resolver: zodResolver(materialFormSchema),
+    resolver: zodResolver(materialFormSchema) as Resolver<MaterialFormValues>,
     defaultValues: emptyValues,
   });
 
@@ -110,13 +110,11 @@ export const WorkshopMaterialFormSheet = ({
   const { data: categories = [] } = useQuery({
     queryKey: workshopCategoryKeys.list(),
     queryFn: getWorkshopCategoriesAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const { data: suppliers = [] } = useQuery({
     queryKey: workshopSupplierKeys.list(),
     queryFn: getWorkshopSuppliersAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const activeSuppliers = suppliers.filter((s) => s.isActive);
@@ -128,8 +126,8 @@ export const WorkshopMaterialFormSheet = ({
       toast.success("Material created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create material");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create material"));
     },
   });
 
@@ -152,8 +150,8 @@ export const WorkshopMaterialFormSheet = ({
       toast.success("Material updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update material");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update material"));
     },
   });
 

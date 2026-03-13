@@ -49,7 +49,7 @@ import { getWorkshopMaterialMovementsAction } from "@/admin/actions/get-workshop
 import { registerMaterialMovementAction } from "@/admin/actions/register-material-movement.action";
 import { workshopMaterialKeys } from "@/admin/queryKeys";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import { WorkshopMaterialFormSheet } from "./components/WorkshopMaterialFormSheet";
 import type { MaterialMovementReason } from "@/interfaces/workshop-material.response";
 
@@ -176,12 +176,8 @@ export const WorkshopMaterialDetailPage = () => {
       setMovementNotes("");
       setMovementReason("compra");
     },
-    onError: (error: Error) => {
-      toast.error(
-        error instanceof ApiError
-          ? error.message
-          : "Failed to register movement",
-      );
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to register movement"));
     },
   });
 
@@ -279,7 +275,7 @@ export const WorkshopMaterialDetailPage = () => {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
             <ArrowLeftIcon className="size-4" />
             Back
           </Button>

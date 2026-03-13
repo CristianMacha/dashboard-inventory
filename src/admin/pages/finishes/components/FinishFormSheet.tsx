@@ -28,7 +28,7 @@ import {
 import { createFinishAction } from "@/admin/actions/create-finish.action";
 import { updateFinishAction } from "@/admin/actions/update-finish.action";
 import { finishKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { FinishResponse } from "@/interfaces/finish.response";
 
 const finishFormSchema = z.object({
@@ -89,8 +89,8 @@ export const FinishFormSheet = ({
       toast.success("Finish created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create finish");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create finish"));
     },
   });
 
@@ -102,8 +102,8 @@ export const FinishFormSheet = ({
       toast.success("Finish updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update finish");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update finish"));
     },
   });
 

@@ -6,7 +6,7 @@ import { ImagePlus, Pencil, Loader2 } from "lucide-react";
 import { uploadBundleImageAction } from "@/admin/actions/upload-bundle-image.action";
 import { bundleKeys } from "@/admin/queryKeys";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 
 interface BundleImageUploadProps {
   bundleId: string;
@@ -27,7 +27,7 @@ export const BundleImageUpload = ({
       toast.success("Image uploaded");
     },
     onError: (err: Error) => {
-      toast.error(err instanceof ApiError ? err.message : "Failed to upload image");
+      toast.error(getErrorMessage(err, "Failed to upload image"));
     },
   });
 

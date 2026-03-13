@@ -20,7 +20,7 @@ import { useListPageState } from "@/admin/hooks/useListPageState";
 import { getWorkshopMaterialsAction } from "@/admin/actions/get-workshop-materials.action";
 import { deleteWorkshopMaterialAction } from "@/admin/actions/delete-workshop-material.action";
 import { workshopMaterialKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopMaterialResponse } from "@/interfaces/workshop-material.response";
 
 import { workshopMaterialColumns } from "./Columns";
@@ -44,7 +44,6 @@ export const WorkshopMaterialsPage = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: workshopMaterialKeys.list({ page, limit: PAGE_LIMIT }),
     queryFn: () => getWorkshopMaterialsAction({ page, limit: PAGE_LIMIT }),
-    staleTime: 5 * 60 * 1000,
   });
 
   const deleteMutation = useMutation({
@@ -54,8 +53,8 @@ export const WorkshopMaterialsPage = () => {
       void queryClient.invalidateQueries({ queryKey: workshopMaterialKeys.lists() });
       toast.success(`Material "${material.name}" deleted successfully`);
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to delete material");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to delete material"));
     },
   });
 

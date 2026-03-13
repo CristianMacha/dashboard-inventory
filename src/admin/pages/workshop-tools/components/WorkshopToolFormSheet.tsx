@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ import { getWorkshopCategoriesAction } from "@/admin/actions/get-workshop-catego
 import { getWorkshopSuppliersAction } from "@/admin/actions/get-workshop-suppliers.action";
 import { workshopToolKeys, workshopCategoryKeys, workshopSupplierKeys } from "@/admin/queryKeys";
 import { WorkshopToolImageUpload } from "@/admin/components/WorkshopToolImageUpload";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopToolResponse } from "@/interfaces/workshop-tool.response";
 
 const toolFormSchema = z.object({
@@ -89,7 +89,7 @@ export const WorkshopToolFormSheet = ({
   const handleClose = () => onOpenChange(false);
 
   const form = useForm<ToolFormValues>({
-    resolver: zodResolver(toolFormSchema),
+    resolver: zodResolver(toolFormSchema) as Resolver<ToolFormValues>,
     defaultValues: emptyValues,
   });
 
@@ -104,13 +104,11 @@ export const WorkshopToolFormSheet = ({
   const { data: categories = [] } = useQuery({
     queryKey: workshopCategoryKeys.list(),
     queryFn: getWorkshopCategoriesAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const { data: suppliers = [] } = useQuery({
     queryKey: workshopSupplierKeys.list(),
     queryFn: getWorkshopSuppliersAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const activeSuppliers = suppliers.filter((s) => s.isActive);
@@ -122,8 +120,8 @@ export const WorkshopToolFormSheet = ({
       toast.success("Tool created successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to create tool");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create tool"));
     },
   });
 
@@ -144,8 +142,8 @@ export const WorkshopToolFormSheet = ({
       toast.success("Tool updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update tool");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update tool"));
     },
   });
 

@@ -7,7 +7,6 @@ export const useProductDetail = (id: string) => {
     queryKey: productKeys.fullDetail(id),
     queryFn: () => getProductDetailAction(id),
     enabled: Boolean(id),
-    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 };

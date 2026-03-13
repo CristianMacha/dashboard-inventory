@@ -3,14 +3,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ImagePlus, Trash2, Loader2, Star } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   uploadProductImageAction,
   deleteProductImageAction,
 } from "@/admin/actions/upload-product-image.action";
 import { productKeys } from "@/admin/queryKeys";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { ProductImageResponse } from "@/interfaces/product.response";
 
 const MAX_IMAGES = 5;
@@ -34,7 +33,7 @@ export const ProductImageUpload = ({
       toast.success("Image uploaded");
     },
     onError: (err: Error) => {
-      toast.error(err instanceof ApiError ? err.message : "Failed to upload image");
+      toast.error(getErrorMessage(err, "Failed to upload image"));
     },
   });
 
@@ -45,7 +44,7 @@ export const ProductImageUpload = ({
       toast.success("Image deleted");
     },
     onError: (err: Error) => {
-      toast.error(err instanceof ApiError ? err.message : "Failed to delete image");
+      toast.error(getErrorMessage(err, "Failed to delete image"));
     },
   });
 
@@ -56,7 +55,7 @@ export const ProductImageUpload = ({
     e.target.value = "";
   };
 
-  const canUpload = images.length < MAX_IMAGES && !uploadMutation.isPending;
+  const canUpload = images.length < MAX_IMAGES;
 
   return (
     <div className="space-y-3">

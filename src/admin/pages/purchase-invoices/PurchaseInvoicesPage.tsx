@@ -1,3 +1,4 @@
+import { usePageParam } from "@/admin/hooks/usePageParam";
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, Search, X } from "lucide-react";
@@ -34,7 +35,7 @@ import { purchaseInvoiceColumns } from "./Columns";
 const DEFAULT_PAGE_SIZE = 10;
 
 export const PurchaseInvoicesPage = () => {
-  const [page, setPage] = useState(1);
+  const { page, setPage } = usePageParam();
   const [searchInput, setSearchInput] = useState("");
   const [supplierId, setSupplierId] = useState<string>("");
   const [status, setStatus] = useState<string>("");

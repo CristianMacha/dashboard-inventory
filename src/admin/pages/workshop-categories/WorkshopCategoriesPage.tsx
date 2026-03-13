@@ -34,7 +34,6 @@ export const WorkshopCategoriesPage = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: workshopCategoryKeys.list(),
     queryFn: getWorkshopCategoriesAction,
-    staleTime: 5 * 60 * 1000,
   });
 
   const columns = workshopCategoryColumns({ onEdit: openEdit });

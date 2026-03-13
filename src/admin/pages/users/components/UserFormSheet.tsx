@@ -28,7 +28,7 @@ import {
 import { updateUserAction } from "@/admin/actions/update-user.action";
 import { getRolesAction } from "@/admin/actions/get-roles.action";
 import { userKeys, roleKeys } from "@/admin/queryKeys";
-import { ApiError } from "@/api/apiClient";
+import { getErrorMessage } from "@/api/apiClient";
 import type { UserResponse } from "@/interfaces/user.response";
 
 const userFormSchema = z.object({
@@ -54,7 +54,6 @@ export const UserFormSheet = ({
   const { data: roles = [], isLoading: rolesLoading } = useQuery({
     queryKey: roleKeys.all,
     queryFn: getRolesAction,
-    staleTime: 5 * 60 * 1000,
     enabled: open,
   });
 
@@ -87,8 +86,8 @@ export const UserFormSheet = ({
       toast.success("User updated successfully");
       handleClose();
     },
-    onError: (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : "Failed to update user");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update user"));
     },
   });
 
