@@ -148,6 +148,7 @@ export const BundleFormSheet = ({
   });
 
   const linkMode = useWatch({ control, name: "linkMode" });
+  const slabValues = useWatch({ control, name: "slabs" });
 
   useEffect(() => {
     if (open) {
@@ -201,6 +202,16 @@ export const BundleFormSheet = ({
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const products = productsData?.data ?? [];
+
+  const appendSlab = () => {
+    const last = slabValues?.[slabValues.length - 1];
+    append({
+      code: "",
+      widthCm: last?.widthCm ?? 0,
+      heightCm: last?.heightCm ?? 0,
+      description: "",
+    });
+  };
 
   const onSubmit = (values: BundleFormValues) => {
     if (isEditing) {
@@ -466,7 +477,7 @@ export const BundleFormSheet = ({
                   <button
                     type="button"
                     onClick={() =>
-                      append({ code: "", widthCm: 0, heightCm: 0, description: "" })
+                      appendSlab()
                     }
                     className="w-full rounded-lg border border-dashed p-5 text-center transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -605,7 +616,7 @@ export const BundleFormSheet = ({
                     variant="outline"
                     className="w-full"
                     onClick={() =>
-                      append({ code: "", widthCm: 0, heightCm: 0, description: "" })
+                      appendSlab()
                     }
                   >
                     <Plus className="size-4" />

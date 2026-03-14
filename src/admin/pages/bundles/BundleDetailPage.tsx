@@ -65,19 +65,11 @@ import { createSupplierReturnAction } from "@/admin/actions/create-supplier-retu
 import { addReturnItemAction } from "@/admin/actions/add-return-item.action";
 import { bundleKeys, supplierReturnSelectKeys } from "@/admin/queryKeys";
 import { formatDate } from "@/lib/format";
+import { SLAB_STATUS_CONFIG } from "@/lib/slab-status";
 import { getErrorMessage } from "@/api/apiClient";
 import type { SlabInBundleDetail } from "@/interfaces/bundle.response";
 import type { ReturnItemReason } from "@/interfaces/supplier-return.response";
 
-const SLAB_STATUS_CONFIG: Record<
-  SlabInBundleDetail["status"],
-  { label: string; variant: "default" | "secondary" | "outline" | "destructive" }
-> = {
-  AVAILABLE: { label: "Available", variant: "default" },
-  RESERVED: { label: "Reserved", variant: "secondary" },
-  SOLD: { label: "Sold", variant: "outline" },
-  RETURNED: { label: "Returned", variant: "destructive" },
-};
 
 const RETURN_REASONS: { value: ReturnItemReason; label: string }[] = [
   { value: "DEFECTIVE", label: "Defective" },
@@ -456,7 +448,7 @@ export const BundleDetailPage = () => {
                               {slab.dimensions}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={statusConfig.variant}>
+                              <Badge className={statusConfig.className}>
                                 {statusConfig.label}
                               </Badge>
                             </TableCell>
