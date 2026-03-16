@@ -167,7 +167,12 @@ export const DashboardPage = () => {
     queryFn: getSummaryAction,
   });
 
-  const { data: recentJobsData, isLoading: jobsLoading, isError: jobsError, refetch: refetchJobs } = useQuery({
+  const {
+    data: recentJobsData,
+    isLoading: jobsLoading,
+    isError: jobsError,
+    refetch: refetchJobs,
+  } = useQuery({
     queryKey: jobKeys.list({ page: 1, limit: 5 }),
     queryFn: () => getJobsAction({ page: 1, limit: 5 }),
   });
@@ -184,7 +189,7 @@ export const DashboardPage = () => {
     <div className="flex flex-col gap-8">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border bg-linear-to-br from-primary/10 via-primary/5 to-background px-7 py-6">
-        <div className="relative z-10">
+        <div className="relative">
           <p className="text-xs font-medium text-primary/70 uppercase tracking-widest mb-1">
             Dashboard
           </p>
@@ -205,33 +210,35 @@ export const DashboardPage = () => {
         {isError ? (
           <QueryError onRetry={() => void refetch()} />
         ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {METRIC_CARDS.map(({ key, label, icon: Icon, color, bg, href }) => (
-            <Link key={key} to={href}>
-              <Card className="hover:shadow-md hover:border-primary/30 transition-all cursor-pointer h-full group overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <div
-                      className={`inline-flex size-8 items-center justify-center rounded-lg ${bg} transition-transform group-hover:scale-110`}
-                    >
-                      <Icon className="size-4 text-white" />
-                    </div>
-                    <div>
-                      {isLoading ? (
-                        <Skeleton className="h-7 w-10 mb-1" />
-                      ) : (
-                        <p className="text-2xl font-bold tabular-nums">
-                          {metrics?.[key] ?? 0}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+            {METRIC_CARDS.map(({ key, label, icon: Icon, color, bg, href }) => (
+              <Link key={key} to={href}>
+                <Card className="hover:shadow-md hover:border-primary/30 transition-all cursor-pointer h-full group overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col gap-3">
+                      <div
+                        className={`inline-flex size-8 items-center justify-center rounded-lg ${bg} transition-transform group-hover:scale-110`}
+                      >
+                        <Icon className="size-4 text-white" />
+                      </div>
+                      <div>
+                        {isLoading ? (
+                          <Skeleton className="h-7 w-10 mb-1" />
+                        ) : (
+                          <p className="text-2xl font-bold tabular-nums">
+                            {metrics?.[key] ?? 0}
+                          </p>
+                        )}
+                        <p className={`text-xs font-medium ${color}`}>
+                          {label}
                         </p>
-                      )}
-                      <p className={`text-xs font-medium ${color}`}>{label}</p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
 
@@ -256,7 +263,9 @@ export const DashboardPage = () => {
                     <Skeleton className="h-8 w-28 mb-3" />
                   ) : (
                     <p className="text-2xl font-bold tabular-nums text-green-600 mb-2">
-                      {currencyFormatter.format(data?.accounting?.totalIngress ?? 0)}
+                      {currencyFormatter.format(
+                        data?.accounting?.totalIngress ?? 0,
+                      )}
                     </p>
                   )}
                   <div className="space-y-1 border-t pt-2">
@@ -266,7 +275,9 @@ export const DashboardPage = () => {
                         <Skeleton className="h-3 w-14" />
                       ) : (
                         <span className="tabular-nums font-medium">
-                          {currencyFormatter.format(data?.accounting?.totalIngress ?? 0)}
+                          {currencyFormatter.format(
+                            data?.accounting?.totalIngress ?? 0,
+                          )}
                         </span>
                       )}
                     </div>
@@ -291,7 +302,9 @@ export const DashboardPage = () => {
                     <Skeleton className="h-8 w-28 mb-3" />
                   ) : (
                     <p className="text-2xl font-bold tabular-nums text-red-600 mb-2">
-                      {currencyFormatter.format(data?.accounting?.totalEgress ?? 0)}
+                      {currencyFormatter.format(
+                        data?.accounting?.totalEgress ?? 0,
+                      )}
                     </p>
                   )}
                   <div className="space-y-1 border-t pt-2">
@@ -301,7 +314,9 @@ export const DashboardPage = () => {
                         <Skeleton className="h-3 w-14" />
                       ) : (
                         <span className="tabular-nums font-medium">
-                          {currencyFormatter.format(data?.accounting?.totalEgress ?? 0)}
+                          {currencyFormatter.format(
+                            data?.accounting?.totalEgress ?? 0,
+                          )}
                         </span>
                       )}
                     </div>
@@ -366,25 +381,27 @@ export const DashboardPage = () => {
       <div>
         <SectionHeader icon={Zap} title="Quick Actions" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {QUICK_ACTIONS.map(({ label, description, href, icon: Icon, color, bg, border }) => (
-            <Link key={href} to={href}>
-              <Card
-                className={`h-full transition-all hover:shadow-md ${border} group`}
-              >
-                <CardContent className="p-4">
-                  <div
-                    className={`inline-flex size-9 items-center justify-center rounded-lg ${bg} mb-3 transition-transform group-hover:scale-110`}
-                  >
-                    <Icon className={`size-4 ${color}`} />
-                  </div>
-                  <p className="text-sm font-semibold">{label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    {description}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {QUICK_ACTIONS.map(
+            ({ label, description, href, icon: Icon, color, bg, border }) => (
+              <Link key={href} to={href}>
+                <Card
+                  className={`h-full transition-all hover:shadow-md ${border} group`}
+                >
+                  <CardContent className="p-4">
+                    <div
+                      className={`inline-flex size-9 items-center justify-center rounded-lg ${bg} mb-3 transition-transform group-hover:scale-110`}
+                    >
+                      <Icon className={`size-4 ${color}`} />
+                    </div>
+                    <p className="text-sm font-semibold">{label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      {description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ),
+          )}
         </div>
       </div>
 
@@ -399,94 +416,94 @@ export const DashboardPage = () => {
         {jobsError ? (
           <QueryError onRetry={() => void refetchJobs()} />
         ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/30">
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
-                    Project Name
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
-                    Client
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">
-                    Amount
-                  </th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">
-                    Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobsLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="border-b last:border-0">
-                      <td className="px-4 py-3">
-                        <Skeleton className="h-4 w-36" />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Skeleton className="h-4 w-24" />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Skeleton className="h-5 w-20 rounded-full" />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Skeleton className="h-4 w-16 ml-auto" />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Skeleton className="h-4 w-14 ml-auto" />
-                      </td>
-                    </tr>
-                  ))
-                ) : recentJobs.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-10 text-center text-sm text-muted-foreground"
-                    >
-                      No jobs yet.
-                    </td>
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                      Project Name
+                    </th>
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                      Client
+                    </th>
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                      Status
+                    </th>
+                    <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                      Amount
+                    </th>
+                    <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                      Date
+                    </th>
                   </tr>
-                ) : (
-                  recentJobs.map((job) => (
-                    <tr
-                      key={job.id}
-                      className="border-b last:border-0 hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <Link
-                          to={`/jobs/${job.id}`}
-                          className="font-medium hover:text-primary hover:underline transition-colors"
-                        >
-                          {job.projectName}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {job.clientName}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge
-                          label={JOB_STATUS_CONFIG[job.status].label}
-                          className={JOB_STATUS_CONFIG[job.status].className}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium">
-                        {currencyFormatter.format(job.totalAmount)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-muted-foreground text-xs">
-                        {formatDate(job.createdAt)}
+                </thead>
+                <tbody>
+                  {jobsLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-4 w-36" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-4 w-24" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-5 w-20 rounded-full" />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Skeleton className="h-4 w-16 ml-auto" />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Skeleton className="h-4 w-14 ml-auto" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : recentJobs.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-4 py-10 text-center text-sm text-muted-foreground"
+                      >
+                        No jobs yet.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                  ) : (
+                    recentJobs.map((job) => (
+                      <tr
+                        key={job.id}
+                        className="border-b last:border-0 hover:bg-muted/30 transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <Link
+                            to={`/jobs/${job.id}`}
+                            className="font-medium hover:text-primary hover:underline transition-colors"
+                          >
+                            {job.projectName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {job.clientName}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusBadge
+                            label={JOB_STATUS_CONFIG[job.status].label}
+                            className={JOB_STATUS_CONFIG[job.status].className}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums font-medium">
+                          {currencyFormatter.format(job.totalAmount)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-muted-foreground text-xs">
+                          {formatDate(job.createdAt)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
       </div>
     </div>
