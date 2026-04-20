@@ -1,5 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { Navigate, useParams, Link } from "react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,6 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -32,7 +41,11 @@ import {
   LayersIcon,
   PackageIcon,
   Pencil,
+  Plus,
+  Star,
+  Trash2,
   TruckIcon,
+  Loader2,
 } from "lucide-react";
 import { useProductDetail } from "@/admin/hooks/useProductDetail";
 import type { BundleInDetail, SlabInDetail } from "@/interfaces/product.response";
@@ -40,6 +53,14 @@ import { ProductImageUpload } from "@/admin/components/ProductImageUpload";
 import { SLAB_STATUS_CONFIG } from "@/lib/slab-status";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getProductSuppliersAction } from "@/admin/actions/get-product-suppliers.action";
+import { linkProductSupplierAction } from "@/admin/actions/link-product-supplier.action";
+import { unlinkProductSupplierAction } from "@/admin/actions/unlink-product-supplier.action";
+import { setPrimaryProductSupplierAction } from "@/admin/actions/set-primary-product-supplier.action";
+import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
+import { productSupplierKeys, supplierKeys } from "@/admin/queryKeys";
+import { getErrorMessage } from "@/api/apiClient";
+import { useState } from "react";
 
 function InfoItem({
   label,
@@ -148,6 +169,185 @@ function BundleCard({ bundle, index }: { bundle: BundleInDetail; index: number }
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
                       {formatDate(slab.createdAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProductSuppliersTab({ productId }: { productId: string }) {
+  const queryClient = useQueryClient();
+  const [selectedSupplierId, setSelectedSupplierId] = useState("");
+
+  const { data: suppliers = [], isLoading: suppliersLoading } = useQuery({
+    queryKey: productSupplierKeys.list(productId),
+    queryFn: () => getProductSuppliersAction(productId),
+  });
+
+  const { data: allSuppliers = [] } = useQuery({
+    queryKey: supplierKeys.active,
+    queryFn: getActiveSuppliersAction,
+  });
+
+  const invalidate = () =>
+    void queryClient.invalidateQueries({
+      queryKey: productSupplierKeys.list(productId),
+    });
+
+  const linkMutation = useMutation({
+    mutationFn: () => linkProductSupplierAction(productId, selectedSupplierId),
+    onSuccess: () => {
+      toast.success("Supplier linked");
+      setSelectedSupplierId("");
+      invalidate();
+    },
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to link supplier")),
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: (productSupplierId: string) =>
+      unlinkProductSupplierAction(productId, productSupplierId),
+    onSuccess: () => {
+      toast.success("Supplier unlinked");
+      invalidate();
+    },
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to unlink supplier")),
+  });
+
+  const setPrimaryMutation = useMutation({
+    mutationFn: (productSupplierId: string) =>
+      setPrimaryProductSupplierAction(productId, productSupplierId),
+    onSuccess: () => {
+      toast.success("Primary supplier updated");
+      invalidate();
+    },
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to update primary supplier")),
+  });
+
+  const linkedIds = new Set(suppliers.map((s) => s.supplierId));
+  const availableToLink = allSuppliers.filter((s) => !linkedIds.has(s.id));
+  const isBusy = unlinkMutation.isPending || setPrimaryMutation.isPending;
+
+  return (
+    <Card>
+      <CardContent className="pt-4">
+        {/* Link new supplier */}
+        <div className="flex items-center gap-2 mb-4">
+          <Select
+            value={selectedSupplierId}
+            onValueChange={setSelectedSupplierId}
+            disabled={availableToLink.length === 0}
+          >
+            <SelectTrigger className="flex-1 max-w-xs">
+              <SelectValue
+                placeholder={
+                  availableToLink.length === 0
+                    ? "All suppliers already linked"
+                    : "Select a supplier to link…"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {availableToLink.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            disabled={!selectedSupplierId || linkMutation.isPending}
+            onClick={() => linkMutation.mutate()}
+          >
+            {linkMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Plus className="size-4" />
+            )}
+            Link
+          </Button>
+        </div>
+
+        {/* Linked suppliers table */}
+        {suppliersLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : suppliers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground text-sm">
+            <TruckIcon className="size-8 mb-2 opacity-30" />
+            <p>No suppliers linked to this product yet.</p>
+          </div>
+        ) : (
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">Supplier</TableHead>
+                  <TableHead className="font-semibold">Abbreviation</TableHead>
+                  <TableHead className="font-semibold">Primary</TableHead>
+                  <TableHead className="w-[100px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {suppliers.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.supplierName}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {s.supplierAbbreviation ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {s.isPrimary ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 ring-1 ring-amber-200 rounded-full px-2 py-0.5 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-800">
+                          <Star className="size-3 fill-current" />
+                          Primary
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 justify-end">
+                        {!s.isPrimary && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-muted-foreground hover:text-amber-600"
+                            disabled={isBusy}
+                            onClick={() => setPrimaryMutation.mutate(s.id)}
+                            aria-label="Set as primary"
+                          >
+                            {setPrimaryMutation.isPending && setPrimaryMutation.variables === s.id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Star className="size-3.5" />
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-muted-foreground hover:text-destructive"
+                          disabled={isBusy}
+                          onClick={() => unlinkMutation.mutate(s.id)}
+                          aria-label="Unlink supplier"
+                        >
+                          {unlinkMutation.isPending && unlinkMutation.variables === s.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-3.5" />
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -306,6 +506,7 @@ export const ProductDetailPage = () => {
               <span className="ml-1.5 text-xs text-muted-foreground">({totalBundles})</span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
           <TabsTrigger value="images">
             Images
             {(product.images?.length ?? 0) > 0 && (
@@ -333,6 +534,10 @@ export const ProductDetailPage = () => {
               <BundleCard key={bundle.id} bundle={bundle} index={i} />
             ))
           )}
+        </TabsContent>
+
+        <TabsContent value="suppliers" className="mt-4">
+          <ProductSuppliersTab productId={product.id} />
         </TabsContent>
 
         <TabsContent value="images" className="mt-4">

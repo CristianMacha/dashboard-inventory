@@ -8,6 +8,7 @@ import {
   ArrowLeftIcon,
   CalendarIcon,
   Layers2Icon,
+  LinkIcon,
   Loader2,
   PackageIcon,
   ReceiptIcon,
@@ -63,6 +64,7 @@ import { BundleImageUpload } from "@/admin/components/BundleImageUpload";
 import { getSupplierReturnsForSelectAction } from "@/admin/actions/get-supplier-returns-for-select.action";
 import { createSupplierReturnAction } from "@/admin/actions/create-supplier-return.action";
 import { addReturnItemAction } from "@/admin/actions/add-return-item.action";
+import { unlinkBundleInvoiceAction } from "@/admin/actions/unlink-bundle-invoice.action";
 import { bundleKeys, supplierReturnSelectKeys } from "@/admin/queryKeys";
 import { formatDate } from "@/lib/format";
 import { SLAB_STATUS_CONFIG } from "@/lib/slab-status";
@@ -316,6 +318,18 @@ export const BundleDetailPage = () => {
     void queryClient.invalidateQueries({ queryKey: bundleKeys.detail(id ?? "") });
   }, [queryClient, id]);
 
+  const unlinkInvoiceMutation = useMutation({
+    mutationFn: () => unlinkBundleInvoiceAction(id!),
+    onSuccess: () => {
+      toast.success("Invoice unlinked from bundle");
+      void queryClient.invalidateQueries({ queryKey: bundleKeys.detail(id ?? "") });
+      void queryClient.invalidateQueries({ queryKey: bundleKeys.lists() });
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to unlink invoice"));
+    },
+  });
+
   if (isLoading) return <DetailSkeleton />;
   if (isError || !bundle) {
     handleNotFound();
@@ -371,6 +385,20 @@ export const BundleDetailPage = () => {
               Back
             </Link>
           </Button>
+          {bundle.purchaseInvoiceId && (
+            <Button
+              variant="outline"
+              disabled={unlinkInvoiceMutation.isPending}
+              onClick={() => unlinkInvoiceMutation.mutate()}
+            >
+              {unlinkInvoiceMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <LinkIcon className="size-4" />
+              )}
+              Unlink Invoice
+            </Button>
+          )}
         </div>
       </div>
 

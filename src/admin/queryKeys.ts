@@ -53,6 +53,12 @@ export const summaryKeys = {
   all: ["summary"] as const,
 };
 
+export const inventoryKeys = {
+  all: ["inventory"] as const,
+  summary: (params?: { productId?: string }) =>
+    [...inventoryKeys.all, "summary", params ?? {}] as const,
+};
+
 export const bundleKeys = {
   all: ["bundles"] as const,
   lists: () => [...bundleKeys.all, "list"] as const,
@@ -69,6 +75,10 @@ export const productSelectKeys = {
   all: ["products", "select"] as const,
 };
 
+export const productSupplierKeys = {
+  list: (productId: string) => ["products", productId, "suppliers"] as const,
+};
+
 export const supplierReturnSelectKeys = {
   all: ["supplier-returns-select"] as const,
   list: (params: { supplierId?: string; purchaseInvoiceId?: string; status?: string }) =>
@@ -82,6 +92,8 @@ export const slabKeys = {
     [...slabKeys.lists(), params] as const,
   details: () => [...slabKeys.all, "detail"] as const,
   detail: (id: string) => [...slabKeys.details(), id] as const,
+  returnable: (params: { purchaseInvoiceId: string; bundleId?: string }) =>
+    [...slabKeys.all, "returnable", params] as const,
 };
 
 export const purchaseInvoiceKeys = {
@@ -199,6 +211,7 @@ export const workshopMaterialKeys = {
   details: () => [...workshopMaterialKeys.all, "detail"] as const,
   detail: (id: string) => [...workshopMaterialKeys.details(), id] as const,
   movements: (id: string) => [...workshopMaterialKeys.all, "movements", id] as const,
+  stock: (id: string) => [...workshopMaterialKeys.all, "stock", id] as const,
 };
 
 export const workshopCategoryKeys = {

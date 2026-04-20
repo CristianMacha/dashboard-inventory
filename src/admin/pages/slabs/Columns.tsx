@@ -1,12 +1,41 @@
-import { Pencil, Scissors } from "lucide-react";
+import { Pencil, Scissors, MoreHorizontal, ShieldCheck, DollarSign, RotateCcw } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { SlabResponse } from "@/interfaces/slab.response";
+import type { SlabResponse, SlabStatus } from "@/interfaces/slab.response";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SLAB_STATUS_CONFIG } from "@/lib/slab-status";
 import { StatusBadge } from "@/components/ui/status-badge";
 
+const TRANSITIONS: Record<
+  SlabStatus,
+  { action: "reserve" | "sell" | "returning"; label: string; icon: React.ElementType }[]
+> = {
+  AVAILABLE: [
+    { action: "reserve", label: "Reserve", icon: ShieldCheck },
+    { action: "sell", label: "Mark as Sold", icon: DollarSign },
+    { action: "returning", label: "Mark as Returning", icon: RotateCcw },
+  ],
+  RESERVED: [
+    { action: "sell", label: "Mark as Sold", icon: DollarSign },
+    { action: "returning", label: "Mark as Returning", icon: RotateCcw },
+  ],
+  SOLD: [],
+  RETURNING: [],
+  RETURNED: [],
+};
+
 export const slabColumns = (
   onEdit: (slab: SlabResponse) => void,
+  onStatusAction: (
+    slab: SlabResponse,
+    action: "reserve" | "sell" | "returning",
+  ) => void,
 ): ColumnDef<SlabResponse>[] => [
   {
     accessorKey: "code",
@@ -61,15 +90,44 @@ export const slabColumns = (
   {
     id: "actions",
     header: "",
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onEdit(row.original)}
-        aria-label="Edit slab"
-      >
-        <Pencil className="size-4" />
-      </Button>
-    ),
+    cell: ({ row }) => {
+      const slab = row.original;
+      const transitions = TRANSITIONS[slab.status];
+
+      return (
+        <div className="flex items-center gap-1 justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onEdit(slab)}
+            aria-label="Edit slab"
+          >
+            <Pencil className="size-4" />
+          </Button>
+
+          {transitions.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="More actions">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuSeparator className="first:hidden" />
+                {transitions.map(({ action, label, icon: Icon }) => (
+                  <DropdownMenuItem
+                    key={action}
+                    onClick={() => onStatusAction(slab, action)}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      );
+    },
   },
 ];

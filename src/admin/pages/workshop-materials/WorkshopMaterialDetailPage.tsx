@@ -46,6 +46,7 @@ import { CustomPagination } from "@/components/ui/custom/CustomPagination";
 
 import { getWorkshopMaterialByIdAction } from "@/admin/actions/get-workshop-material-by-id.action";
 import { getWorkshopMaterialMovementsAction } from "@/admin/actions/get-workshop-material-movements.action";
+import { getWorkshopMaterialStockAction } from "@/admin/actions/get-workshop-material-stock.action";
 import { registerMaterialMovementAction } from "@/admin/actions/register-material-movement.action";
 import { workshopMaterialKeys } from "@/admin/queryKeys";
 import { getCloudinaryUrl } from "@/lib/cloudinary";
@@ -151,6 +152,12 @@ export const WorkshopMaterialDetailPage = () => {
     enabled: !!id,
   });
 
+  const { data: stockData } = useQuery({
+    queryKey: workshopMaterialKeys.stock(id!),
+    queryFn: () => getWorkshopMaterialStockAction(id!),
+    enabled: !!id,
+  });
+
   const registerMovementMutation = useMutation({
     mutationFn: ({
       delta,
@@ -170,6 +177,9 @@ export const WorkshopMaterialDetailPage = () => {
       });
       void queryClient.invalidateQueries({
         queryKey: workshopMaterialKeys.lists(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: workshopMaterialKeys.stock(id!),
       });
       toast.success("Movement registered");
       setMovementDelta("");
@@ -295,6 +305,13 @@ export const WorkshopMaterialDetailPage = () => {
               value={`${material!.currentStock} ${material!.unit}`}
               icon={<ScaleIcon className="size-3 shrink-0" />}
             />
+            {stockData !== undefined && (
+              <InfoItem
+                label="Calculated Stock"
+                value={`${stockData.currentStock} ${material!.unit}`}
+                icon={<ScaleIcon className="size-3 shrink-0" />}
+              />
+            )}
             <InfoItem
               label="Min. Stock"
               value={`${material!.minStock} ${material!.unit}`}

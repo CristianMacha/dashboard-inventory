@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,7 +68,7 @@ import { sendSupplierReturnAction } from "@/admin/actions/send-supplier-return.a
 import { creditSupplierReturnAction } from "@/admin/actions/credit-supplier-return.action";
 import { cancelSupplierReturnAction } from "@/admin/actions/cancel-supplier-return.action";
 import { getActiveSuppliersAction } from "@/admin/actions/get-active-suppliers.action";
-import { getSlabsAction } from "@/admin/actions/get-slabs.action";
+import { getReturnableSlabsAction } from "@/admin/actions/get-returnable-slabs.action";
 import { getPurchaseInvoicesForSelectAction } from "@/admin/actions/get-purchase-invoices-for-select.action";
 import {
   supplierReturnKeys,
@@ -620,6 +620,7 @@ function ReturnDetail({
 
       <AddSlabSheet
         returnId={supplierReturn.id}
+        purchaseInvoiceId={supplierReturn.purchaseInvoiceId}
         open={slabSheetOpen}
         onOpenChange={setSlabSheetOpen}
       />
@@ -631,18 +632,20 @@ function ReturnDetail({
 
 function AddSlabSheet({
   returnId,
+  purchaseInvoiceId,
   open,
   onOpenChange,
 }: {
   returnId: string;
+  purchaseInvoiceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const queryClient = useQueryClient();
 
   const { data: slabsData } = useQuery({
-    queryKey: slabKeys.list({ page: 1, limit: 100 }),
-    queryFn: () => getSlabsAction({ page: 1, limit: 100 }),
+    queryKey: slabKeys.returnable({ purchaseInvoiceId }),
+    queryFn: () => getReturnableSlabsAction({ purchaseInvoiceId }),
     enabled: open,
   });
 
@@ -663,7 +666,7 @@ function AddSlabSheet({
 
   // Auto-fill bundleId when slab is selected
   const selectedSlabId = useWatch({ control, name: "slabId" });
-  const slabs = useMemo(() => slabsData?.data ?? [], [slabsData?.data]);
+  const slabs = slabsData ?? [];
 
   useEffect(() => {
     if (selectedSlabId) {

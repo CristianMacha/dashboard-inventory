@@ -560,6 +560,97 @@
         ]
       }
     },
+    "/api/v1/brands/{id}": {
+      "get": {
+        "operationId": "GetBrandsController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Brand UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IBrandOutputDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brand not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get brand by ID",
+        "tags": [
+          "Brands"
+        ]
+      },
+      "patch": {
+        "operationId": "UpdateBrandController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Brand ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBrandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Brand updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brand not found"
+          },
+          "409": {
+            "description": "Brand name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a brand",
+        "tags": [
+          "Brands"
+        ]
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "operationId": "GetCategoriesController_run",
@@ -664,6 +755,97 @@
           }
         ],
         "summary": "Get active categories for select dropdowns",
+        "tags": [
+          "Categories"
+        ]
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "get": {
+        "operationId": "GetCategoriesController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Category UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ICategoryOutputDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get category by ID",
+        "tags": [
+          "Categories"
+        ]
+      },
+      "patch": {
+        "operationId": "UpdateCategoryController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Category ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found"
+          },
+          "409": {
+            "description": "Category name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a category",
         "tags": [
           "Categories"
         ]
@@ -1012,112 +1194,6 @@
         "summary": "Update a product",
         "tags": [
           "Products"
-        ]
-      }
-    },
-    "/api/v1/brands/{id}": {
-      "patch": {
-        "operationId": "UpdateBrandController_run",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Brand ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateBrandDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Brand updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Brand not found"
-          },
-          "409": {
-            "description": "Brand name already exists"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a brand",
-        "tags": [
-          "Brands"
-        ]
-      }
-    },
-    "/api/v1/categories/{id}": {
-      "patch": {
-        "operationId": "UpdateCategoryController_run",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Category ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Category updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Category not found"
-          },
-          "409": {
-            "description": "Category name already exists"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a category",
-        "tags": [
-          "Categories"
         ]
       }
     },
@@ -1615,6 +1691,84 @@
         ]
       }
     },
+    "/api/v1/slabs/bulk": {
+      "post": {
+        "operationId": "GetSlabsController_bulkCreate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCreateSlabsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Slabs created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkCreateSlabsOutputDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bundle not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create multiple slabs in a bundle at once",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
+    "/api/v1/slabs/bulk-status": {
+      "patch": {
+        "description": "Attempts to update all provided slabs. Invalid transitions are reported in the `failed` array without aborting the operation.",
+        "operationId": "GetSlabsController_bulkUpdateStatus",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateSlabStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateSlabStatusOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update status of multiple slabs at once",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
     "/api/v1/slabs/{slabId}/remnant": {
       "post": {
         "operationId": "GetSlabsController_createRemnant",
@@ -1783,6 +1937,106 @@
         ]
       }
     },
+    "/api/v1/levels/{id}": {
+      "get": {
+        "operationId": "GetLevelsController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Level UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILevelOutputDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Level not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get level by ID",
+        "tags": [
+          "Levels"
+        ]
+      },
+      "patch": {
+        "operationId": "UpdateLevelController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Level UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLevelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Level updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Level not found."
+          },
+          "409": {
+            "description": "Level name already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a level",
+        "tags": [
+          "Levels"
+        ]
+      }
+    },
     "/api/v1/finishes": {
       "get": {
         "operationId": "GetFinishesController_run",
@@ -1890,6 +2144,106 @@
           }
         ],
         "summary": "Get active finishes for select dropdowns",
+        "tags": [
+          "Finishes"
+        ]
+      }
+    },
+    "/api/v1/finishes/{id}": {
+      "get": {
+        "operationId": "GetFinishesController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Finish UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IFinishOutputDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Finish not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get finish by ID",
+        "tags": [
+          "Finishes"
+        ]
+      },
+      "patch": {
+        "operationId": "UpdateFinishController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Finish UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFinishDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Finish updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Finish not found."
+          },
+          "409": {
+            "description": "Finish name already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a finish",
         "tags": [
           "Finishes"
         ]
@@ -2007,180 +2361,45 @@
         ]
       }
     },
-    "/api/v1/bundles/with-slabs": {
-      "post": {
-        "operationId": "CreateBundleWithSlabsController_run",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBundleWithSlabsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Bundle and slabs created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BundleWithSlabsOutputDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request. Invalid input data."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "Product or supplier not found."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a bundle together with multiple slabs",
-        "tags": [
-          "Bundles"
-        ]
-      }
-    },
-    "/api/v1/finishes/{id}": {
-      "patch": {
-        "operationId": "UpdateFinishController_run",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Finish UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateFinishDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Finish updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "Finish not found."
-          },
-          "409": {
-            "description": "Finish name already exists."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a finish",
-        "tags": [
-          "Finishes"
-        ]
-      }
-    },
-    "/api/v1/levels/{id}": {
-      "patch": {
-        "operationId": "UpdateLevelController_run",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Level UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLevelDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Level updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "Level not found."
-          },
-          "409": {
-            "description": "Level name already exists."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a level",
-        "tags": [
-          "Levels"
-        ]
-      }
-    },
     "/api/v1/suppliers/{id}": {
+      "get": {
+        "operationId": "GetSuppliersController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Supplier UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ISupplierOutputDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Supplier not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get supplier by ID",
+        "tags": [
+          "Suppliers"
+        ]
+      },
       "patch": {
         "operationId": "UpdateSupplierController_run",
         "parameters": [
@@ -2239,6 +2458,55 @@
         "summary": "Update a supplier",
         "tags": [
           "Suppliers"
+        ]
+      }
+    },
+    "/api/v1/bundles/with-slabs": {
+      "post": {
+        "operationId": "CreateBundleWithSlabsController_run",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBundleWithSlabsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bundle and slabs created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleWithSlabsOutputDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request. Invalid input data."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Product or supplier not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a bundle together with multiple slabs",
+        "tags": [
+          "Bundles"
         ]
       }
     },
@@ -2489,7 +2757,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated catalog products."
+            "description": "Paginated catalog products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogProductOutputDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Get public product catalog (no auth required)",
@@ -2498,15 +2776,15 @@
         ]
       }
     },
-    "/api/v1/catalog/products/{id}": {
+    "/api/v1/catalog/products/{slug}": {
       "get": {
         "operationId": "GetCatalogProductDetailController_run",
         "parameters": [
           {
-            "name": "id",
+            "name": "slug",
             "required": true,
             "in": "path",
-            "description": "Product UUID",
+            "description": "Product slug (e.g. calacatta-gold)",
             "schema": {
               "type": "string"
             }
@@ -2514,7 +2792,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Product detail with bundles and available slabs."
+            "description": "Product detail with bundles and available slabs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductDetailOutputDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Product not found or not public."
@@ -2523,6 +2808,377 @@
         "summary": "Get public product detail with available bundles (no auth required)",
         "tags": [
           "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/filters": {
+      "get": {
+        "operationId": "GetCatalogFiltersController_run",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Categories, brands, levels and finishes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogFiltersOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all filter options for the catalog (no auth required)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/slabs/{id}/reserve": {
+      "patch": {
+        "operationId": "ReserveSlabController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Slab ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Slab reserved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Slab not found"
+          },
+          "409": {
+            "description": "Invalid status transition"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reserve a slab",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
+    "/api/v1/slabs/{id}/sell": {
+      "patch": {
+        "operationId": "SellSlabController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Slab ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Slab marked as sold successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Slab not found"
+          },
+          "409": {
+            "description": "Invalid status transition"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a slab as sold",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
+    "/api/v1/slabs/{id}/mark-as-returning": {
+      "patch": {
+        "operationId": "MarkSlabAsReturningController_run",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Slab ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Slab marked as returning successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Slab not found"
+          },
+          "409": {
+            "description": "Invalid status transition"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a slab as returning to supplier",
+        "tags": [
+          "Slabs"
+        ]
+      }
+    },
+    "/api/v1/inventory/summary": {
+      "get": {
+        "operationId": "GetInventorySummaryController_run",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Filter summary to a single product",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory summary with slab counts and available area per product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySummaryOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get inventory stock summary by product (slabs count and area in m²)",
+        "tags": [
+          "Inventory"
+        ]
+      }
+    },
+    "/api/v1/products/{productId}/suppliers": {
+      "get": {
+        "operationId": "ProductSuppliersController_getSuppliers",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductSupplierOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List suppliers linked to a product",
+        "tags": [
+          "Products"
+        ]
+      },
+      "post": {
+        "operationId": "ProductSuppliersController_addSupplier",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddProductSupplierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Supplier linked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product or supplier not found"
+          },
+          "409": {
+            "description": "Supplier already linked"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Link a supplier to a product",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/v1/products/{productId}/suppliers/{productSupplierId}/set-primary": {
+      "patch": {
+        "operationId": "ProductSuppliersController_setPrimary",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "productSupplierId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Primary supplier updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProductSupplier not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a supplier as primary for a product",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/v1/products/{productId}/suppliers/{productSupplierId}": {
+      "delete": {
+        "operationId": "ProductSuppliersController_removeSupplier",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "productSupplierId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier unlinked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProductSupplier not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unlink a supplier from a product",
+        "tags": [
+          "Products"
         ]
       }
     },
@@ -5497,6 +6153,279 @@
         ]
       }
     },
+    "/api/v1/workshop/requests": {
+      "post": {
+        "operationId": "WorkshopRequestsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkshopRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new workshop request for a tool or material",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      },
+      "get": {
+        "operationId": "WorkshopRequestsController_findAll",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "tool",
+                "material"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkshopRequestDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all workshop requests",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      }
+    },
+    "/api/v1/workshop/requests/my": {
+      "get": {
+        "operationId": "WorkshopRequestsController_findMine",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "tool",
+                "material"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkshopRequestDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my own requests",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      }
+    },
+    "/api/v1/workshop/requests/procurement-needs": {
+      "get": {
+        "operationId": "WorkshopRequestsController_getProcurementNeeds",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcurementNeedsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get procurement needs dashboard",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      }
+    },
+    "/api/v1/workshop/requests/{id}/approve": {
+      "post": {
+        "operationId": "WorkshopRequestsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request approved successfully"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a workshop request",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      }
+    },
+    "/api/v1/workshop/requests/{id}/reject": {
+      "post": {
+        "operationId": "WorkshopRequestsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectWorkshopRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request rejected successfully"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a workshop request",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      }
+    },
     "/api/v1/dashboard/summary": {
       "get": {
         "operationId": "GetDashboardSummaryController_run",
@@ -6582,6 +7511,10 @@
           "brandId": {
             "type": "string",
             "example": "Brand UUID"
+          },
+          "isOnline": {
+            "type": "boolean",
+            "example": false
           }
         },
         "required": [
@@ -6911,6 +7844,140 @@
           "heightCm",
           "dimensions",
           "status"
+        ]
+      },
+      "SlabItemDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "SN-2024-001",
+            "description": "Unique code for the slab"
+          },
+          "widthCm": {
+            "type": "number",
+            "example": 120.5,
+            "description": "Width in centimeters"
+          },
+          "heightCm": {
+            "type": "number",
+            "example": 240,
+            "description": "Height in centimeters"
+          },
+          "description": {
+            "type": "string",
+            "example": "No visible defects"
+          }
+        },
+        "required": [
+          "code",
+          "widthCm",
+          "heightCm"
+        ]
+      },
+      "BulkCreateSlabsDto": {
+        "type": "object",
+        "properties": {
+          "bundleId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Bundle UUID to add slabs to"
+          },
+          "slabs": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlabItemDto"
+            }
+          }
+        },
+        "required": [
+          "bundleId",
+          "slabs"
+        ]
+      },
+      "BulkCreateSlabsOutputDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 10,
+            "description": "Number of slabs created"
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "BulkUpdateSlabStatusDto": {
+        "type": "object",
+        "properties": {
+          "slabIds": {
+            "minItems": 1,
+            "description": "List of slab UUIDs to update",
+            "example": [
+              "uuid-1",
+              "uuid-2"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "RESERVED",
+              "SOLD",
+              "RETURNING",
+              "RETURNED"
+            ],
+            "description": "Target status for all slabs",
+            "example": "RESERVED"
+          }
+        },
+        "required": [
+          "slabIds",
+          "status"
+        ]
+      },
+      "SlabUpdateFailureDto": {
+        "type": "object",
+        "properties": {
+          "slabId": {
+            "type": "string",
+            "example": "uuid-slab"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Invalid status transition: SOLD -\u003E AVAILABLE"
+          }
+        },
+        "required": [
+          "slabId",
+          "reason"
+        ]
+      },
+      "BulkUpdateSlabStatusOutputDto": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "number",
+            "example": 8,
+            "description": "Number of slabs successfully updated"
+          },
+          "failed": {
+            "description": "Slabs that could not be updated",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlabUpdateFailureDto"
+            }
+          }
+        },
+        "required": [
+          "updated",
+          "failed"
         ]
       },
       "CreateRemnantSlabDto": {
@@ -7352,6 +8419,435 @@
           "updatedBy",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "CatalogProductRelationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "Marble"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CatalogProductOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "Calacatta Gold"
+          },
+          "slug": {
+            "type": "string",
+            "example": "calacatta-gold"
+          },
+          "description": {
+            "type": "string",
+            "example": "A premium white marble with gold veining."
+          },
+          "primaryImagePublicId": {
+            "type": "object",
+            "example": "products/abc123",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "level": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "finish": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "category",
+          "level",
+          "finish"
+        ]
+      },
+      "CatalogProductImageOutputDto": {
+        "type": "object",
+        "properties": {
+          "publicId": {
+            "type": "string",
+            "example": "products/abc123"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "example": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "publicId",
+          "isPrimary",
+          "sortOrder"
+        ]
+      },
+      "CatalogSlabOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "code": {
+            "type": "string",
+            "example": "SL-001"
+          },
+          "widthCm": {
+            "type": "number",
+            "example": 120.5
+          },
+          "heightCm": {
+            "type": "number",
+            "example": 240
+          },
+          "status": {
+            "type": "string",
+            "example": "available"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "widthCm",
+          "heightCm",
+          "status"
+        ]
+      },
+      "CatalogBundleOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "lotNumber": {
+            "type": "string",
+            "example": "LOT-2024-001"
+          },
+          "thicknessCm": {
+            "type": "number",
+            "example": 2
+          },
+          "imagePublicId": {
+            "type": "object",
+            "example": "folder/image-public-id",
+            "nullable": true
+          },
+          "slabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogSlabOutputDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "lotNumber",
+          "thicknessCm",
+          "slabs"
+        ]
+      },
+      "CatalogProductDetailOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "Calacatta Gold"
+          },
+          "slug": {
+            "type": "string",
+            "example": "calacatta-gold"
+          },
+          "description": {
+            "type": "string",
+            "example": "A premium white marble with gold veining."
+          },
+          "primaryImagePublicId": {
+            "type": "object",
+            "example": "products/abc123",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "level": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "finish": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/CatalogProductRelationDto"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogProductImageOutputDto"
+            }
+          },
+          "bundles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogBundleOutputDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "category",
+          "level",
+          "finish",
+          "images",
+          "bundles"
+        ]
+      },
+      "CatalogFilterItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "name": {
+            "type": "string",
+            "example": "Marble"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CatalogFiltersOutputDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogFilterItemDto"
+            }
+          },
+          "brands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogFilterItemDto"
+            }
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogFilterItemDto"
+            }
+          },
+          "finishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogFilterItemDto"
+            }
+          }
+        },
+        "required": [
+          "categories",
+          "brands",
+          "levels",
+          "finishes"
+        ]
+      },
+      "SlabStatusCountDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "number",
+            "example": 10
+          },
+          "reserved": {
+            "type": "number",
+            "example": 3
+          },
+          "sold": {
+            "type": "number",
+            "example": 5
+          },
+          "returning": {
+            "type": "number",
+            "example": 1
+          },
+          "returned": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "available",
+          "reserved",
+          "sold",
+          "returning",
+          "returned"
+        ]
+      },
+      "ProductInventorySummaryDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "uuid-product"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Marble Calacatta"
+          },
+          "bundleCount": {
+            "type": "number",
+            "example": 3
+          },
+          "totalSlabs": {
+            "type": "number",
+            "example": 21
+          },
+          "slabsByStatus": {
+            "description": "Slab counts by status",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlabStatusCountDto"
+              }
+            ]
+          },
+          "availableAreaM2": {
+            "type": "number",
+            "example": 42.5,
+            "description": "Available area in square meters"
+          },
+          "totalAreaM2": {
+            "type": "number",
+            "example": 85.3,
+            "description": "Total area in square meters (all statuses)"
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "bundleCount",
+          "totalSlabs",
+          "slabsByStatus",
+          "availableAreaM2",
+          "totalAreaM2"
+        ]
+      },
+      "InventorySummaryOutputDto": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductInventorySummaryDto"
+            }
+          },
+          "totalProducts": {
+            "type": "number",
+            "example": 150
+          },
+          "totalBundles": {
+            "type": "number",
+            "example": 45
+          },
+          "totalSlabs": {
+            "type": "number",
+            "example": 320
+          },
+          "totalAvailableAreaM2": {
+            "type": "number",
+            "example": 640.5,
+            "description": "Total available area in square meters"
+          }
+        },
+        "required": [
+          "products",
+          "totalProducts",
+          "totalBundles",
+          "totalSlabs",
+          "totalAvailableAreaM2"
+        ]
+      },
+      "ProductSupplierOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-product-supplier"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "uuid-supplier"
+          },
+          "supplierName": {
+            "type": "string",
+            "example": "Proveedor ABC"
+          },
+          "supplierAbbreviation": {
+            "type": "object",
+            "example": "ABC",
+            "nullable": true
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "supplierId",
+          "supplierName",
+          "isPrimary"
+        ]
+      },
+      "AddProductSupplierDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "example": "uuid-supplier"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          }
+        },
+        "required": [
+          "supplierId"
         ]
       },
       "CreatePurchaseInvoiceDto": {
@@ -9557,6 +11053,262 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        }
+      },
+      "CreateWorkshopRequestDto": {
+        "type": "object",
+        "properties": {
+          "requestType": {
+            "type": "string",
+            "enum": [
+              "tool",
+              "material"
+            ]
+          },
+          "itemId": {
+            "type": "string",
+            "description": "UUID of the tool or material"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Required for material requests",
+            "minimum": 0.001
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Job this request is associated with"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ],
+            "default": "normal"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestType",
+          "itemId"
+        ]
+      },
+      "WorkshopRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "requestType": {
+            "type": "string",
+            "enum": [
+              "tool",
+              "material"
+            ]
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "object"
+          },
+          "jobId": {
+            "type": "object"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ]
+          },
+          "notes": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "requestedBy": {
+            "type": "string"
+          },
+          "resolvedBy": {
+            "type": "object"
+          },
+          "resolvedAt": {
+            "type": "object"
+          },
+          "rejectionReason": {
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "requestType",
+          "itemId",
+          "priority",
+          "status",
+          "requestedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MaterialBelowMinStockDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string"
+          },
+          "materialName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "currentStock": {
+            "type": "number"
+          },
+          "minStock": {
+            "type": "number"
+          },
+          "deficit": {
+            "type": "number",
+            "description": "minStock - currentStock"
+          },
+          "supplierId": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "materialId",
+          "materialName",
+          "unit",
+          "currentStock",
+          "minStock",
+          "deficit",
+          "supplierId"
+        ]
+      },
+      "ApprovedRequestStockGapDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "materialName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "requestedQuantity": {
+            "type": "number"
+          },
+          "currentStock": {
+            "type": "number"
+          },
+          "shortfall": {
+            "type": "number",
+            "description": "requestedQuantity - currentStock"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ]
+          },
+          "requestedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "materialId",
+          "materialName",
+          "unit",
+          "requestedQuantity",
+          "currentStock",
+          "shortfall",
+          "priority",
+          "requestedBy",
+          "createdAt"
+        ]
+      },
+      "ToolInRepairDto": {
+        "type": "object",
+        "properties": {
+          "toolId": {
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "toolId",
+          "toolName",
+          "categoryId"
+        ]
+      },
+      "ProcurementNeedsDto": {
+        "type": "object",
+        "properties": {
+          "materialsBelowMinStock": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialBelowMinStockDto"
+            }
+          },
+          "approvedRequestsWithInsufficientStock": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovedRequestStockGapDto"
+            }
+          },
+          "toolsInRepair": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolInRepairDto"
+            }
+          }
+        },
+        "required": [
+          "materialsBelowMinStock",
+          "approvedRequestsWithInsufficientStock",
+          "toolsInRepair"
+        ]
+      },
+      "RejectWorkshopRequestDto": {
+        "type": "object",
+        "properties": {
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason for rejection"
           }
         }
       },

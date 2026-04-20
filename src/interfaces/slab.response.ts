@@ -36,3 +36,15 @@ export interface SlabUpdate {
   status?: SlabStatus;
   description?: string;
 }
+
+export interface SlabReturnableResponse {
+  id: string;
+  bundleId: string;
+  lotNumber: string;
+  code: string;
+  widthCm: number;
+  heightCm: number;
+  dimensions: string;
+  status: SlabStatus;
+  description?: string;
+}

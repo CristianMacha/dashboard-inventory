@@ -169,23 +169,36 @@ const WorkshopToolDetailPage = lazy(() =>
   })),
 );
 const WorkshopMaterialsPage = lazy(() =>
-  import("./admin/pages/workshop-materials/WorkshopMaterialsPage").then((m) => ({
-    default: m.WorkshopMaterialsPage,
-  })),
+  import("./admin/pages/workshop-materials/WorkshopMaterialsPage").then(
+    (m) => ({
+      default: m.WorkshopMaterialsPage,
+    }),
+  ),
 );
 const WorkshopMaterialDetailPage = lazy(() =>
-  import("./admin/pages/workshop-materials/WorkshopMaterialDetailPage").then((m) => ({
-    default: m.WorkshopMaterialDetailPage,
-  })),
+  import("./admin/pages/workshop-materials/WorkshopMaterialDetailPage").then(
+    (m) => ({
+      default: m.WorkshopMaterialDetailPage,
+    }),
+  ),
 );
 const WorkshopCategoriesPage = lazy(() =>
-  import("./admin/pages/workshop-categories/WorkshopCategoriesPage").then((m) => ({
-    default: m.WorkshopCategoriesPage,
-  })),
+  import("./admin/pages/workshop-categories/WorkshopCategoriesPage").then(
+    (m) => ({
+      default: m.WorkshopCategoriesPage,
+    }),
+  ),
 );
 const WorkshopSuppliersPage = lazy(() =>
-  import("./admin/pages/workshop-suppliers/WorkshopSuppliersPage").then((m) => ({
-    default: m.WorkshopSuppliersPage,
+  import("./admin/pages/workshop-suppliers/WorkshopSuppliersPage").then(
+    (m) => ({
+      default: m.WorkshopSuppliersPage,
+    }),
+  ),
+);
+const InventorySummaryPage = lazy(() =>
+  import("./admin/pages/inventory-summary/InventoryPage").then((m) => ({
+    default: m.InventoryPage,
   })),
 );
 
@@ -271,6 +284,14 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <SlabsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "summary",
+        element: (
+          <PageSuspense>
+            <InventorySummaryPage />
           </PageSuspense>
         ),
       },
