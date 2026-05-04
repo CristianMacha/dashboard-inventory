@@ -226,6 +226,24 @@ export const workshopSupplierKeys = {
   list: () => [...workshopSupplierKeys.lists()] as const,
 };
 
+export const workshopRequestKeys = {
+  all: ["workshop-requests"] as const,
+  lists: () => [...workshopRequestKeys.all, "list"] as const,
+  list: (params: {
+    page: number;
+    limit: number;
+    status?: string;
+    requestType?: string;
+  }) => [...workshopRequestKeys.lists(), params] as const,
+  myLists: () => [...workshopRequestKeys.all, "my-list"] as const,
+  myList: (params: {
+    page: number;
+    limit: number;
+    status?: string;
+    requestType?: string;
+  }) => [...workshopRequestKeys.myLists(), params] as const,
+};
+
 export const supplierReturnKeys = {
   all: ["supplier-returns"] as const,
   lists: () => [...supplierReturnKeys.all, "list"] as const,

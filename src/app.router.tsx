@@ -201,6 +201,16 @@ const InventorySummaryPage = lazy(() =>
     default: m.InventoryPage,
   })),
 );
+const WorkshopRequestsPage = lazy(() =>
+  import("./admin/pages/workshop-requests/WorkshopRequestsPage").then((m) => ({
+    default: m.WorkshopRequestsPage,
+  })),
+);
+const MyWorkshopRequestsPage = lazy(() =>
+  import("./admin/pages/workshop-requests/MyWorkshopRequestsPage").then(
+    (m) => ({ default: m.MyWorkshopRequestsPage }),
+  ),
+);
 
 export const appRouter = createBrowserRouter([
   {
@@ -476,6 +486,22 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <WorkshopSuppliersPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/requests",
+        element: (
+          <PageSuspense>
+            <WorkshopRequestsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/my-requests",
+        element: (
+          <PageSuspense>
+            <MyWorkshopRequestsPage />
           </PageSuspense>
         ),
       },

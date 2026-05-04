@@ -1,0 +1,218 @@
+import { Loader2, MoreHorizontal, CheckCircle, XCircle } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { WorkshopRequestDto } from "@/interfaces/workshop-request.response";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/ui/status-badge";
+
+const STATUS_CONFIG: Record<
+  WorkshopRequestDto["status"],
+  { label: string; className: string }
+> = {
+  pending: {
+    label: "Pending",
+    className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-400",
+  },
+  approved: {
+    label: "Approved",
+    className: "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-400",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400",
+  },
+};
+
+const PRIORITY_CONFIG: Record<
+  WorkshopRequestDto["priority"],
+  { label: string; className: string }
+> = {
+  normal: {
+    label: "Normal",
+    className: "bg-muted text-muted-foreground",
+  },
+  urgent: {
+    label: "Urgent",
+    className: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-400",
+  },
+};
+
+interface WorkshopRequestColumnsOptions {
+  onApprove: (request: WorkshopRequestDto) => void;
+  onReject: (request: WorkshopRequestDto) => void;
+  approvingId: string | null;
+  rejectingId: string | null;
+}
+
+export const workshopRequestColumns = ({
+  onApprove,
+  onReject,
+  approvingId,
+  rejectingId,
+}: WorkshopRequestColumnsOptions): ColumnDef<WorkshopRequestDto>[] => [
+  {
+    accessorKey: "requestType",
+    header: "Type",
+    cell: ({ row }) => (
+      <span className="capitalize">{row.original.requestType}</span>
+    ),
+  },
+  {
+    accessorKey: "itemId",
+    header: "Item ID",
+    cell: ({ row }) => (
+      <span className="font-mono text-xs text-muted-foreground">
+        {row.original.itemId.slice(0, 8)}…
+      </span>
+    ),
+  },
+  {
+    accessorKey: "quantity",
+    header: "Qty",
+    cell: ({ row }) =>
+      row.original.quantity != null ? (
+        <span>{row.original.quantity}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
+    accessorKey: "priority",
+    header: "Priority",
+    cell: ({ row }) => {
+      const cfg = PRIORITY_CONFIG[row.original.priority];
+      return <StatusBadge label={cfg.label} className={cfg.className} />;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const cfg = STATUS_CONFIG[row.original.status];
+      return <StatusBadge label={cfg.label} className={cfg.className} />;
+    },
+  },
+  {
+    accessorKey: "requestedBy",
+    header: "Requested By",
+    cell: ({ row }) => <span>{row.original.requestedBy}</span>,
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {new Date(row.original.createdAt).toLocaleDateString()}
+      </span>
+    ),
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: ({ row }) => {
+      const request = row.original;
+      const isApproving = approvingId === request.id;
+      const isRejecting = rejectingId === request.id;
+      const isBusy = isApproving || isRejecting;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Row actions"
+              disabled={isBusy}
+            >
+              {isBusy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <MoreHorizontal className="size-4" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {request.status === "pending" ? (
+              <>
+                <DropdownMenuItem onClick={() => onApprove(request)}>
+                  <CheckCircle className="size-4 text-green-600" />
+                  Approve
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onReject(request)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <XCircle className="size-4" />
+                  Reject
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem disabled>
+                {STATUS_CONFIG[request.status].label}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+];
+
+export const workshopRequestReadOnlyColumns = (): ColumnDef<WorkshopRequestDto>[] => [
+  {
+    accessorKey: "requestType",
+    header: "Type",
+    cell: ({ row }) => (
+      <span className="capitalize">{row.original.requestType}</span>
+    ),
+  },
+  {
+    accessorKey: "itemId",
+    header: "Item ID",
+    cell: ({ row }) => (
+      <span className="font-mono text-xs text-muted-foreground">
+        {row.original.itemId.slice(0, 8)}…
+      </span>
+    ),
+  },
+  {
+    accessorKey: "quantity",
+    header: "Qty",
+    cell: ({ row }) =>
+      row.original.quantity != null ? (
+        <span>{row.original.quantity}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
+    accessorKey: "priority",
+    header: "Priority",
+    cell: ({ row }) => {
+      const cfg = PRIORITY_CONFIG[row.original.priority];
+      return <StatusBadge label={cfg.label} className={cfg.className} />;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const cfg = STATUS_CONFIG[row.original.status];
+      return <StatusBadge label={cfg.label} className={cfg.className} />;
+    },
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {new Date(row.original.createdAt).toLocaleDateString()}
+      </span>
+    ),
+  },
+];
