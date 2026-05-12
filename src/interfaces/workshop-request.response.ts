@@ -13,6 +13,7 @@ export interface WorkshopRequestDto {
   itemId: string;
   itemName: string;
   quantity: number | null;
+  approvedQuantity: number | null;
   jobId: string | null;
   priority: WorkshopRequestPriority;
   status: WorkshopRequestStatus;
@@ -53,6 +54,7 @@ export interface MaterialBelowMinStockDto {
 export interface UnfulfilledRequestDto {
   requestId: string;
   requestedQuantity: number;
+  approvedQuantity: number;
   availableStock: number;
   shortfall: number;
   priority: WorkshopRequestPriority;

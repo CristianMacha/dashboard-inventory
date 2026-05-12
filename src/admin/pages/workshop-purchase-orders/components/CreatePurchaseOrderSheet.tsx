@@ -302,23 +302,25 @@ export const CreatePurchaseOrderSheet = ({
                 </div>
               ))}
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  append({
-                    materialId: "",
-                    materialName: "",
-                    purchaseQuantity: 0,
-                    requestedQuantity: 0,
-                    unitCost: 0,
-                  })
-                }
-              >
-                <PlusIcon className="size-4" />
-                Add Item
-              </Button>
+              {!initialItems && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    append({
+                      materialId: "",
+                      materialName: "",
+                      purchaseQuantity: 0,
+                      requestedQuantity: 0,
+                      unitCost: 0,
+                    })
+                  }
+                >
+                  <PlusIcon className="size-4" />
+                  Add Item
+                </Button>
+              )}
 
               {form.formState.errors.items?.root && (
                 <FieldError>{form.formState.errors.items.root.message}</FieldError>

@@ -6443,6 +6443,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "approvedQuantity",
+            "required": false,
+            "in": "query",
+            "description": "Override requested quantity (materials only)",
+            "schema": {
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -11486,6 +11495,9 @@
           "quantity": {
             "type": "object"
           },
+          "approvedQuantity": {
+            "type": "object"
+          },
           "jobId": {
             "type": "object"
           },
@@ -11592,6 +11604,10 @@
           "requestedQuantity": {
             "type": "number"
           },
+          "approvedQuantity": {
+            "type": "number",
+            "description": "Quantity approved by admin (may differ from requestedQuantity)"
+          },
           "availableStock": {
             "type": "number",
             "description": "Stock available when this request was processed (FIFO)"
@@ -11619,6 +11635,7 @@
         "required": [
           "requestId",
           "requestedQuantity",
+          "approvedQuantity",
           "availableStock",
           "shortfall",
           "priority",

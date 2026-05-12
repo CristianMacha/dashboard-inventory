@@ -10,6 +10,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
 
+const QtyCell = ({ quantity, approvedQuantity }: { quantity: number | null; approvedQuantity: number | null }) => {
+  if (quantity == null) return <span className="text-muted-foreground">—</span>;
+  if (approvedQuantity != null && approvedQuantity !== quantity) {
+    return (
+      <span className="flex flex-col leading-tight">
+        <span className="line-through text-muted-foreground text-xs">{quantity}</span>
+        <span>{approvedQuantity}</span>
+      </span>
+    );
+  }
+  return <span>{quantity}</span>;
+};
+
 const STATUS_CONFIG: Record<
   WorkshopRequestDto["status"],
   { label: string; className: string }
@@ -78,12 +91,9 @@ export const workshopRequestColumns = ({
   {
     accessorKey: "quantity",
     header: "Qty",
-    cell: ({ row }) =>
-      row.original.quantity != null ? (
-        <span>{row.original.quantity}</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      ),
+    cell: ({ row }) => (
+      <QtyCell quantity={row.original.quantity} approvedQuantity={row.original.approvedQuantity} />
+    ),
   },
   {
     accessorKey: "priority",
@@ -189,12 +199,9 @@ export const workshopRequestReadOnlyColumns = (): ColumnDef<WorkshopRequestDto>[
   {
     accessorKey: "quantity",
     header: "Qty",
-    cell: ({ row }) =>
-      row.original.quantity != null ? (
-        <span>{row.original.quantity}</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      ),
+    cell: ({ row }) => (
+      <QtyCell quantity={row.original.quantity} approvedQuantity={row.original.approvedQuantity} />
+    ),
   },
   {
     accessorKey: "priority",

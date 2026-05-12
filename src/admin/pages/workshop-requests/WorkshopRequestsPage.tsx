@@ -28,13 +28,14 @@ import { getWorkshopRequestsAction } from "@/admin/actions/get-workshop-requests
 import { approveWorkshopRequestAction } from "@/admin/actions/approve-workshop-request.action";
 import { rejectWorkshopRequestAction } from "@/admin/actions/reject-workshop-request.action";
 import { deliverWorkshopRequestAction } from "@/admin/actions/deliver-workshop-request.action";
-import { workshopRequestKeys } from "@/admin/queryKeys";
+import { workshopRequestKeys, procurementNeedsKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopRequestDto } from "@/interfaces/workshop-request.response";
 
 import { workshopRequestColumns } from "./Columns";
 import { CreateWorkshopRequestSheet } from "./components/CreateWorkshopRequestSheet";
 import { RejectRequestDialog } from "./components/RejectRequestDialog";
+import { ApproveRequestDialog } from "./components/ApproveRequestDialog";
 
 const PAGE_LIMIT = 20;
 
@@ -47,6 +48,7 @@ export const WorkshopRequestsPage = () => {
 
   const [page, setPage] = useState(1);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState<WorkshopRequestDto | null>(null);
   const [rejectTarget, setRejectTarget] = useState<WorkshopRequestDto | null>(null);
 
   const setFilter = (key: string, value: string | undefined) => {
@@ -75,11 +77,13 @@ export const WorkshopRequestsPage = () => {
   });
 
   const approveMutation = useMutation({
-    mutationFn: (request: WorkshopRequestDto) => approveWorkshopRequestAction(request.id),
-    onSuccess: (_, request) => {
+    mutationFn: ({ request, approvedQuantity }: { request: WorkshopRequestDto; approvedQuantity?: number }) =>
+      approveWorkshopRequestAction(request.id, approvedQuantity),
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: workshopRequestKeys.lists() });
-      toast.success(`Request approved`);
-      void request;
+      void queryClient.invalidateQueries({ queryKey: procurementNeedsKeys.all });
+      toast.success("Request approved");
+      setApproveTarget(null);
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed to approve request"));
@@ -111,7 +115,7 @@ export const WorkshopRequestsPage = () => {
   });
 
   const approvingId = approveMutation.isPending
-    ? (approveMutation.variables?.id ?? null)
+    ? (approveMutation.variables?.request.id ?? null)
     : null;
   const rejectingId = rejectMutation.isPending
     ? (rejectMutation.variables?.request.id ?? null)
@@ -121,7 +125,7 @@ export const WorkshopRequestsPage = () => {
     : null;
 
   const columns = workshopRequestColumns({
-    onApprove: (request) => approveMutation.mutate(request),
+    onApprove: (request) => setApproveTarget(request),
     onReject: (request) => setRejectTarget(request),
     onDeliver: (request) => deliverMutation.mutate(request),
     approvingId,
@@ -210,6 +214,16 @@ export const WorkshopRequestsPage = () => {
       <CreateWorkshopRequestSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+      />
+
+      <ApproveRequestDialog
+        request={approveTarget}
+        open={!!approveTarget}
+        onOpenChange={(open) => { if (!open) setApproveTarget(null); }}
+        onConfirm={(approvedQuantity) => {
+          if (approveTarget) approveMutation.mutate({ request: approveTarget, approvedQuantity });
+        }}
+        isPending={approveMutation.isPending}
       />
 
       <RejectRequestDialog

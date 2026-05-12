@@ -67,7 +67,11 @@ const UnfulfilledRequestRow = ({ req, unit }: { req: UnfulfilledRequestDto; unit
   <div className="flex items-center justify-between py-2 pl-3 border-l-2 border-muted">
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">
-        Requested: {req.requestedQuantity} {unit} · Available: {req.availableStock} {unit}
+        Requested: {req.requestedQuantity} {unit}
+        {req.approvedQuantity !== req.requestedQuantity && (
+          <> · Approved: {req.approvedQuantity} {unit}</>
+        )}
+        {" · "}Available: {req.availableStock} {unit}
       </span>
       <span className="text-xs text-muted-foreground">By {req.requestedByName}</span>
     </div>
