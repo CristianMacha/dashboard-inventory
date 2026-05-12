@@ -206,6 +206,21 @@ const WorkshopRequestsPage = lazy(() =>
     default: m.WorkshopRequestsPage,
   })),
 );
+const ProcurementNeedsPage = lazy(() =>
+  import("./admin/pages/procurement-needs/ProcurementNeedsPage").then((m) => ({
+    default: m.ProcurementNeedsPage,
+  })),
+);
+const WorkshopPurchaseOrdersPage = lazy(() =>
+  import("./admin/pages/workshop-purchase-orders/WorkshopPurchaseOrdersPage").then((m) => ({
+    default: m.WorkshopPurchaseOrdersPage,
+  })),
+);
+const WorkshopPurchaseOrderDetailPage = lazy(() =>
+  import("./admin/pages/workshop-purchase-orders/WorkshopPurchaseOrderDetailPage").then((m) => ({
+    default: m.WorkshopPurchaseOrderDetailPage,
+  })),
+);
 const MyWorkshopRequestsPage = lazy(() =>
   import("./admin/pages/workshop-requests/MyWorkshopRequestsPage").then(
     (m) => ({ default: m.MyWorkshopRequestsPage }),
@@ -502,6 +517,30 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <MyWorkshopRequestsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/procurement-needs",
+        element: (
+          <PageSuspense>
+            <ProcurementNeedsPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/purchase-orders",
+        element: (
+          <PageSuspense>
+            <WorkshopPurchaseOrdersPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "workshop/purchase-orders/:id",
+        element: (
+          <PageSuspense>
+            <WorkshopPurchaseOrderDetailPage />
           </PageSuspense>
         ),
       },

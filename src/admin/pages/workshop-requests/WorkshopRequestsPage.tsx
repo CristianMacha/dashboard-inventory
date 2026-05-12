@@ -27,6 +27,7 @@ import {
 import { getWorkshopRequestsAction } from "@/admin/actions/get-workshop-requests.action";
 import { approveWorkshopRequestAction } from "@/admin/actions/approve-workshop-request.action";
 import { rejectWorkshopRequestAction } from "@/admin/actions/reject-workshop-request.action";
+import { deliverWorkshopRequestAction } from "@/admin/actions/deliver-workshop-request.action";
 import { workshopRequestKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopRequestDto } from "@/interfaces/workshop-request.response";
@@ -98,18 +99,34 @@ export const WorkshopRequestsPage = () => {
     },
   });
 
+  const deliverMutation = useMutation({
+    mutationFn: (request: WorkshopRequestDto) => deliverWorkshopRequestAction(request.id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: workshopRequestKeys.lists() });
+      toast.success("Request marked as delivered");
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to deliver request"));
+    },
+  });
+
   const approvingId = approveMutation.isPending
     ? (approveMutation.variables?.id ?? null)
     : null;
   const rejectingId = rejectMutation.isPending
     ? (rejectMutation.variables?.request.id ?? null)
     : null;
+  const deliveringId = deliverMutation.isPending
+    ? (deliverMutation.variables?.id ?? null)
+    : null;
 
   const columns = workshopRequestColumns({
     onApprove: (request) => approveMutation.mutate(request),
     onReject: (request) => setRejectTarget(request),
+    onDeliver: (request) => deliverMutation.mutate(request),
     approvingId,
     rejectingId,
+    deliveringId,
   });
 
   return (
@@ -147,6 +164,7 @@ export const WorkshopRequestsPage = () => {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
           </SelectContent>
         </Select>
 

@@ -1,4 +1,4 @@
-import { Loader2, MoreHorizontal, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, MoreHorizontal, CheckCircle, XCircle, PackageCheck } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { WorkshopRequestDto } from "@/interfaces/workshop-request.response";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,10 @@ const STATUS_CONFIG: Record<
     label: "Rejected",
     className: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400",
   },
+  delivered: {
+    label: "Delivered",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400",
+  },
 };
 
 const PRIORITY_CONFIG: Record<
@@ -45,15 +49,19 @@ const PRIORITY_CONFIG: Record<
 interface WorkshopRequestColumnsOptions {
   onApprove: (request: WorkshopRequestDto) => void;
   onReject: (request: WorkshopRequestDto) => void;
+  onDeliver: (request: WorkshopRequestDto) => void;
   approvingId: string | null;
   rejectingId: string | null;
+  deliveringId: string | null;
 }
 
 export const workshopRequestColumns = ({
   onApprove,
   onReject,
+  onDeliver,
   approvingId,
   rejectingId,
+  deliveringId,
 }: WorkshopRequestColumnsOptions): ColumnDef<WorkshopRequestDto>[] => [
   {
     accessorKey: "requestType",
@@ -63,13 +71,9 @@ export const workshopRequestColumns = ({
     ),
   },
   {
-    accessorKey: "itemId",
-    header: "Item ID",
-    cell: ({ row }) => (
-      <span className="font-mono text-xs text-muted-foreground">
-        {row.original.itemId.slice(0, 8)}…
-      </span>
-    ),
+    accessorKey: "itemName",
+    header: "Item",
+    cell: ({ row }) => <span>{row.original.itemName}</span>,
   },
   {
     accessorKey: "quantity",
@@ -98,9 +102,9 @@ export const workshopRequestColumns = ({
     },
   },
   {
-    accessorKey: "requestedBy",
+    accessorKey: "requestedByName",
     header: "Requested By",
-    cell: ({ row }) => <span>{row.original.requestedBy}</span>,
+    cell: ({ row }) => <span>{row.original.requestedByName}</span>,
   },
   {
     accessorKey: "createdAt",
@@ -118,7 +122,8 @@ export const workshopRequestColumns = ({
       const request = row.original;
       const isApproving = approvingId === request.id;
       const isRejecting = rejectingId === request.id;
-      const isBusy = isApproving || isRejecting;
+      const isDelivering = deliveringId === request.id;
+      const isBusy = isApproving || isRejecting || isDelivering;
 
       return (
         <DropdownMenu>
@@ -151,6 +156,11 @@ export const workshopRequestColumns = ({
                   Reject
                 </DropdownMenuItem>
               </>
+            ) : request.status === "approved" ? (
+              <DropdownMenuItem onClick={() => onDeliver(request)}>
+                <PackageCheck className="size-4 text-blue-600" />
+                Mark as Delivered
+              </DropdownMenuItem>
             ) : (
               <DropdownMenuItem disabled>
                 {STATUS_CONFIG[request.status].label}
@@ -172,13 +182,9 @@ export const workshopRequestReadOnlyColumns = (): ColumnDef<WorkshopRequestDto>[
     ),
   },
   {
-    accessorKey: "itemId",
-    header: "Item ID",
-    cell: ({ row }) => (
-      <span className="font-mono text-xs text-muted-foreground">
-        {row.original.itemId.slice(0, 8)}…
-      </span>
-    ),
+    accessorKey: "itemName",
+    header: "Item",
+    cell: ({ row }) => <span>{row.original.itemName}</span>,
   },
   {
     accessorKey: "quantity",

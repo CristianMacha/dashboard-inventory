@@ -36,7 +36,7 @@ import { createWorkshopToolAction } from "@/admin/actions/create-workshop-tool.a
 import { updateWorkshopToolAction } from "@/admin/actions/update-workshop-tool.action";
 import { getWorkshopCategoriesAction } from "@/admin/actions/get-workshop-categories.action";
 import { getWorkshopSuppliersAction } from "@/admin/actions/get-workshop-suppliers.action";
-import { workshopToolKeys, workshopCategoryKeys, workshopSupplierKeys } from "@/admin/queryKeys";
+import { workshopToolKeys, workshopToolSelectKeys, workshopCategoryKeys, workshopSupplierKeys } from "@/admin/queryKeys";
 import { WorkshopToolImageUpload } from "@/admin/components/WorkshopToolImageUpload";
 import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopToolResponse } from "@/interfaces/workshop-tool.response";
@@ -117,6 +117,7 @@ export const WorkshopToolFormSheet = ({
     mutationFn: createWorkshopToolAction,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: workshopToolKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: workshopToolSelectKeys.all });
       toast.success("Tool created successfully");
       handleClose();
     },

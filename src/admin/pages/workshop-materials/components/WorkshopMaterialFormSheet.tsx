@@ -36,7 +36,7 @@ import { createWorkshopMaterialAction } from "@/admin/actions/create-workshop-ma
 import { updateWorkshopMaterialAction } from "@/admin/actions/update-workshop-material.action";
 import { getWorkshopCategoriesAction } from "@/admin/actions/get-workshop-categories.action";
 import { getWorkshopSuppliersAction } from "@/admin/actions/get-workshop-suppliers.action";
-import { workshopMaterialKeys, workshopCategoryKeys, workshopSupplierKeys } from "@/admin/queryKeys";
+import { workshopMaterialKeys, workshopMaterialSelectKeys, workshopCategoryKeys, workshopSupplierKeys } from "@/admin/queryKeys";
 import { WorkshopMaterialImageUpload } from "@/admin/components/WorkshopMaterialImageUpload";
 import { getErrorMessage } from "@/api/apiClient";
 import type { WorkshopMaterialResponse } from "@/interfaces/workshop-material.response";
@@ -123,6 +123,7 @@ export const WorkshopMaterialFormSheet = ({
     mutationFn: createWorkshopMaterialAction,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: workshopMaterialKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: workshopMaterialSelectKeys.all });
       toast.success("Material created successfully");
       handleClose();
     },
@@ -227,12 +228,28 @@ export const WorkshopMaterialFormSheet = ({
                 render={({ field, fieldState }) => (
                   <Field>
                     <FieldLabel htmlFor="material-unit">Unit</FieldLabel>
-                    <Input
-                      id="material-unit"
-                      {...field}
-                      placeholder="e.g. kg, L, pcs"
-                      autoComplete="off"
-                    />
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="material-unit">
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="kg">kg — kilogram</SelectItem>
+                        <SelectItem value="g">g — gram</SelectItem>
+                        <SelectItem value="lb">lb — pound</SelectItem>
+                        <SelectItem value="L">L — liter</SelectItem>
+                        <SelectItem value="mL">mL — milliliter</SelectItem>
+                        <SelectItem value="m">m — meter</SelectItem>
+                        <SelectItem value="cm">cm — centimeter</SelectItem>
+                        <SelectItem value="mm">mm — millimeter</SelectItem>
+                        <SelectItem value="m²">m² — square meter</SelectItem>
+                        <SelectItem value="pcs">pcs — pieces</SelectItem>
+                        <SelectItem value="u">u — unit</SelectItem>
+                        <SelectItem value="box">box</SelectItem>
+                        <SelectItem value="roll">roll</SelectItem>
+                        <SelectItem value="bag">bag</SelectItem>
+                        <SelectItem value="gal">gal — gallon</SelectItem>
+                      </SelectContent>
+                    </Select>
                     {fieldState.invalid && (
                       <FieldError>{fieldState.error?.message}</FieldError>
                     )}

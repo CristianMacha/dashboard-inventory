@@ -226,6 +226,31 @@ export const workshopSupplierKeys = {
   list: () => [...workshopSupplierKeys.lists()] as const,
 };
 
+export const workshopToolSelectKeys = {
+  all: ["workshop-tools-select"] as const,
+  list: (params?: { search?: string }) =>
+    [...workshopToolSelectKeys.all, params ?? {}] as const,
+};
+
+export const workshopMaterialSelectKeys = {
+  all: ["workshop-materials-select"] as const,
+  list: (params?: { search?: string }) =>
+    [...workshopMaterialSelectKeys.all, params ?? {}] as const,
+};
+
+export const workshopPurchaseOrderKeys = {
+  all: ["workshop-purchase-orders"] as const,
+  lists: () => [...workshopPurchaseOrderKeys.all, "list"] as const,
+  list: (params: { page: number; limit: number; status?: string; supplierId?: string }) =>
+    [...workshopPurchaseOrderKeys.lists(), params] as const,
+  details: () => [...workshopPurchaseOrderKeys.all, "detail"] as const,
+  detail: (id: string) => [...workshopPurchaseOrderKeys.details(), id] as const,
+};
+
+export const procurementNeedsKeys = {
+  all: ["procurement-needs"] as const,
+};
+
 export const workshopRequestKeys = {
   all: ["workshop-requests"] as const,
   lists: () => [...workshopRequestKeys.all, "list"] as const,

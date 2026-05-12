@@ -5255,6 +5255,45 @@
         ]
       }
     },
+    "/api/v1/workshop/tools/select": {
+      "get": {
+        "operationId": "ToolsController_getForSelect",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToolSelectDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tools for select/autocomplete (id + name)",
+        "tags": [
+          "Workshop - Tools"
+        ]
+      }
+    },
     "/api/v1/workshop/tools/{id}": {
       "get": {
         "operationId": "ToolsController_findOne",
@@ -5616,6 +5655,45 @@
           }
         ],
         "summary": "Get paginated list of materials",
+        "tags": [
+          "Workshop - Materials"
+        ]
+      }
+    },
+    "/api/v1/workshop/materials/select": {
+      "get": {
+        "operationId": "MaterialsController_getForSelect",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialSelectDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get materials for select/autocomplete (id + name)",
         "tags": [
           "Workshop - Materials"
         ]
@@ -6193,7 +6271,8 @@
               "enum": [
                 "pending",
                 "approved",
-                "rejected"
+                "rejected",
+                "delivered"
               ],
               "type": "string"
             }
@@ -6265,7 +6344,8 @@
               "enum": [
                 "pending",
                 "approved",
-                "rejected"
+                "rejected",
+                "delivered"
               ],
               "type": "string"
             }
@@ -6423,6 +6503,264 @@
         "summary": "Reject a workshop request",
         "tags": [
           "Workshop - Requests"
+        ]
+      }
+    },
+    "/api/v1/workshop/requests/{id}/deliver": {
+      "post": {
+        "operationId": "WorkshopRequestsController_deliver",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request delivered successfully"
+          },
+          "404": {
+            "description": "Request not found"
+          },
+          "409": {
+            "description": "Request is not in APPROVED status"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark request as delivered — registers material movement (exit) or sets tool to IN_USE",
+        "tags": [
+          "Workshop - Requests"
+        ]
+      }
+    },
+    "/api/v1/workshop/purchase-orders": {
+      "post": {
+        "operationId": "WorkshopPurchaseOrdersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkshopPurchaseOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Purchase order created"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a workshop purchase order from procurement needs",
+        "tags": [
+          "Workshop - Purchase Orders"
+        ]
+      },
+      "get": {
+        "operationId": "WorkshopPurchaseOrdersController_findAll",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "DRAFT",
+                "SENT",
+                "RECEIVED",
+                "CANCELLED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkshopPurchaseOrderDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of workshop purchase orders",
+        "tags": [
+          "Workshop - Purchase Orders"
+        ]
+      }
+    },
+    "/api/v1/workshop/purchase-orders/{id}": {
+      "get": {
+        "operationId": "WorkshopPurchaseOrdersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkshopPurchaseOrderDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Purchase order not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get purchase order by id",
+        "tags": [
+          "Workshop - Purchase Orders"
+        ]
+      }
+    },
+    "/api/v1/workshop/purchase-orders/{id}/send": {
+      "patch": {
+        "operationId": "WorkshopPurchaseOrdersController_send",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark purchase order as sent to supplier",
+        "tags": [
+          "Workshop - Purchase Orders"
+        ]
+      }
+    },
+    "/api/v1/workshop/purchase-orders/{id}/receive": {
+      "patch": {
+        "operationId": "WorkshopPurchaseOrdersController_receive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark purchase order as received",
+        "tags": [
+          "Workshop - Purchase Orders"
+        ]
+      }
+    },
+    "/api/v1/workshop/purchase-orders/{id}/cancel": {
+      "patch": {
+        "operationId": "WorkshopPurchaseOrdersController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a purchase order",
+        "tags": [
+          "Workshop - Purchase Orders"
         ]
       }
     },
@@ -10621,6 +10959,21 @@
           "updatedAt"
         ]
       },
+      "ToolSelectDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "UpdateToolDto": {
         "type": "object",
         "properties": {
@@ -10813,6 +11166,21 @@
           "updatedBy",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "MaterialSelectDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "UpdateMaterialDto": {
@@ -11112,6 +11480,9 @@
           "itemId": {
             "type": "string"
           },
+          "itemName": {
+            "type": "string"
+          },
           "quantity": {
             "type": "object"
           },
@@ -11133,13 +11504,20 @@
             "enum": [
               "pending",
               "approved",
-              "rejected"
+              "rejected",
+              "delivered"
             ]
           },
           "requestedBy": {
             "type": "string"
           },
+          "requestedByName": {
+            "type": "string"
+          },
           "resolvedBy": {
+            "type": "object"
+          },
+          "resolvedByName": {
             "type": "object"
           },
           "resolvedAt": {
@@ -11159,9 +11537,11 @@
           "id",
           "requestType",
           "itemId",
+          "itemName",
           "priority",
           "status",
           "requestedBy",
+          "requestedByName",
           "createdAt",
           "updatedAt"
         ]
@@ -11203,30 +11583,21 @@
           "supplierId"
         ]
       },
-      "ApprovedRequestStockGapDto": {
+      "UnfulfilledRequestDto": {
         "type": "object",
         "properties": {
           "requestId": {
             "type": "string"
           },
-          "materialId": {
-            "type": "string"
-          },
-          "materialName": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string"
-          },
           "requestedQuantity": {
             "type": "number"
           },
-          "currentStock": {
-            "type": "number"
+          "availableStock": {
+            "type": "number",
+            "description": "Stock available when this request was processed (FIFO)"
           },
           "shortfall": {
-            "type": "number",
-            "description": "requestedQuantity - currentStock"
+            "type": "number"
           },
           "priority": {
             "type": "string",
@@ -11238,21 +11609,69 @@
           "requestedBy": {
             "type": "string"
           },
+          "requestedByName": {
+            "type": "string"
+          },
           "createdAt": {
             "type": "string"
           }
         },
         "required": [
           "requestId",
-          "materialId",
-          "materialName",
-          "unit",
           "requestedQuantity",
-          "currentStock",
+          "availableStock",
           "shortfall",
           "priority",
           "requestedBy",
+          "requestedByName",
           "createdAt"
+        ]
+      },
+      "ApprovedRequestStockGapDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string"
+          },
+          "materialName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "currentStock": {
+            "type": "number",
+            "description": "Current stock of the material"
+          },
+          "totalShortfall": {
+            "type": "number",
+            "description": "Total shortfall across all unfulfilled requests for this material"
+          },
+          "onOrderQuantity": {
+            "type": "number",
+            "description": "Quantity already on active purchase orders (DRAFT or SENT)",
+            "default": 0
+          },
+          "netShortfall": {
+            "type": "number",
+            "description": "Remaining quantity still needed after subtracting onOrderQuantity"
+          },
+          "unfulfilledRequests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnfulfilledRequestDto"
+            }
+          }
+        },
+        "required": [
+          "materialId",
+          "materialName",
+          "unit",
+          "currentStock",
+          "totalShortfall",
+          "onOrderQuantity",
+          "netShortfall",
+          "unfulfilledRequests"
         ]
       },
       "ToolInRepairDto": {
@@ -11311,6 +11730,149 @@
             "description": "Reason for rejection"
           }
         }
+      },
+      "CreatePurchaseOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string",
+            "description": "Workshop material UUID"
+          },
+          "materialName": {
+            "type": "string"
+          },
+          "purchaseQuantity": {
+            "type": "number",
+            "description": "Quantity to purchase"
+          },
+          "requestedQuantity": {
+            "type": "number",
+            "description": "Original requested quantity from procurement needs — read-only reference, not editable by admin",
+            "default": 0
+          },
+          "unitCost": {
+            "type": "number",
+            "description": "Unit cost (can be 0 if unknown)",
+            "default": 0
+          }
+        },
+        "required": [
+          "materialId",
+          "materialName",
+          "purchaseQuantity",
+          "requestedQuantity",
+          "unitCost"
+        ]
+      },
+      "CreateWorkshopPurchaseOrderDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "description": "Workshop supplier UUID"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePurchaseOrderItemDto"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplierId",
+          "items"
+        ]
+      },
+      "WorkshopPurchaseOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string"
+          },
+          "materialName": {
+            "type": "string"
+          },
+          "purchaseQuantity": {
+            "type": "number"
+          },
+          "requestedQuantity": {
+            "type": "number"
+          },
+          "unitCost": {
+            "type": "number"
+          },
+          "totalCost": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "materialId",
+          "materialName",
+          "purchaseQuantity",
+          "requestedQuantity",
+          "unitCost",
+          "totalCost"
+        ]
+      },
+      "WorkshopPurchaseOrderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "supplierId": {
+            "type": "string"
+          },
+          "supplierName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SENT",
+              "RECEIVED",
+              "CANCELLED"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopPurchaseOrderItemDto"
+            }
+          },
+          "notes": {
+            "type": "object",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "supplierId",
+          "supplierName",
+          "status",
+          "items",
+          "notes",
+          "totalAmount",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "InventoryMetricsDto": {
         "type": "object",
