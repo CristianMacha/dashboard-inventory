@@ -226,6 +226,16 @@ const MyWorkshopRequestsPage = lazy(() =>
     (m) => ({ default: m.MyWorkshopRequestsPage }),
   ),
 );
+const FilesPage = lazy(() =>
+  import("./admin/pages/files/FilesPage").then((m) => ({
+    default: m.FilesPage,
+  })),
+);
+const FileSearchPage = lazy(() =>
+  import("./admin/pages/files/FileSearchPage").then((m) => ({
+    default: m.FileSearchPage,
+  })),
+);
 
 export const appRouter = createBrowserRouter([
   {
@@ -541,6 +551,22 @@ export const appRouter = createBrowserRouter([
         element: (
           <PageSuspense>
             <WorkshopPurchaseOrderDetailPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "files",
+        element: (
+          <PageSuspense>
+            <FilesPage />
+          </PageSuspense>
+        ),
+      },
+      {
+        path: "files/search",
+        element: (
+          <PageSuspense>
+            <FileSearchPage />
           </PageSuspense>
         ),
       },

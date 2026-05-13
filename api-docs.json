@@ -6536,7 +6536,7 @@
             "description": "Request not found"
           },
           "409": {
-            "description": "Request is not in APPROVED status"
+            "description": "Request is not in APPROVED status or insufficient stock"
           }
         },
         "security": [
@@ -6770,6 +6770,807 @@
         "summary": "Cancel a purchase order",
         "tags": [
           "Workshop - Purchase Orders"
+        ]
+      }
+    },
+    "/api/v1/organizations": {
+      "post": {
+        "description": "Creates an organization that acts as the shared storage space for files. Default quota is 10 GB.",
+        "operationId": "CreateOrganizationController_run",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Organization created. Returns the new organization ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "id": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires organizations.create permission."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new organization",
+        "tags": [
+          "Organizations"
+        ]
+      },
+      "get": {
+        "description": "Returns all organizations with their storage usage and quota information.",
+        "operationId": "GetOrganizationsController_run",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of organizations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires organizations.read permission."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all organizations",
+        "tags": [
+          "Organizations"
+        ]
+      }
+    },
+    "/api/v1/files/folders": {
+      "post": {
+        "description": "Creates a folder inside an organization. Omit `parentId` to create a root-level folder.",
+        "operationId": "CreateFolderController_run",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Folder created. Returns the new folder ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "id": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.create_folder permission."
+          },
+          "404": {
+            "description": "Parent folder not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a folder",
+        "tags": [
+          "Files"
+        ]
+      },
+      "get": {
+        "description": "Returns all top-level folders (parentId = null) for the given organization, sorted by name. Use GET /files/folders/{folderId}/contents to navigate into a folder.",
+        "operationId": "GetRootFoldersController_run",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of root folders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FolderDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.read permission."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List root folders of an organization",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/folders/{folderId}/contents": {
+      "get": {
+        "description": "Returns the folder metadata, its direct subfolders, and a paginated list of files inside it.",
+        "operationId": "GetFolderContentsController_run",
+        "parameters": [
+          {
+            "name": "folderId",
+            "required": true,
+            "in": "path",
+            "description": "Folder UUID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the folder",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1-based)",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Files per page (max 100)",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder contents including subfolders and paginated files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderContentsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.read permission."
+          },
+          "404": {
+            "description": "Folder not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get folder contents",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/folders/{folderId}/upload": {
+      "post": {
+        "description": "Uploads a file to Firebase Storage and registers it in the specified folder. Max file size: 50 MB. Allowed types: images, PDF, Word, Excel, CSV, TXT, ZIP.",
+        "operationId": "UploadFileController_run",
+        "parameters": [
+          {
+            "name": "folderId",
+            "required": true,
+            "in": "path",
+            "description": "Target folder UUID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the folder",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload (images, PDF, Word, Excel, CSV, TXT, ZIP — max 50 MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded. Returns the new file ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "id": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file provided, invalid MIME type, or file exceeds 50 MB."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.upload permission."
+          },
+          "404": {
+            "description": "Folder or organization not found."
+          },
+          "422": {
+            "description": "Storage quota exceeded for this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a file to a folder",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/search": {
+      "get": {
+        "description": "Search files across an organization by tags, name fragment, MIME type, or folder. All filters are optional and combinable. Tags are matched with OR logic (any file that has at least one of the provided tags).",
+        "operationId": "SearchFilesController_run",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Partial file name match (case-insensitive)",
+            "schema": {
+              "example": "contrato",
+              "type": "string"
+            }
+          },
+          {
+            "name": "mimeType",
+            "required": false,
+            "in": "query",
+            "description": "MIME type prefix filter",
+            "schema": {
+              "example": "application/pdf",
+              "type": "string"
+            }
+          },
+          {
+            "name": "folderId",
+            "required": false,
+            "in": "query",
+            "description": "Restrict search to a specific folder UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1-based)",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Results per page (max 100)",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "One or more tags to match (OR logic)",
+            "schema": {
+              "example": [
+                "factura",
+                "proveedor"
+              ],
+              "type": "array",
+              "items": {
+
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of matching files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedFileSearchResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.search permission."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search files",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/{fileId}/tags": {
+      "post": {
+        "description": "Adds one or more tags to a file. Tags are normalized to lowercase. Duplicate tags are ignored.",
+        "operationId": "FileTagsController_addTags",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the file",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTagsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags added successfully."
+          },
+          "400": {
+            "description": "Invalid input or empty tags array."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.tag permission."
+          },
+          "404": {
+            "description": "File not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add tags to a file",
+        "tags": [
+          "Files"
+        ]
+      },
+      "delete": {
+        "description": "Removes one or more tags from a file. Tags not present on the file are silently ignored.",
+        "operationId": "FileTagsController_removeTags",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the file",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTagsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags removed successfully."
+          },
+          "400": {
+            "description": "Invalid input or empty tags array."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.tag permission."
+          },
+          "404": {
+            "description": "File not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove tags from a file",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/{fileId}/move": {
+      "patch": {
+        "description": "Moves a file to a different folder within the same organization.",
+        "operationId": "MoveFileController_run",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID to move",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the file",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File moved successfully."
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.move permission."
+          },
+          "404": {
+            "description": "File or target folder not found, or they do not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a file to another folder",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/{fileId}": {
+      "delete": {
+        "description": "Deletes the file from Firebase Storage and removes its record from the database. Also frees the storage quota used by the file in the organization.",
+        "operationId": "DeleteFileController_run",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID to delete",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the file",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File deleted successfully."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.delete permission."
+          },
+          "404": {
+            "description": "File not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a file permanently",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/folders/{folderId}": {
+      "delete": {
+        "description": "Deletes a folder only if it has no subfolders and no files. Returns 422 if the folder is not empty.",
+        "operationId": "DeleteFolderController_run",
+        "parameters": [
+          {
+            "name": "folderId",
+            "required": true,
+            "in": "path",
+            "description": "Folder UUID to delete",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the folder",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder deleted successfully."
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.delete permission."
+          },
+          "404": {
+            "description": "Folder not found or does not belong to this organization."
+          },
+          "422": {
+            "description": "Folder is not empty. Delete or move its contents first."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an empty folder",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/{fileId}/url": {
+      "get": {
+        "description": "Generates a temporary signed URL to download the file directly from Firebase Storage. The URL expires after 1 hour.",
+        "operationId": "GetFileUrlController_run",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID that owns the file",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed URL generated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "url": "https://storage.googleapis.com/..."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Valid JWT token required."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.read permission."
+          },
+          "404": {
+            "description": "File not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get signed download URL",
+        "tags": [
+          "Files"
         ]
       }
     },
@@ -11889,6 +12690,278 @@
           "createdBy",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "CreateOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "storageLimitBytes": {
+            "type": "number",
+            "example": 10737418240,
+            "description": "Storage limit in bytes (default 10 GB)"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "OrganizationDto": {
+        "type": "object",
+        "properties": {
+
+        }
+      },
+      "CreateFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Contratos 2024"
+          },
+          "parentId": {
+            "type": "string",
+            "example": "uuid-of-parent-folder"
+          },
+          "organizationId": {
+            "type": "string",
+            "example": "uuid-of-organization"
+          }
+        },
+        "required": [
+          "name",
+          "organizationId"
+        ]
+      },
+      "FolderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Contratos 2024"
+          },
+          "parentId": {
+            "type": "object",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "nullable": true
+          },
+          "organizationId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "createdByUserId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "organizationId",
+          "createdByUserId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "FileRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "example": "contrato-proveedor.pdf"
+          },
+          "mimeType": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 204800,
+            "description": "File size in bytes"
+          },
+          "folderId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "organizationId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "createdByUserId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "tags": {
+            "example": [
+              "factura",
+              "proveedor",
+              "2024"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "mimeType",
+          "sizeBytes",
+          "folderId",
+          "organizationId",
+          "createdByUserId",
+          "tags",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedFileRecordsDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileRecordDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "FolderContentsDto": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "$ref": "#/components/schemas/FolderDto"
+          },
+          "subfolders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FolderDto"
+            }
+          },
+          "files": {
+            "$ref": "#/components/schemas/PaginatedFileRecordsDto"
+          }
+        },
+        "required": [
+          "folder",
+          "subfolders",
+          "files"
+        ]
+      },
+      "PaginatedFileSearchResultDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileRecordDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "AddTagsDto": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "example": [
+              "factura",
+              "proveedor",
+              "2024"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tags"
+        ]
+      },
+      "MoveFileDto": {
+        "type": "object",
+        "properties": {
+          "targetFolderId": {
+            "type": "string",
+            "example": "uuid-of-target-folder"
+          }
+        },
+        "required": [
+          "targetFolderId"
         ]
       },
       "InventoryMetricsDto": {

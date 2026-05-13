@@ -269,6 +269,26 @@ export const workshopRequestKeys = {
   }) => [...workshopRequestKeys.myLists(), params] as const,
 };
 
+export const organizationKeys = {
+  all: ["organizations"] as const,
+};
+
+export const fileKeys = {
+  all: ["files"] as const,
+  rootFolders: (organizationId: string) =>
+    [...fileKeys.all, "root-folders", organizationId] as const,
+  folderContents: (folderId: string, organizationId: string, page: number) =>
+    [...fileKeys.all, "folder", folderId, organizationId, page] as const,
+  search: (params: {
+    organizationId: string;
+    name?: string;
+    mimeType?: string;
+    folderId?: string;
+    tags?: string[];
+    page: number;
+  }) => [...fileKeys.all, "search", params] as const,
+};
+
 export const supplierReturnKeys = {
   all: ["supplier-returns"] as const,
   lists: () => [...supplierReturnKeys.all, "list"] as const,
