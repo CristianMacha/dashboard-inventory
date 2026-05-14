@@ -46,4 +46,9 @@ export interface PaginatedFileSearchResultDto {
 export interface OrganizationDto {
   id: string;
   name: string;
+  storageLimitBytes: number;
+  storageUsedBytes: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }

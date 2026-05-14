@@ -4,6 +4,8 @@ import {
   Download,
   Eye,
   File,
+  LayoutGrid,
+  LayoutList,
   Search,
   X,
 } from "lucide-react";
@@ -41,6 +43,8 @@ import { getErrorMessage } from "@/api/apiClient";
 import type { FileRecordDto } from "@/interfaces/file.response";
 import { FilePreviewDialog } from "./components/FilePreviewDialog";
 import { FileHoverPreview } from "./components/FileHoverPreview";
+import { FileGridCard } from "./components/FileGridCard";
+import { StorageUsageBar } from "./components/StorageUsageBar";
 
 const PAGE_LIMIT = 20;
 
@@ -80,6 +84,7 @@ export const FileSearchPage = () => {
   // Committed filters — what the last Search press sent
   const [committed, setCommitted] = useState<CommittedFilters | null>(null);
   const [previewFile, setPreviewFile] = useState<FileRecordDto | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const { data: orgs, isLoading: orgsLoading } = useQuery({
     queryKey: organizationKeys.all,
@@ -279,6 +284,16 @@ export const FileSearchPage = () => {
           </div>
         </div>
 
+        {organizationId && (() => {
+          const selectedOrg = orgs?.find((o) => o.id === organizationId);
+          return selectedOrg ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">Storage</span>
+              <StorageUsageBar org={selectedOrg} />
+            </div>
+          ) : null;
+        })()}
+
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {tags.map((tag) => (
@@ -292,7 +307,7 @@ export const FileSearchPage = () => {
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button onClick={handleSearch} disabled={!organizationId}>
             <Search className="size-4" />
             Search
@@ -302,6 +317,26 @@ export const FileSearchPage = () => {
               Clear
             </Button>
           )}
+          <div className="ml-auto flex items-center rounded-md border">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="size-8 rounded-r-none border-r"
+              onClick={() => setViewMode("list")}
+              title="List view"
+            >
+              <LayoutList className="size-4" />
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="size-8 rounded-l-none"
+              onClick={() => setViewMode("grid")}
+              title="Grid view"
+            >
+              <LayoutGrid className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -309,7 +344,7 @@ export const FileSearchPage = () => {
         <>
           {isError ? (
             <QueryError onRetry={() => void refetch()} />
-          ) : (
+          ) : viewMode === "list" ? (
             <div className="rounded-md border">
               <div className="divide-y">
                 {isLoading ? (
@@ -385,6 +420,49 @@ export const FileSearchPage = () => {
                     disabled={isLoading}
                   />
                 </div>
+              )}
+            </div>
+          ) : (
+            // Grid view
+            <div className="rounded-md border p-4">
+              {isLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-square rounded-lg" />
+                  ))}
+                </div>
+              ) : data?.data.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No files match your search criteria.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {data?.data.map((file) => (
+                      <FileGridCard
+                        key={file.id}
+                        file={file}
+                        organizationId={organizationId}
+                        onPreview={() => setPreviewFile(file)}
+                        onDownload={() => downloadMutation.mutate(file.id)}
+                        downloading={downloadMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                  {data && data.totalPages > 1 && (
+                    <div className="mt-4 border-t pt-4">
+                      <CustomPagination
+                        page={committed.page}
+                        totalPages={data.totalPages}
+                        totalCount={data.total}
+                        pageSize={PAGE_LIMIT}
+                        itemLabel="files"
+                        onPageChange={handlePageChange}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

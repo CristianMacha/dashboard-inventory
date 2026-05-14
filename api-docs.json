@@ -12712,8 +12712,46 @@
       "OrganizationDto": {
         "type": "object",
         "properties": {
-
-        }
+          "id": {
+            "type": "string",
+            "example": "a1b2c3d4-..."
+          },
+          "name": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "storageLimitBytes": {
+            "type": "number",
+            "example": 10737418240,
+            "description": "Storage quota in bytes"
+          },
+          "storageUsedBytes": {
+            "type": "number",
+            "example": 524288000,
+            "description": "Storage used in bytes"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "user-uuid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "storageLimitBytes",
+          "storageUsedBytes",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "CreateFolderDto": {
         "type": "object",
