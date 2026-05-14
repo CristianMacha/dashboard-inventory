@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, Eye, File, Tag, Trash2 } from "lucide-react";
+import { Download, Eye, File, FolderInput, Tag, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getFileUrlAction } from "@/admin/actions/get-file-url.action";
@@ -44,6 +44,7 @@ interface FileGridCardProps {
   organizationId: string;
   onPreview: () => void;
   onTags?: () => void;
+  onMove?: () => void;
   onDownload: () => void;
   onDelete?: () => void;
   downloading: boolean;
@@ -55,6 +56,7 @@ export const FileGridCard = ({
   organizationId,
   onPreview,
   onTags,
+  onMove,
   onDownload,
   onDelete,
   downloading,
@@ -95,6 +97,15 @@ export const FileGridCard = ({
           onClick={onTags} title="Manage tags"
         >
           <Tag className="size-4" />
+        </Button>
+      )}
+      {onMove && (
+        <Button
+          variant="ghost" size="icon"
+          className="size-8 text-white hover:text-white hover:bg-white/20"
+          onClick={onMove} title="Move to folder"
+        >
+          <FolderInput className="size-4" />
         </Button>
       )}
       <Button

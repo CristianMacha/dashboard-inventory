@@ -1,19 +1,23 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
   ChevronRight,
   Download,
   Eye,
   File,
+  FolderInput,
   FolderOpen,
   FolderPlus,
   Home,
   LayoutGrid,
   LayoutList,
   Loader2,
+  Pencil,
   Tag,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -51,6 +55,7 @@ import { getOrganizationsAction } from "@/admin/actions/get-organizations.action
 import { getRootFoldersAction } from "@/admin/actions/get-root-folders.action";
 import { getFolderContentsAction } from "@/admin/actions/get-folder-contents.action";
 import { createFolderAction } from "@/admin/actions/create-folder.action";
+import { renameFolderAction } from "@/admin/actions/rename-folder.action";
 import { uploadFileAction } from "@/admin/actions/upload-file.action";
 import { deleteFileAction } from "@/admin/actions/delete-file.action";
 import { getFileUrlAction } from "@/admin/actions/get-file-url.action";
@@ -63,6 +68,7 @@ import { FilePreviewDialog } from "./components/FilePreviewDialog";
 import { FileHoverPreview } from "./components/FileHoverPreview";
 import { FileGridCard } from "./components/FileGridCard";
 import { StorageUsageBar } from "./components/StorageUsageBar";
+import { MoveFileDialog } from "./components/MoveFileDialog";
 
 const PAGE_LIMIT = 20;
 
@@ -77,9 +83,9 @@ function formatBytes(bytes: number): string {
 // ─── File actions ─────────────────────────────────────────────────────────────
 
 interface FileActionsProps {
-  file: FileRecordDto;
   onPreview: () => void;
   onTags: () => void;
+  onMove: () => void;
   onDownload: () => void;
   onDelete: () => void;
   downloading: boolean;
@@ -88,9 +94,9 @@ interface FileActionsProps {
 }
 
 function FileActions({
-  file: _file,
   onPreview,
   onTags,
+  onMove,
   onDownload,
   onDelete,
   downloading,
@@ -102,45 +108,25 @@ function FileActions({
     : "size-8";
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={base}
-        onClick={onPreview}
-        title="Preview"
-      >
+      <Button variant="ghost" size="icon" className={base} onClick={onPreview} title="Preview">
         <Eye className="size-4" />
       </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={base}
-        onClick={onTags}
-        title="Manage tags"
-      >
+      <Button variant="ghost" size="icon" className={base} onClick={onTags} title="Manage tags">
         <Tag className="size-4" />
       </Button>
+      <Button variant="ghost" size="icon" className={base} onClick={onMove} title="Move to folder">
+        <FolderInput className="size-4" />
+      </Button>
       <Button
-        variant="ghost"
-        size="icon"
-        className={base}
-        onClick={onDownload}
-        disabled={downloading}
-        title="Download"
+        variant="ghost" size="icon" className={base}
+        onClick={onDownload} disabled={downloading} title="Download"
       >
         <Download className="size-4" />
       </Button>
       <Button
-        variant="ghost"
-        size="icon"
-        className={
-          overlay
-            ? `${base} hover:bg-red-500/40`
-            : "size-8 text-destructive hover:text-destructive"
-        }
-        onClick={onDelete}
-        disabled={deleting}
-        title="Delete"
+        variant="ghost" size="icon"
+        className={overlay ? `${base} hover:bg-red-500/40` : "size-8 text-destructive hover:text-destructive"}
+        onClick={onDelete} disabled={deleting} title="Delete"
       >
         <Trash2 className="size-4" />
       </Button>
@@ -162,6 +148,9 @@ export const FilesPage = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [tagsFile, setTagsFile] = useState<FileRecordDto | null>(null);
   const [previewFile, setPreviewFile] = useState<FileRecordDto | null>(null);
+  const [moveFile, setMoveFile] = useState<FileRecordDto | null>(null);
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [renamingValue, setRenamingValue] = useState("");
 
   const currentFolderId = searchParams.get("folderId");
   const isAtRoot = !currentFolderId;
@@ -222,6 +211,23 @@ export const FilesPage = () => {
     },
     onError: (e: unknown) =>
       toast.error(getErrorMessage(e, "Failed to create folder")),
+  });
+
+  const renameFolderMutation = useMutation({
+    mutationFn: ({ folderId, name }: { folderId: string; name: string }) =>
+      renameFolderAction(folderId, organizationId, name),
+    onSuccess: (_data, { name }) => {
+      void queryClient.invalidateQueries({
+        queryKey: isAtRoot
+          ? fileKeys.rootFolders(organizationId)
+          : fileKeys.folderContents(currentFolderId!, organizationId, page),
+      });
+      toast.success(`Folder renamed to "${name}"`);
+      setRenamingFolderId(null);
+      setRenamingValue("");
+    },
+    onError: (e: unknown) =>
+      toast.error(getErrorMessage(e, "Failed to rename folder")),
   });
 
   const uploadMutation = useMutation({
@@ -292,34 +298,129 @@ export const FilesPage = () => {
     : (data?.subfolders ?? []);
   const contentLoading = isLoading || ancestorsLoading;
 
+  const startRename = (folder: FolderDto, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenamingFolderId(folder.id);
+    setRenamingValue(folder.name);
+  };
+
+  const commitRename = (folderId: string) => {
+    const trimmed = renamingValue.trim();
+    if (trimmed) renameFolderMutation.mutate({ folderId, name: trimmed });
+    else cancelRename();
+  };
+
+  const cancelRename = () => {
+    setRenamingFolderId(null);
+    setRenamingValue("");
+  };
+
   // ── Folder row/card (shared between modes) ──────────────────────────────────
-  const FolderItem = ({ folder }: { folder: FolderDto }) =>
-    viewMode === "list" ? (
-      <button
-        key={folder.id}
-        onClick={() => navigateInto(folder)}
-        className="flex w-full items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors"
-      >
-        <FolderOpen className="size-5 text-amber-500 shrink-0" />
-        <span className="flex-1 text-sm font-medium">{folder.name}</span>
-        <ChevronRight className="size-4 text-muted-foreground" />
-      </button>
-    ) : (
-      <button
-        key={folder.id}
-        onClick={() => navigateInto(folder)}
-        className="flex flex-col rounded-lg border overflow-hidden text-left hover:border-amber-400/60 hover:bg-muted/30 transition-colors"
-      >
+  const FolderItem = ({ folder }: { folder: FolderDto }) => {
+    const isRenaming = renamingFolderId === folder.id;
+
+    if (viewMode === "list") {
+      return isRenaming ? (
+        <div className="flex w-full items-center gap-2 p-3 bg-muted/30">
+          <FolderOpen className="size-5 text-amber-500 shrink-0" />
+          <Input
+            className="h-7 text-sm flex-1"
+            value={renamingValue}
+            onChange={(e) => setRenamingValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename(folder.id);
+              if (e.key === "Escape") cancelRename();
+            }}
+            autoFocus
+          />
+          <Button
+            variant="ghost" size="icon" className="size-7 text-green-600 hover:text-green-600"
+            onClick={() => commitRename(folder.id)}
+            disabled={renameFolderMutation.isPending}
+          >
+            {renameFolderMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+          </Button>
+          <Button variant="ghost" size="icon" className="size-7" onClick={cancelRename}>
+            <X className="size-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <div className="group flex w-full items-center gap-3 p-3 hover:bg-muted/50 transition-colors">
+          <FolderOpen className="size-5 text-amber-500 shrink-0" />
+          <button
+            className="flex-1 text-sm font-medium text-left truncate"
+            onClick={() => navigateInto(folder)}
+          >
+            {folder.name}
+          </button>
+          <Button
+            variant="ghost" size="icon"
+            className="size-7 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => startRename(folder, e)}
+            title="Rename"
+          >
+            <Pencil className="size-3.5" />
+          </Button>
+          <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+        </div>
+      );
+    }
+
+    // Grid mode
+    return isRenaming ? (
+      <div className="flex flex-col rounded-lg border overflow-hidden">
         <div className="aspect-square flex items-center justify-center bg-amber-50 dark:bg-amber-950/20">
           <FolderOpen className="size-12 text-amber-500" />
         </div>
-        <div className="p-2 border-t">
-          <span className="text-xs font-medium truncate block w-full">
-            {folder.name}
-          </span>
+        <div className="p-2 border-t flex flex-col gap-1">
+          <Input
+            className="h-6 text-xs px-1"
+            value={renamingValue}
+            onChange={(e) => setRenamingValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename(folder.id);
+              if (e.key === "Escape") cancelRename();
+            }}
+            autoFocus
+          />
+          <div className="flex gap-1">
+            <Button
+              variant="ghost" size="icon" className="size-6 text-green-600 hover:text-green-600"
+              onClick={() => commitRename(folder.id)}
+              disabled={renameFolderMutation.isPending}
+            >
+              {renameFolderMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+            </Button>
+            <Button variant="ghost" size="icon" className="size-6" onClick={cancelRename}>
+              <X className="size-3" />
+            </Button>
+          </div>
         </div>
-      </button>
+      </div>
+    ) : (
+      <div className="group relative flex flex-col rounded-lg border overflow-hidden hover:border-amber-400/60 hover:bg-muted/30 transition-colors">
+        <button
+          className="flex flex-col w-full"
+          onClick={() => navigateInto(folder)}
+        >
+          <div className="aspect-square flex items-center justify-center bg-amber-50 dark:bg-amber-950/20">
+            <FolderOpen className="size-12 text-amber-500" />
+          </div>
+          <div className="p-2 border-t">
+            <span className="text-xs font-medium truncate block w-full">{folder.name}</span>
+          </div>
+        </button>
+        <Button
+          variant="ghost" size="icon"
+          className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
+          onClick={(e) => startRename(folder, e)}
+          title="Rename"
+        >
+          <Pencil className="size-3" />
+        </Button>
+      </div>
     );
+  };
 
   // ── File row (list mode) ─────────────────────────────────────────────────────
   const FileListItem = ({ file }: { file: FileRecordDto }) => (
@@ -347,9 +448,9 @@ export const FilesPage = () => {
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <FileActions
-          file={file}
           onPreview={() => setPreviewFile(file)}
           onTags={() => setTagsFile(file)}
+          onMove={() => setMoveFile(file)}
           onDownload={() => downloadMutation.mutate(file.id)}
           onDelete={() => deleteMutation.mutate(file.id)}
           downloading={downloadMutation.isPending}
@@ -367,6 +468,7 @@ export const FilesPage = () => {
       organizationId={organizationId}
       onPreview={() => setPreviewFile(file)}
       onTags={() => setTagsFile(file)}
+      onMove={() => setMoveFile(file)}
       onDownload={() => downloadMutation.mutate(file.id)}
       onDelete={() => deleteMutation.mutate(file.id)}
       downloading={downloadMutation.isPending}
@@ -428,38 +530,68 @@ export const FilesPage = () => {
       {organizationId && (
         <>
           {/* Breadcrumb path */}
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
             <button
               onClick={navigateHome}
-              className="hover:text-foreground flex items-center gap-1"
+              className="hover:text-foreground flex items-center gap-1 shrink-0"
             >
               <Home className="size-4" />
-              Root
+              <span className="hidden sm:inline">Root</span>
             </button>
             {ancestorsLoading && currentFolderId ? (
               <span className="flex items-center gap-1">
-                <ChevronRight className="size-3" />
+                <ChevronRight className="size-3 shrink-0" />
                 <Skeleton className="h-4 w-24" />
               </span>
-            ) : (
-              folderStack.map((folder, i) => (
-                <span key={folder.id} className="flex items-center gap-1">
-                  <ChevronRight className="size-3" />
-                  {i < folderStack.length - 1 ? (
-                    <button
-                      onClick={() => navigateTo(folder)}
-                      className="hover:text-foreground"
-                    >
-                      {folder.name}
-                    </button>
-                  ) : (
-                    <span className="text-foreground font-medium">
-                      {folder.name}
+            ) : (() => {
+              // On mobile show at most last 2 segments; on desktop show all
+              const hidden = folderStack.slice(0, Math.max(0, folderStack.length - 2));
+              const visible = folderStack.slice(Math.max(0, folderStack.length - 2));
+              return (
+                <>
+                  {hidden.length > 0 && (
+                    <span className="flex items-center gap-1 sm:hidden">
+                      <ChevronRight className="size-3 shrink-0" />
+                      <span className="text-muted-foreground">…</span>
                     </span>
                   )}
-                </span>
-              ))
-            )}
+                  {/* Desktop: show all */}
+                  {hidden.map((folder) => (
+                    <span key={folder.id} className="hidden sm:flex items-center gap-1">
+                      <ChevronRight className="size-3 shrink-0" />
+                      <button
+                        onClick={() => navigateTo(folder)}
+                        className="hover:text-foreground max-w-[120px] truncate"
+                      >
+                        {folder.name}
+                      </button>
+                    </span>
+                  ))}
+                  {/* Always visible: last 2 segments */}
+                  {visible.map((folder, i) => {
+                    const globalIndex = hidden.length + i;
+                    const isLast = globalIndex === folderStack.length - 1;
+                    return (
+                      <span key={folder.id} className="flex items-center gap-1 min-w-0">
+                        <ChevronRight className="size-3 shrink-0" />
+                        {isLast ? (
+                          <span className="text-foreground font-medium truncate max-w-[120px] sm:max-w-none">
+                            {folder.name}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => navigateTo(folder)}
+                            className="hover:text-foreground truncate max-w-[120px] sm:max-w-none"
+                          >
+                            {folder.name}
+                          </button>
+                        )}
+                      </span>
+                    );
+                  })}
+                </>
+              );
+            })()}
           </div>
 
           {/* Action bar */}
@@ -681,6 +813,16 @@ export const FilesPage = () => {
         page={page}
         onOpenChange={(open) => {
           if (!open) setTagsFile(null);
+        }}
+      />
+
+      <MoveFileDialog
+        file={moveFile}
+        organizationId={organizationId}
+        currentFolderId={currentFolderId}
+        onSuccess={() => setMoveFile(null)}
+        onOpenChange={(open) => {
+          if (!open) setMoveFile(null);
         }}
       />
 

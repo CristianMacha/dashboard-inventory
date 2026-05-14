@@ -7513,6 +7513,65 @@
         "tags": [
           "Files"
         ]
+      },
+      "patch": {
+        "operationId": "RenameFolderController_run",
+        "parameters": [
+          {
+            "name": "folderId",
+            "required": true,
+            "in": "path",
+            "description": "Folder UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Folder renamed successfully."
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.create_folder permission."
+          },
+          "404": {
+            "description": "Folder not found or does not belong to this organization."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a folder",
+        "tags": [
+          "Files"
+        ]
       }
     },
     "/api/v1/files/{fileId}/url": {
@@ -13000,6 +13059,18 @@
         },
         "required": [
           "targetFolderId"
+        ]
+      },
+      "RenameFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "New Folder Name"
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "InventoryMetricsDto": {
