@@ -279,6 +279,8 @@ export const fileKeys = {
     [...fileKeys.all, "root-folders", organizationId] as const,
   folderContents: (folderId: string, organizationId: string, page: number) =>
     [...fileKeys.all, "folder", folderId, organizationId, page] as const,
+  fileUrl: (fileId: string, organizationId: string) =>
+    [...fileKeys.all, "url", fileId, organizationId] as const,
   search: (params: {
     organizationId: string;
     name?: string;

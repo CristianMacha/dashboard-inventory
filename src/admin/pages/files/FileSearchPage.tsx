@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Download,
+  Eye,
   File,
   Search,
   X,
@@ -37,6 +38,9 @@ import { searchFilesAction } from "@/admin/actions/search-files.action";
 import { getFileUrlAction } from "@/admin/actions/get-file-url.action";
 import { fileKeys, organizationKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
+import type { FileRecordDto } from "@/interfaces/file.response";
+import { FilePreviewDialog } from "./components/FilePreviewDialog";
+import { FileHoverPreview } from "./components/FileHoverPreview";
 
 const PAGE_LIMIT = 20;
 
@@ -75,6 +79,7 @@ export const FileSearchPage = () => {
 
   // Committed filters — what the last Search press sent
   const [committed, setCommitted] = useState<CommittedFilters | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileRecordDto | null>(null);
 
   const { data: orgs, isLoading: orgsLoading } = useQuery({
     queryKey: organizationKeys.all,
@@ -325,7 +330,9 @@ export const FileSearchPage = () => {
                       key={file.id}
                       className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
                     >
-                      <File className="size-5 text-blue-500 shrink-0" />
+                      <FileHoverPreview file={file} organizationId={organizationId}>
+                        <File className="size-5 text-blue-500 shrink-0 cursor-pointer" />
+                      </FileHoverPreview>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{file.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -341,15 +348,27 @@ export const FileSearchPage = () => {
                           </div>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0"
-                        onClick={() => downloadMutation.mutate(file.id)}
-                        disabled={downloadMutation.isPending}
-                      >
-                        <Download className="size-4" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => setPreviewFile(file)}
+                          title="Preview"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => downloadMutation.mutate(file.id)}
+                          disabled={downloadMutation.isPending}
+                          title="Download"
+                        >
+                          <Download className="size-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -371,6 +390,11 @@ export const FileSearchPage = () => {
           )}
         </>
       )}
+      <FilePreviewDialog
+        file={previewFile}
+        organizationId={organizationId}
+        onOpenChange={(open) => { if (!open) setPreviewFile(null); }}
+      />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight,
   Download,
+  Eye,
   File,
   FolderOpen,
   FolderPlus,
@@ -56,6 +57,8 @@ import { fileKeys, organizationKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
 import type { FileRecordDto, FolderDto } from "@/interfaces/file.response";
 import { FileTagsDialog } from "./components/FileTagsDialog";
+import { FilePreviewDialog } from "./components/FilePreviewDialog";
+import { FileHoverPreview } from "./components/FileHoverPreview";
 
 const PAGE_LIMIT = 20;
 
@@ -75,6 +78,7 @@ export const FilesPage = () => {
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [tagsFile, setTagsFile] = useState<FileRecordDto | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileRecordDto | null>(null);
 
   const currentFolderId = searchParams.get("folderId");
   const isAtRoot = !currentFolderId;
@@ -375,7 +379,9 @@ export const FilesPage = () => {
                           key={file.id}
                           className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
                         >
-                          <File className="size-5 text-blue-500 shrink-0" />
+                          <FileHoverPreview file={file} organizationId={organizationId}>
+                            <File className="size-5 text-blue-500 shrink-0 cursor-pointer" />
+                          </FileHoverPreview>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{file.name}</p>
                             <p className="text-xs text-muted-foreground">
@@ -395,6 +401,15 @@ export const FilesPage = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => setPreviewFile(file)}
+                              title="Preview"
+                            >
+                              <Eye className="size-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -453,6 +468,12 @@ export const FilesPage = () => {
           </div>
         </>
       )}
+
+      <FilePreviewDialog
+        file={previewFile}
+        organizationId={organizationId}
+        onOpenChange={(open) => { if (!open) setPreviewFile(null); }}
+      />
 
       <FileTagsDialog
         file={tagsFile}
