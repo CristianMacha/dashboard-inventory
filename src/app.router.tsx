@@ -212,14 +212,18 @@ const ProcurementNeedsPage = lazy(() =>
   })),
 );
 const WorkshopPurchaseOrdersPage = lazy(() =>
-  import("./admin/pages/workshop-purchase-orders/WorkshopPurchaseOrdersPage").then((m) => ({
-    default: m.WorkshopPurchaseOrdersPage,
-  })),
+  import("./admin/pages/workshop-purchase-orders/WorkshopPurchaseOrdersPage").then(
+    (m) => ({
+      default: m.WorkshopPurchaseOrdersPage,
+    }),
+  ),
 );
 const WorkshopPurchaseOrderDetailPage = lazy(() =>
-  import("./admin/pages/workshop-purchase-orders/WorkshopPurchaseOrderDetailPage").then((m) => ({
-    default: m.WorkshopPurchaseOrderDetailPage,
-  })),
+  import("./admin/pages/workshop-purchase-orders/WorkshopPurchaseOrderDetailPage").then(
+    (m) => ({
+      default: m.WorkshopPurchaseOrderDetailPage,
+    }),
+  ),
 );
 const MyWorkshopRequestsPage = lazy(() =>
   import("./admin/pages/workshop-requests/MyWorkshopRequestsPage").then(
@@ -563,7 +567,7 @@ export const appRouter = createBrowserRouter([
         ),
       },
       {
-        path: "files/search",
+        path: "files-search",
         element: (
           <PageSuspense>
             <FileSearchPage />

@@ -8,10 +8,11 @@ import {
   FolderPlus,
   Home,
   Loader2,
+  Tag,
   Trash2,
   Upload,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import {
@@ -50,9 +51,11 @@ import { createFolderAction } from "@/admin/actions/create-folder.action";
 import { uploadFileAction } from "@/admin/actions/upload-file.action";
 import { deleteFileAction } from "@/admin/actions/delete-file.action";
 import { getFileUrlAction } from "@/admin/actions/get-file-url.action";
+import { useFolderAncestors } from "@/admin/hooks/useFolderAncestors";
 import { fileKeys, organizationKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
-import type { FolderDto } from "@/interfaces/file.response";
+import type { FileRecordDto, FolderDto } from "@/interfaces/file.response";
+import { FileTagsDialog } from "./components/FileTagsDialog";
 
 const PAGE_LIMIT = 20;
 
@@ -65,20 +68,33 @@ function formatBytes(bytes: number): string {
 export const FilesPage = () => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [organizationId, setOrganizationId] = useState<string>("");
-  const [folderStack, setFolderStack] = useState<FolderDto[]>([]);
   const [page, setPage] = useState(1);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [tagsFile, setTagsFile] = useState<FileRecordDto | null>(null);
 
+  const currentFolderId = searchParams.get("folderId");
+  const isAtRoot = !currentFolderId;
+
+  // Reconstruct breadcrumb from URL folderId on page load
+  const { stack: folderStack, isLoading: ancestorsLoading } = useFolderAncestors(
+    currentFolderId,
+    organizationId,
+  );
   const currentFolder = folderStack[folderStack.length - 1] ?? null;
-  const currentFolderId = currentFolder?.id ?? null;
-  const isAtRoot = folderStack.length === 0;
 
   const { data: orgs, isLoading: orgsLoading } = useQuery({
     queryKey: organizationKeys.all,
     queryFn: getOrganizationsAction,
+    select: (data) => {
+      if (!organizationId && data.length > 0) {
+        setOrganizationId(data[0].id);
+      }
+      return data;
+    },
   });
 
   const { data: rootFolders, isLoading: rootFoldersLoading } = useQuery({
@@ -105,9 +121,7 @@ export const FilesPage = () => {
     },
     onSuccess: ({ id: _id, name }) => {
       if (isAtRoot) {
-        void queryClient.invalidateQueries({
-          queryKey: fileKeys.rootFolders(organizationId),
-        });
+        void queryClient.invalidateQueries({ queryKey: fileKeys.rootFolders(organizationId) });
       } else {
         void queryClient.invalidateQueries({
           queryKey: fileKeys.folderContents(currentFolderId!, organizationId, page),
@@ -160,23 +174,23 @@ export const FilesPage = () => {
   });
 
   const navigateInto = (folder: FolderDto) => {
-    setFolderStack((prev) => [...prev, folder]);
+    setSearchParams({ folderId: folder.id });
     setPage(1);
   };
 
-  const navigateTo = (index: number) => {
-    setFolderStack((prev) => prev.slice(0, index + 1));
+  const navigateTo = (folder: FolderDto) => {
+    setSearchParams({ folderId: folder.id });
     setPage(1);
   };
 
   const navigateHome = () => {
-    setFolderStack([]);
+    setSearchParams({});
     setPage(1);
   };
 
   const handleOrgChange = (v: string) => {
     setOrganizationId(v);
-    setFolderStack([]);
+    setSearchParams({});
     setPage(1);
   };
 
@@ -243,17 +257,28 @@ export const FilesPage = () => {
               <Home className="size-4" />
               Root
             </button>
-            {folderStack.map((folder, i) => (
-              <span key={folder.id} className="flex items-center gap-1">
+            {ancestorsLoading && currentFolderId ? (
+              <span className="flex items-center gap-1">
                 <ChevronRight className="size-3" />
-                <button
-                  onClick={() => navigateTo(i)}
-                  className="hover:text-foreground"
-                >
-                  {folder.name}
-                </button>
+                <Skeleton className="h-4 w-24" />
               </span>
-            ))}
+            ) : (
+              folderStack.map((folder, i) => (
+                <span key={folder.id} className="flex items-center gap-1">
+                  <ChevronRight className="size-3" />
+                  {i < folderStack.length - 1 ? (
+                    <button
+                      onClick={() => navigateTo(folder)}
+                      className="hover:text-foreground"
+                    >
+                      {folder.name}
+                    </button>
+                  ) : (
+                    <span className="text-foreground font-medium">{folder.name}</span>
+                  )}
+                </span>
+              ))
+            )}
           </div>
 
           {/* Action bar */}
@@ -325,7 +350,7 @@ export const FilesPage = () => {
             ) : (
               <>
                 <div className="divide-y">
-                  {isLoading ? (
+                  {isLoading || ancestorsLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <div key={i} className="flex items-center gap-3 p-3">
                         <Skeleton className="size-5 rounded" />
@@ -374,8 +399,18 @@ export const FilesPage = () => {
                               variant="ghost"
                               size="icon"
                               className="size-8"
+                              onClick={() => setTagsFile(file)}
+                              title="Manage tags"
+                            >
+                              <Tag className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
                               onClick={() => downloadMutation.mutate(file.id)}
                               disabled={downloadMutation.isPending}
+                              title="Download"
                             >
                               <Download className="size-4" />
                             </Button>
@@ -385,6 +420,7 @@ export const FilesPage = () => {
                               className="size-8 text-destructive hover:text-destructive"
                               onClick={() => deleteMutation.mutate(file.id)}
                               disabled={deleteMutation.isPending}
+                              title="Delete"
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -417,6 +453,14 @@ export const FilesPage = () => {
           </div>
         </>
       )}
+
+      <FileTagsDialog
+        file={tagsFile}
+        organizationId={organizationId}
+        folderId={currentFolderId ?? ""}
+        page={page}
+        onOpenChange={(open) => { if (!open) setTagsFile(null); }}
+      />
 
       <Dialog open={newFolderOpen} onOpenChange={setNewFolderOpen}>
         <DialogContent>

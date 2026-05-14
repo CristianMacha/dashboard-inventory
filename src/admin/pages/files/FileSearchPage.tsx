@@ -56,38 +56,55 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+interface CommittedFilters {
+  organizationId: string;
+  name?: string;
+  mimeType?: string;
+  tags?: string[];
+  page: number;
+}
+
 export const FileSearchPage = () => {
   const [organizationId, setOrganizationId] = useState("");
+
+  // Draft filter state — what the user is typing
   const [nameFilter, setNameFilter] = useState("");
   const [mimeTypeFilter, setMimeTypeFilter] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
-  const [submitted, setSubmitted] = useState(false);
+
+  // Committed filters — what the last Search press sent
+  const [committed, setCommitted] = useState<CommittedFilters | null>(null);
 
   const { data: orgs, isLoading: orgsLoading } = useQuery({
     queryKey: organizationKeys.all,
     queryFn: getOrganizationsAction,
+    select: (data) => {
+      if (!organizationId && data.length > 0) {
+        setOrganizationId(data[0].id);
+      }
+      return data;
+    },
   });
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: fileKeys.search({
-      organizationId,
-      name: nameFilter || undefined,
-      mimeType: mimeTypeFilter || undefined,
-      tags: tags.length > 0 ? tags : undefined,
-      page,
+      organizationId: committed?.organizationId ?? "",
+      name: committed?.name,
+      mimeType: committed?.mimeType,
+      tags: committed?.tags,
+      page: committed?.page ?? 1,
     }),
     queryFn: () =>
       searchFilesAction({
-        organizationId,
-        name: nameFilter || undefined,
-        mimeType: mimeTypeFilter || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        page,
+        organizationId: committed!.organizationId,
+        name: committed!.name,
+        mimeType: committed!.mimeType,
+        tags: committed!.tags,
+        page: committed!.page,
         limit: PAGE_LIMIT,
       }),
-    enabled: submitted && !!organizationId,
+    enabled: !!committed,
   });
 
   const downloadMutation = useMutation({
@@ -100,12 +117,20 @@ export const FileSearchPage = () => {
     },
   });
 
-  const addTag = () => {
+  const addTag = (andSearch = false) => {
     const tag = tagInput.trim().toLowerCase();
-    if (tag && !tags.includes(tag)) {
-      setTags((prev) => [...prev, tag]);
-    }
+    const newTags = tag && !tags.includes(tag) ? [...tags, tag] : tags;
+    if (tag) setTags(newTags);
     setTagInput("");
+    if (andSearch && organizationId) {
+      setCommitted({
+        organizationId,
+        name: nameFilter || undefined,
+        mimeType: mimeTypeFilter || undefined,
+        tags: newTags.length > 0 ? newTags : undefined,
+        page: 1,
+      });
+    }
   };
 
   const removeTag = (tag: string) => {
@@ -113,8 +138,17 @@ export const FileSearchPage = () => {
   };
 
   const handleSearch = () => {
-    setPage(1);
-    setSubmitted(true);
+    setCommitted({
+      organizationId,
+      name: nameFilter || undefined,
+      mimeType: mimeTypeFilter || undefined,
+      tags: tags.length > 0 ? tags : undefined,
+      page: 1,
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCommitted((prev) => prev ? { ...prev, page } : prev);
   };
 
   const handleClear = () => {
@@ -122,8 +156,7 @@ export const FileSearchPage = () => {
     setMimeTypeFilter("");
     setTags([]);
     setTagInput("");
-    setSubmitted(false);
-    setPage(1);
+    setCommitted(null);
   };
 
   return (
@@ -161,7 +194,7 @@ export const FileSearchPage = () => {
                 value={organizationId}
                 onValueChange={(v) => {
                   setOrganizationId(v);
-                  setSubmitted(false);
+                  setCommitted(null);
                 }}
               >
                 <SelectTrigger>
@@ -192,8 +225,19 @@ export const FileSearchPage = () => {
           <div className="flex flex-col gap-1">
             <Label>MIME type</Label>
             <Select
-              value={mimeTypeFilter}
-              onValueChange={(v) => setMimeTypeFilter(v === "__all" ? "" : v)}
+              value={mimeTypeFilter || "__all"}
+              onValueChange={(v) => {
+                setMimeTypeFilter(v === "__all" ? "" : v);
+                if (organizationId) {
+                  setCommitted({
+                    organizationId,
+                    name: nameFilter || undefined,
+                    mimeType: v === "__all" ? undefined : v || undefined,
+                    tags: tags.length > 0 ? tags : undefined,
+                    page: 1,
+                  });
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All types" />
@@ -219,11 +263,11 @@ export const FileSearchPage = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    addTag();
+                    addTag(true);
                   }
                 }}
               />
-              <Button variant="outline" size="sm" onClick={addTag} disabled={!tagInput.trim()}>
+              <Button variant="outline" size="sm" onClick={() => addTag(false)} disabled={!tagInput.trim()}>
                 Add
               </Button>
             </div>
@@ -248,7 +292,7 @@ export const FileSearchPage = () => {
             <Search className="size-4" />
             Search
           </Button>
-          {submitted && (
+          {committed && (
             <Button variant="outline" onClick={handleClear}>
               Clear
             </Button>
@@ -256,7 +300,7 @@ export const FileSearchPage = () => {
         </div>
       </div>
 
-      {submitted && organizationId && (
+      {committed && (
         <>
           {isError ? (
             <QueryError onRetry={() => void refetch()} />
@@ -313,12 +357,12 @@ export const FileSearchPage = () => {
               {data && data.totalPages > 1 && (
                 <div className="border-t p-4 bg-muted">
                   <CustomPagination
-                    page={page}
+                    page={committed.page}
                     totalPages={data.totalPages}
                     totalCount={data.total}
                     pageSize={PAGE_LIMIT}
                     itemLabel="files"
-                    onPageChange={setPage}
+                    onPageChange={handlePageChange}
                     disabled={isLoading}
                   />
                 </div>

@@ -16,7 +16,21 @@ export const searchFilesAction = async (
 ): Promise<PaginatedFileSearchResultDto> => {
   const { data } = await apiClient.get<PaginatedFileSearchResultDto>(
     "/files/search",
-    { params },
+    {
+      params,
+      paramsSerializer: (p) => {
+        const sp = new URLSearchParams();
+        for (const [key, value] of Object.entries(p)) {
+          if (value === undefined || value === null) continue;
+          if (Array.isArray(value)) {
+            value.forEach((v) => sp.append(key, String(v)));
+          } else {
+            sp.append(key, String(value));
+          }
+        }
+        return sp.toString();
+      },
+    },
   );
   return data;
 };
