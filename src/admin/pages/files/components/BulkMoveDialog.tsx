@@ -12,34 +12,34 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-import { moveFileAction } from "@/admin/actions/move-file.action";
+import { bulkMoveFilesAction } from "@/admin/actions/bulk-move-files.action";
 import { fileKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
-import type { FileRecordDto } from "@/interfaces/file.response";
 import { FolderPicker } from "./FolderPicker";
 
-interface MoveFileDialogProps {
-  file: FileRecordDto | null;
+interface BulkMoveDialogProps {
+  open: boolean;
+  fileIds: string[];
   organizationId: string;
   currentFolderId: string | null;
   onSuccess: () => void;
   onOpenChange: (open: boolean) => void;
 }
 
-export const MoveFileDialog = ({
-  file,
+export const BulkMoveDialog = ({
+  open,
+  fileIds,
   organizationId,
   currentFolderId,
   onSuccess,
   onOpenChange,
-}: MoveFileDialogProps) => {
+}: BulkMoveDialogProps) => {
   const queryClient = useQueryClient();
-  // undefined = nothing selected, null = root, string = folderId
   const [selectedFolderId, setSelectedFolderId] = useState<string | null | undefined>(undefined);
 
   const moveMutation = useMutation({
-    mutationFn: () => moveFileAction(file!.id, organizationId, selectedFolderId!),
-    onSuccess: () => {
+    mutationFn: () => bulkMoveFilesAction(organizationId, fileIds, selectedFolderId!),
+    onSuccess: (result) => {
       const toInvalidate: string[][] = [];
       if (currentFolderId) {
         toInvalidate.push([...fileKeys.all, "folder", currentFolderId, organizationId]);
@@ -50,11 +50,11 @@ export const MoveFileDialog = ({
       void Promise.all(
         toInvalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
       );
-      toast.success(`"${file!.name}" moved successfully`);
+      toast.success(`${result.moved} file${result.moved !== 1 ? "s" : ""} moved successfully`);
       onSuccess();
       handleClose();
     },
-    onError: (e: unknown) => toast.error(getErrorMessage(e, "Failed to move file")),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Failed to move files")),
   });
 
   const handleClose = () => {
@@ -62,16 +62,14 @@ export const MoveFileDialog = ({
     onOpenChange(false);
   };
 
-  const isSameFolder = selectedFolderId === file?.folderId ||
-    (selectedFolderId === null && file?.folderId == null);
-  const hasSelection = selectedFolderId !== undefined;
+  const hasSelection = selectedFolderId !== undefined && selectedFolderId !== null;
 
   return (
-    <Dialog open={!!file} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="truncate pr-8">
-            Move &ldquo;{file?.name}&rdquo;
+          <DialogTitle>
+            Move {fileIds.length} file{fileIds.length !== 1 ? "s" : ""}
           </DialogTitle>
         </DialogHeader>
 
@@ -85,7 +83,7 @@ export const MoveFileDialog = ({
           <Button variant="outline" onClick={handleClose}>Cancel</Button>
           <Button
             onClick={() => moveMutation.mutate()}
-            disabled={!hasSelection || isSameFolder || moveMutation.isPending}
+            disabled={!hasSelection || moveMutation.isPending}
           >
             {moveMutation.isPending && <Loader2 className="size-4 animate-spin" />}
             Move here

@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, Eye, File, FolderInput, Tag, Trash2 } from "lucide-react";
+import { Download, Eye, File, FolderInput, MoreHorizontal, Pencil, Tag, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getFileUrlAction } from "@/admin/actions/get-file-url.action";
 import { fileKeys } from "@/admin/queryKeys";
 import type { FileRecordDto } from "@/interfaces/file.response";
@@ -43,6 +50,7 @@ interface FileGridCardProps {
   file: FileRecordDto;
   organizationId: string;
   onPreview: () => void;
+  onRename?: () => void;
   onTags?: () => void;
   onMove?: () => void;
   onDownload: () => void;
@@ -55,6 +63,7 @@ export const FileGridCard = ({
   file,
   organizationId,
   onPreview,
+  onRename,
   onTags,
   onMove,
   onDownload,
@@ -63,11 +72,11 @@ export const FileGridCard = ({
   deleting = false,
 }: FileGridCardProps) => (
   <div className="group relative flex flex-col rounded-lg border overflow-hidden hover:border-primary/50 transition-colors">
-    <div className="aspect-square overflow-hidden">
+    <button className="aspect-square overflow-hidden w-full" onClick={onPreview}>
       <GridFileThumbnail file={file} organizationId={organizationId} />
-    </div>
+    </button>
     <div className="p-2 border-t">
-      <p className="text-xs font-medium truncate" title={file.name}>{file.name}</p>
+      <p className="text-xs font-medium truncate pr-6" title={file.name}>{file.name}</p>
       <p className="text-xs text-muted-foreground">{formatBytes(file.sizeBytes)}</p>
       {file.tags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-0.5">
@@ -82,48 +91,49 @@ export const FileGridCard = ({
         </div>
       )}
     </div>
-    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-      <Button
-        variant="ghost" size="icon"
-        className="size-8 text-white hover:text-white hover:bg-white/20"
-        onClick={onPreview} title="Preview"
-      >
-        <Eye className="size-4" />
-      </Button>
-      {onTags && (
-        <Button
-          variant="ghost" size="icon"
-          className="size-8 text-white hover:text-white hover:bg-white/20"
-          onClick={onTags} title="Manage tags"
-        >
-          <Tag className="size-4" />
-        </Button>
-      )}
-      {onMove && (
-        <Button
-          variant="ghost" size="icon"
-          className="size-8 text-white hover:text-white hover:bg-white/20"
-          onClick={onMove} title="Move to folder"
-        >
-          <FolderInput className="size-4" />
-        </Button>
-      )}
-      <Button
-        variant="ghost" size="icon"
-        className="size-8 text-white hover:text-white hover:bg-white/20"
-        onClick={onDownload} disabled={downloading} title="Download"
-      >
-        <Download className="size-4" />
-      </Button>
-      {onDelete && (
-        <Button
-          variant="ghost" size="icon"
-          className="size-8 text-white hover:text-white hover:bg-red-500/40"
-          onClick={onDelete} disabled={deleting} title="Delete"
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      )}
+    <div className="absolute bottom-[34px] right-1">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 bg-background/80 hover:bg-background transition-opacity"
+          >
+            <MoreHorizontal className="size-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onPreview}>
+            <Eye className="size-4" /> Preview
+          </DropdownMenuItem>
+          {onRename && (
+            <DropdownMenuItem onClick={onRename}>
+              <Pencil className="size-4" /> Rename
+            </DropdownMenuItem>
+          )}
+          {onTags && (
+            <DropdownMenuItem onClick={onTags}>
+              <Tag className="size-4" /> Tags
+            </DropdownMenuItem>
+          )}
+          {onMove && (
+            <DropdownMenuItem onClick={onMove}>
+              <FolderInput className="size-4" /> Move
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={onDownload} disabled={downloading}>
+            <Download className="size-4" /> Download
+          </DropdownMenuItem>
+          {onDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onDelete} disabled={deleting} className="text-destructive focus:text-destructive">
+                <Trash2 className="size-4" /> Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </div>
 );

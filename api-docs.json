@@ -7460,6 +7460,59 @@
         "tags": [
           "Files"
         ]
+      },
+      "get": {
+        "operationId": "GetFileController_run",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File detail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileRecordDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.read permission."
+          },
+          "404": {
+            "description": "File not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get file detail",
+        "tags": [
+          "Files"
+        ]
       }
     },
     "/api/v1/files/folders/{folderId}": {
@@ -7572,6 +7625,59 @@
         "tags": [
           "Files"
         ]
+      },
+      "get": {
+        "operationId": "GetFolderController_run",
+        "parameters": [
+          {
+            "name": "folderId",
+            "required": true,
+            "in": "path",
+            "description": "Folder UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder detail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.read permission."
+          },
+          "404": {
+            "description": "Folder not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get folder detail",
+        "tags": [
+          "Files"
+        ]
       }
     },
     "/api/v1/files/{fileId}/url": {
@@ -7628,6 +7734,296 @@
           }
         ],
         "summary": "Get signed download URL",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/folders/{folderId}/move": {
+      "patch": {
+        "description": "Moves a folder to a new parent folder within the same organization. Send `targetParentId: null` to move it to root.",
+        "operationId": "MoveFolderController_run",
+        "parameters": [
+          {
+            "name": "folderId",
+            "required": true,
+            "in": "path",
+            "description": "Folder UUID to move",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Folder moved successfully."
+          },
+          "400": {
+            "description": "Invalid input or circular reference."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.move permission."
+          },
+          "404": {
+            "description": "Folder or target parent not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a folder",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/{fileId}/rename": {
+      "patch": {
+        "operationId": "RenameFileController_run",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File renamed successfully."
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "File not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a file",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/folders/search": {
+      "get": {
+        "description": "Returns all folders whose name contains the search term (case-insensitive).",
+        "operationId": "SearchFoldersController_run",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "required": true,
+            "in": "query",
+            "description": "Name fragment to search",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching folders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FolderDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.search permission."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search folders by name",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/bulk-move": {
+      "patch": {
+        "description": "Moves all specified files to the target folder in a single operation.",
+        "operationId": "BulkMoveFilesController_run",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkMoveFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Files moved. Returns count of moved files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "moved": 3
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.move permission."
+          },
+          "404": {
+            "description": "A file or the target folder was not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move multiple files to a folder",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/api/v1/files/{fileId}/download": {
+      "get": {
+        "description": "Streams the file content directly. Sets Content-Disposition: attachment so the browser triggers a download.",
+        "operationId": "DownloadFileController_run",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "File UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
+            "description": "Organization UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File stream."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden. Requires files.read permission."
+          },
+          "404": {
+            "description": "File not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download a file",
         "tags": [
           "Files"
         ]
@@ -13071,6 +13467,54 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "MoveFolderDto": {
+        "type": "object",
+        "properties": {
+          "targetParentId": {
+            "type": "object",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Target parent folder UUID. Send null to move to root.",
+            "nullable": true
+          }
+        }
+      },
+      "RenameFileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "contrato-final-2024.pdf"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "BulkMoveFilesDto": {
+        "type": "object",
+        "properties": {
+          "fileIds": {
+            "example": [
+              "uuid-1",
+              "uuid-2"
+            ],
+            "description": "List of file UUIDs to move",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "targetFolderId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Target folder UUID"
+          }
+        },
+        "required": [
+          "fileIds",
+          "targetFolderId"
         ]
       },
       "InventoryMetricsDto": {

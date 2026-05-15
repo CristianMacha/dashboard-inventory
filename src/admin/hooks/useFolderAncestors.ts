@@ -13,7 +13,7 @@ export function useFolderAncestors(
   organizationId: string,
 ): { stack: FolderDto[]; isLoading: boolean } {
   const leafQ = useQuery({
-    queryKey: fileKeys.folderContents(folderId ?? "", organizationId, 1),
+    queryKey: [...fileKeys.all, "ancestor", folderId, organizationId],
     queryFn: () => getFolderContentsAction(folderId!, organizationId, 1, 1),
     enabled: !!folderId && !!organizationId,
     staleTime: 30_000,
@@ -23,7 +23,7 @@ export function useFolderAncestors(
   const leaf = leafQ.data ?? null;
 
   const parentQ = useQuery({
-    queryKey: fileKeys.folderContents(leaf?.parentId ?? "", organizationId, 1),
+    queryKey: [...fileKeys.all, "ancestor", leaf?.parentId ?? "", organizationId],
     queryFn: () => getFolderContentsAction(leaf!.parentId!, organizationId, 1, 1),
     enabled: !!leaf?.parentId && !!organizationId,
     staleTime: 30_000,
@@ -33,7 +33,7 @@ export function useFolderAncestors(
   const parent = parentQ.data ?? null;
 
   const grandparentQ = useQuery({
-    queryKey: fileKeys.folderContents(parent?.parentId ?? "", organizationId, 1),
+    queryKey: [...fileKeys.all, "ancestor", parent?.parentId ?? "", organizationId],
     queryFn: () => getFolderContentsAction(parent!.parentId!, organizationId, 1, 1),
     enabled: !!parent?.parentId && !!organizationId,
     staleTime: 30_000,
@@ -43,7 +43,7 @@ export function useFolderAncestors(
   const grandparent = grandparentQ.data ?? null;
 
   const greatGrandparentQ = useQuery({
-    queryKey: fileKeys.folderContents(grandparent?.parentId ?? "", organizationId, 1),
+    queryKey: [...fileKeys.all, "ancestor", grandparent?.parentId ?? "", organizationId],
     queryFn: () => getFolderContentsAction(grandparent!.parentId!, organizationId, 1, 1),
     enabled: !!grandparent?.parentId && !!organizationId,
     staleTime: 30_000,

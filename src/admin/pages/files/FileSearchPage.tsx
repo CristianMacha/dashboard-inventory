@@ -37,7 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getOrganizationsAction } from "@/admin/actions/get-organizations.action";
 import { searchFilesAction } from "@/admin/actions/search-files.action";
-import { getFileUrlAction } from "@/admin/actions/get-file-url.action";
+import { downloadFileAction } from "@/admin/actions/download-file.action";
 import { fileKeys, organizationKeys } from "@/admin/queryKeys";
 import { getErrorMessage } from "@/api/apiClient";
 import type { FileRecordDto } from "@/interfaces/file.response";
@@ -118,10 +118,8 @@ export const FileSearchPage = () => {
   });
 
   const downloadMutation = useMutation({
-    mutationFn: (fileId: string) => getFileUrlAction(fileId, organizationId),
-    onSuccess: (url) => {
-      window.open(url, "_blank");
-    },
+    mutationFn: ({ fileId, filename }: { fileId: string; filename: string }) =>
+      downloadFileAction(fileId, organizationId, filename),
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed to get download URL"));
     },
@@ -397,7 +395,7 @@ export const FileSearchPage = () => {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          onClick={() => downloadMutation.mutate(file.id)}
+                          onClick={() => downloadMutation.mutate({ fileId: file.id, filename: file.name })}
                           disabled={downloadMutation.isPending}
                           title="Download"
                         >
@@ -444,7 +442,7 @@ export const FileSearchPage = () => {
                         file={file}
                         organizationId={organizationId}
                         onPreview={() => setPreviewFile(file)}
-                        onDownload={() => downloadMutation.mutate(file.id)}
+                        onDownload={() => downloadMutation.mutate({ fileId: file.id, filename: file.name })}
                         downloading={downloadMutation.isPending}
                       />
                     ))}

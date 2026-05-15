@@ -289,6 +289,8 @@ export const fileKeys = {
     tags?: string[];
     page: number;
   }) => [...fileKeys.all, "search", params] as const,
+  folderSearch: (organizationId: string, name: string) =>
+    [...fileKeys.all, "folder-search", organizationId, name] as const,
 };
 
 export const supplierReturnKeys = {
