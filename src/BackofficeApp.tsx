@@ -5,27 +5,23 @@ import { appRouter } from "./app.router";
 import { Toaster } from "sonner";
 
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { onAuthStateChanged } from "firebase/auth";
 import { CustomFullScreenLoading } from "./components/ui/custom/CustomFullScreenLoading";
 import { useAuthStore } from "./auth/store/auth.store";
-import { useMenusStore } from "./auth/store/menus.store";
+import { useMenusQuery } from "./auth/store/menus.store";
+import { menuKeys } from "./admin/queryKeys";
 import { auth } from "./lib/firebase";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       retry: 1,
     },
   },
 });
 
-/**
- * Auth resolution is async (Firebase onAuthStateChanged + backend loginWithIdToken).
- * This component reads auth/menus from the store and only re-renders when that state
- * changes; it does not await anything. Children (router) render once auth + menus are ready.
- */
 const CheckAuthProvider = ({ children }: PropsWithChildren) => {
   const {
     loginWithIdToken,
@@ -34,7 +30,8 @@ const CheckAuthProvider = ({ children }: PropsWithChildren) => {
     status,
     token,
   } = useAuthStore();
-  const { fetchMenus, status: menusStatus } = useMenusStore();
+  const qc = useQueryClient();
+  const { isLoading: menusLoading } = useMenusQuery(status === "authenticated");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -55,18 +52,14 @@ const CheckAuthProvider = ({ children }: PropsWithChildren) => {
   }, [loginWithIdToken, setFirebaseUser, setUnauthenticated]);
 
   useEffect(() => {
-    // Only fetch if menus are not already available (e.g. not hydrated from sessionStorage)
-    if (status === "authenticated" && (menusStatus === "idle" || menusStatus === "error")) {
-      void fetchMenus();
+    if (status === "unauthenticated") {
+      qc.removeQueries({ queryKey: menuKeys.all });
     }
-  }, [status, menusStatus, fetchMenus]);
+  }, [status, qc]);
 
   if (status === "checking") return <CustomFullScreenLoading />;
 
-  if (
-    status === "authenticated" &&
-    (!token || menusStatus === "loading" || menusStatus === "idle")
-  ) {
+  if (status === "authenticated" && (!token || menusLoading)) {
     return <CustomFullScreenLoading />;
   }
 

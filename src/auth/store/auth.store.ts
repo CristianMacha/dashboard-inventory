@@ -2,7 +2,6 @@ import type { User } from "firebase/auth";
 import type { UserAuthentication } from "@/interfaces/user-authentication";
 import { create } from "zustand";
 import { loginAction } from "../actions/login.action";
-import { useMenusStore } from "./menus.store";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 
@@ -117,7 +116,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => {
       } catch (err) {
         console.error("[AuthStore] Firebase signOut error:", err);
       } finally {
-        useMenusStore.getState().reset();
         set({
           user: null,
           token: null,

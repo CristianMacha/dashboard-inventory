@@ -1,5 +1,10 @@
 import { useEffect } from "react";
-import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } from "react-hook-form";
+import {
+  useForm,
+  type DefaultValues,
+  type FieldValues,
+  type UseFormReturn,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -8,7 +13,8 @@ import { getErrorMessage } from "@/api/apiClient";
 interface UseFormSheetOptions<TValues extends FieldValues, TResponse> {
   open: boolean;
   editingItem: TResponse | null;
-  schema: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: any;
   emptyValues: DefaultValues<TValues>;
   toFormValues: (item: TResponse) => TValues;
   createFn: (values: TValues) => Promise<TResponse>;
@@ -51,7 +57,7 @@ export function useFormSheet<TValues extends FieldValues, TResponse>({
 
   useEffect(() => {
     if (open) {
-      reset(editingItem ? (toFormValues(editingItem) as DefaultValues<TValues>) : emptyValues);
+      reset(editingItem ? toFormValues(editingItem) : emptyValues);
     }
   }, [open, editingItem, reset, emptyValues, toFormValues]);
 
@@ -63,7 +69,9 @@ export function useFormSheet<TValues extends FieldValues, TResponse>({
       onClose();
     },
     onError: (error: unknown) => {
-      toast.error(getErrorMessage(error, `Failed to create ${entityName.toLowerCase()}`));
+      toast.error(
+        getErrorMessage(error, `Failed to create ${entityName.toLowerCase()}`),
+      );
     },
   });
 
@@ -76,7 +84,9 @@ export function useFormSheet<TValues extends FieldValues, TResponse>({
       onClose();
     },
     onError: (error: unknown) => {
-      toast.error(getErrorMessage(error, `Failed to update ${entityName.toLowerCase()}`));
+      toast.error(
+        getErrorMessage(error, `Failed to update ${entityName.toLowerCase()}`),
+      );
     },
   });
 

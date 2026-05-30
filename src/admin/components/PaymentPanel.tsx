@@ -8,12 +8,7 @@ import { Loader2, Plus, CreditCard, Banknote, Building2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -47,10 +42,13 @@ import { Separator } from "@/components/ui/separator";
 import { getErrorMessage } from "@/api/apiClient";
 import { formatDate } from "@/lib/format";
 
-const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const currency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
 const today = () => new Date().toISOString().slice(0, 10);
 
-export const paymentSchema = z.object({
+const paymentSchema = z.object({
   amount: z.coerce.number().positive("Must be greater than 0"),
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER"]),
   paymentDate: z.string().min(1, "Date is required"),
@@ -76,12 +74,21 @@ export interface PaymentSummary {
 }
 
 // Covariant-friendly summary type for use with concrete API responses
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyPaymentSummary = { totalPaid: number; remaining: number; payments: any[] };
+export type AnyPaymentSummary = {
+  totalPaid: number;
+  remaining: number;
+  payments: PaymentRecord[];
+};
 
 // ─── Payment Progress Bar ─────────────────────────────────────────────────────
 
-export function PaymentProgress({ paid, total }: { paid: number; total: number }) {
+export function PaymentProgress({
+  paid,
+  total,
+}: {
+  paid: number;
+  total: number;
+}) {
   const pct = total > 0 ? Math.min((paid / total) * 100, 100) : 0;
   return (
     <div
@@ -102,7 +109,11 @@ export function PaymentProgress({ paid, total }: { paid: number; total: number }
 
 // ─── Payment History Table ─────────────────────────────────────────────────────
 
-export function PaymentHistoryTable({ payments }: { payments: PaymentRecord[] }) {
+export function PaymentHistoryTable({
+  payments,
+}: {
+  payments: PaymentRecord[];
+}) {
   return (
     <Card className="py-0">
       <CardHeader className="py-3 px-4">
@@ -121,7 +132,9 @@ export function PaymentHistoryTable({ payments }: { payments: PaymentRecord[] })
           <TableBody>
             {payments.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="text-sm">{formatDate(p.paymentDate)}</TableCell>
+                <TableCell className="text-sm">
+                  {formatDate(p.paymentDate)}
+                </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium">
                     {p.paymentMethod === "CASH" ? (
@@ -163,16 +176,28 @@ export function PaymentSummaryCard({
       <CardContent className="pt-4 pb-4 space-y-3">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Total</p>
-            <p className="text-base font-bold tabular-nums">{currency.format(total)}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+              Total
+            </p>
+            <p className="text-base font-bold tabular-nums">
+              {currency.format(total)}
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Paid</p>
-            <p className="text-base font-bold tabular-nums text-green-600">{currency.format(paid)}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+              Paid
+            </p>
+            <p className="text-base font-bold tabular-nums text-green-600">
+              {currency.format(paid)}
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Remaining</p>
-            <p className="text-base font-bold tabular-nums text-amber-600">{currency.format(remaining)}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+              Remaining
+            </p>
+            <p className="text-base font-bold tabular-nums text-amber-600">
+              {currency.format(remaining)}
+            </p>
           </div>
         </div>
         <PaymentProgress paid={paid} total={total} />
@@ -254,14 +279,18 @@ export function RecordPaymentSheet({
                     min={0.01}
                     step="0.01"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                    onChange={(e) =>
+                      field.onChange(e.target.valueAsNumber || 0)
+                    }
                   />
                   {remaining > 0 && (
                     <p className="text-xs text-muted-foreground">
                       Remaining: {currency.format(remaining)}
                     </p>
                   )}
-                  {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                  {fieldState.invalid && (
+                    <FieldError>{fieldState.error?.message}</FieldError>
+                  )}
                 </Field>
               )}
             />
@@ -271,17 +300,23 @@ export function RecordPaymentSheet({
               name="paymentMethod"
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel htmlFor={`${formId}-method`}>Payment Method</FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-method`}>
+                    Payment Method
+                  </FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id={`${formId}-method`}>
                       <SelectValue placeholder="Select method" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="CASH">Cash</SelectItem>
-                      <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                      <SelectItem value="BANK_TRANSFER">
+                        Bank Transfer
+                      </SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                  {fieldState.invalid && (
+                    <FieldError>{fieldState.error?.message}</FieldError>
+                  )}
                 </Field>
               )}
             />
@@ -291,9 +326,13 @@ export function RecordPaymentSheet({
               name="paymentDate"
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel htmlFor={`${formId}-date`}>Payment Date</FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-date`}>
+                    Payment Date
+                  </FieldLabel>
                   <Input id={`${formId}-date`} type="date" {...field} />
-                  {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+                  {fieldState.invalid && (
+                    <FieldError>{fieldState.error?.message}</FieldError>
+                  )}
                 </Field>
               )}
             />
@@ -304,9 +343,16 @@ export function RecordPaymentSheet({
               render={({ field }) => (
                 <Field>
                   <FieldLabel htmlFor={`${formId}-ref`}>
-                    Reference <span className="font-normal text-muted-foreground">(optional)</span>
+                    Reference{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (optional)
+                    </span>
                   </FieldLabel>
-                  <Input id={`${formId}-ref`} {...field} placeholder="e.g. TRF-001" />
+                  <Input
+                    id={`${formId}-ref`}
+                    {...field}
+                    placeholder="e.g. TRF-001"
+                  />
                 </Field>
               )}
             />
@@ -338,7 +384,9 @@ interface PaymentPanelProps {
   queryKey: readonly unknown[];
   queryFn: () => Promise<AnyPaymentSummary>;
   mutationFn: (values: PaymentFormValues) => Promise<unknown>;
-  onSuccess: (queryClient: ReturnType<typeof useQueryClient>) => void | Promise<void>;
+  onSuccess: (
+    queryClient: ReturnType<typeof useQueryClient>,
+  ) => void | Promise<void>;
   totalAmount: number | ((data: unknown) => number);
   formId: string;
   sheetDescription: string;
@@ -372,11 +420,13 @@ export function PaymentPanel({
     },
   });
 
-  const paid = (data?.totalPaid ?? 0) as number;
-  const remaining = (data?.remaining ?? 0) as number;
+  const paid = data?.totalPaid ?? 0;
+  const remaining = data?.remaining ?? 0;
   const total =
     typeof totalAmount === "function"
-      ? (data ? totalAmount(data) : 0)
+      ? data
+        ? totalAmount(data)
+        : 0
       : totalAmount;
   const isPaid = remaining <= 0 && total > 0;
 
@@ -391,8 +441,8 @@ export function PaymentPanel({
             {isLoading
               ? "Loading…"
               : isPaid
-              ? "Fully paid"
-              : `${currency.format(remaining)} remaining`}
+                ? "Fully paid"
+                : `${currency.format(remaining)} remaining`}
           </p>
         </div>
         {canRecordPayment && !isPaid && (

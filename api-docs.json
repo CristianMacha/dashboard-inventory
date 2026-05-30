@@ -6892,7 +6892,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.create_folder permission."
+            "description": "Forbidden. Requires files.create_folder permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Parent folder not found or does not belong to this organization."
@@ -6940,7 +6940,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.read permission."
+            "description": "Forbidden. Requires files.read permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           }
         },
         "security": [
@@ -7014,7 +7014,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.read permission."
+            "description": "Forbidden. Requires files.read permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Folder not found or does not belong to this organization."
@@ -7096,7 +7096,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.upload permission."
+            "description": "Forbidden. Requires files.upload permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Folder or organization not found."
@@ -7211,7 +7211,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.search permission."
+            "description": "Forbidden. Requires files.search permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           }
         },
         "security": [
@@ -7271,7 +7271,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.tag permission."
+            "description": "Forbidden. Requires files.tag permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found or does not belong to this organization."
@@ -7332,7 +7332,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.tag permission."
+            "description": "Forbidden. Requires files.tag permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found or does not belong to this organization."
@@ -7395,7 +7395,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.move permission."
+            "description": "Forbidden. Requires files.move permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File or target folder not found, or they do not belong to this organization."
@@ -7445,7 +7445,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.delete permission."
+            "description": "Forbidden. Requires files.delete permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found or does not belong to this organization."
@@ -7498,7 +7498,7 @@
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.read permission."
+            "description": "Forbidden. Requires files.read permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found."
@@ -7548,7 +7548,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.delete permission."
+            "description": "Forbidden. Requires files.delete permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Folder not found or does not belong to this organization."
@@ -7604,13 +7604,13 @@
             "description": "Folder renamed successfully."
           },
           "400": {
-            "description": "Invalid input."
+            "description": "Invalid input. `name` is required and must not exceed 255 characters."
           },
           "401": {
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.create_folder permission."
+            "description": "Forbidden. Requires files.create_folder permission or the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Folder not found or does not belong to this organization."
@@ -7663,7 +7663,7 @@
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.read permission."
+            "description": "Forbidden. Requires files.read permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Folder not found."
@@ -7722,7 +7722,7 @@
             "description": "Unauthorized. Valid JWT token required."
           },
           "403": {
-            "description": "Forbidden. Requires files.read permission."
+            "description": "Forbidden. Requires files.read permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found or does not belong to this organization."
@@ -7778,13 +7778,13 @@
             "description": "Folder moved successfully."
           },
           "400": {
-            "description": "Invalid input or circular reference."
+            "description": "Invalid input. Possible reasons: `targetParentId` is not a valid UUID; moving the folder into itself (`\"A folder cannot be moved into itself\"`); moving the folder into one of its own descendants (`\"Moving this folder would create a circular reference\"`)."
           },
           "401": {
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.move permission."
+            "description": "Forbidden. Requires files.move permission or the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "Folder or target parent not found."
@@ -7839,13 +7839,13 @@
             "description": "File renamed successfully."
           },
           "400": {
-            "description": "Invalid input."
+            "description": "Invalid input. `name` is required and must not exceed 255 characters."
           },
           "401": {
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden."
+            "description": "Forbidden. Requires files.move permission or the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found."
@@ -7904,7 +7904,7 @@
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.search permission."
+            "description": "Forbidden. Requires files.search permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           }
         },
         "security": [
@@ -7963,7 +7963,7 @@
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.move permission."
+            "description": "Forbidden. Requires files.move permission. Also returns 403 if the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "A file or the target folder was not found."
@@ -8006,16 +8006,19 @@
         ],
         "responses": {
           "200": {
-            "description": "File stream."
+            "description": "File stream (binary). Headers: Content-Type, Content-Disposition: attachment, Content-Length."
           },
           "401": {
             "description": "Unauthorized."
           },
           "403": {
-            "description": "Forbidden. Requires files.read permission."
+            "description": "Forbidden. Requires files.read permission or the organizationId does not belong to the authenticated user."
           },
           "404": {
             "description": "File not found."
+          },
+          "500": {
+            "description": "Storage read error. The file record exists but the storage object could not be streamed."
           }
         },
         "security": [

@@ -46,9 +46,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 
-import {
-  getGeneralPaymentsAction,
-} from "@/admin/actions/get-general-payments.action";
+import { getGeneralPaymentsAction } from "@/admin/actions/get-general-payments.action";
 import { recordGeneralPaymentAction } from "@/admin/actions/record-general-payment.action";
 import { cashflowKeys, generalPaymentKeys } from "@/admin/queryKeys";
 import type { GeneralPaymentResponse } from "@/interfaces/general-payment.response";
@@ -83,7 +81,8 @@ const columns: ColumnDef<GeneralPaymentResponse>[] = [
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => {
-      const { label, className } = GENERAL_PAYMENT_TYPE_CONFIG[row.original.type];
+      const { label, className } =
+        GENERAL_PAYMENT_TYPE_CONFIG[row.original.type];
       return <StatusBadge label={label} className={className} />;
     },
   },
@@ -94,7 +93,9 @@ const columns: ColumnDef<GeneralPaymentResponse>[] = [
       const cat = GENERAL_PAYMENT_CATEGORIES.find(
         (c) => c.value === row.original.category,
       );
-      return <span className="text-sm">{cat?.label ?? row.original.category}</span>;
+      return (
+        <span className="text-sm">{cat?.label ?? row.original.category}</span>
+      );
     },
   },
   {
@@ -218,7 +219,8 @@ export const GeneralPaymentsPage = () => {
     setPage(1);
   }, []);
 
-  const hasFilters = !!type || !!category || !!paymentMethod || !!fromDate || !!toDate;
+  const hasFilters =
+    !!type || !!category || !!paymentMethod || !!fromDate || !!toDate;
 
   const queryParams = useMemo(
     () => ({
@@ -456,7 +458,10 @@ export const GeneralPaymentsPage = () => {
                   render={({ field, fieldState }) => (
                     <Field>
                       <FieldLabel htmlFor="category">Category</FieldLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger id="category">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -505,7 +510,10 @@ export const GeneralPaymentsPage = () => {
                       <FieldLabel htmlFor="paymentMethod">
                         Payment Method
                       </FieldLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger id="paymentMethod">
                           <SelectValue placeholder="Select method" />
                         </SelectTrigger>

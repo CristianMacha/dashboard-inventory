@@ -1,4 +1,4 @@
-import { useMenusStore } from "@/auth/store/menus.store";
+import { useMenusQuery } from "@/auth/store/menus.store";
 import { useAuthStore } from "@/auth/store/auth.store";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,13 +36,12 @@ type MenusErrorScreenProps = {
 export const MenusErrorScreen = ({
   variant = "error",
 }: MenusErrorScreenProps) => {
-  const { fetchMenus, status: menusStatus } = useMenusStore();
+  const { refetch, isFetching } = useMenusQuery(true);
   const { logout } = useAuthStore();
   const { title, description } = messages[variant];
-  const isRetrying = menusStatus === "loading";
 
   const handleRetry = () => {
-    void fetchMenus();
+    void refetch();
   };
 
   const handleLogout = () => {
@@ -60,14 +59,14 @@ export const MenusErrorScreen = ({
           {variant === "error" && (
             <Button
               onClick={handleRetry}
-              disabled={isRetrying}
+              disabled={isFetching}
               className="w-full gap-2"
             >
               <RefreshCwIcon
-                className={isRetrying ? "size-4 animate-spin" : "size-4"}
+                className={isFetching ? "size-4 animate-spin" : "size-4"}
                 aria-hidden
               />
-              {isRetrying ? "Retrying…" : "Retry"}
+              {isFetching ? "Retrying…" : "Retry"}
             </Button>
           )}
         </CardContent>

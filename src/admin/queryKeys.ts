@@ -293,6 +293,10 @@ export const fileKeys = {
     [...fileKeys.all, "folder-search", organizationId, name] as const,
 };
 
+export const menuKeys = {
+  all: ["menus"] as const,
+};
+
 export const supplierReturnKeys = {
   all: ["supplier-returns"] as const,
   lists: () => [...supplierReturnKeys.all, "list"] as const,

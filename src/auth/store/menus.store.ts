@@ -1,29 +1,8 @@
 import type { MenuItem } from "@/interfaces/menu-item";
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { useQuery } from "@tanstack/react-query";
+import { menuKeys } from "@/admin/queryKeys";
 import { getMenusAction } from "../actions/get-menus.action";
 
-type MenusStatus = "idle" | "loading" | "success" | "error";
-
-type MenusStore = {
-  items: MenuItem[] | null;
-  status: MenusStatus;
-  error: string | null;
-  fetchMenus: () => Promise<void>;
-  reset: () => void;
-};
-
-const initialState = {
-  items: null,
-  status: "idle" as MenusStatus,
-  error: null,
-};
-
-/**
- * Recursively resolve child paths that the backend sends as relative
- * (e.g. `/finishes`) into absolute paths based on their parent
- * (e.g. `/products/finishes`).
- */
 function resolveMenuPaths(items: MenuItem[], parentPath = ""): MenuItem[] {
   return items.map((item) => {
     const resolvedPath =
@@ -41,42 +20,7 @@ function resolveMenuPaths(items: MenuItem[], parentPath = ""): MenuItem[] {
   });
 }
 
-export const useMenusStore = create<MenusStore>()(
-  persist(
-    (set) => ({
-      ...initialState,
-      fetchMenus: async () => {
-        set({ status: "loading", error: null });
-        try {
-          const { menus } = await getMenusAction();
-          set({
-            items: resolveMenuPaths(menus),
-            status: "success",
-            error: null,
-          });
-        } catch (err) {
-          set({
-            items: null,
-            status: "error",
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-      },
-      reset: () => set(initialState),
-    }),
-    {
-      name: "menus-store",
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({ items: state.items, status: state.status }),
-    },
-  ),
-);
-
-/**
- * Returns all allowed paths from menu items (flat). Only items with path are collected
- * (top-level groups in the API have no path; only their children do).
- */
-export function getAllowedPaths(items: MenuItem[] | null): string[] {
+export function getAllowedPaths(items: MenuItem[] | null | undefined): string[] {
   if (!items?.length) return [];
   const paths: string[] = [];
   function collect(menuItems: MenuItem[]) {
@@ -89,11 +33,6 @@ export function getAllowedPaths(items: MenuItem[] | null): string[] {
   return paths;
 }
 
-/**
- * Returns true if the given pathname is allowed by the menus.
- * - Exact match: /products matches /products
- * - Nested match: /products/123 matches if /products is in menus
- */
 export function isPathAllowed(
   pathname: string,
   allowedPaths: string[],
@@ -103,4 +42,17 @@ export function isPathAllowed(
   return allowedPaths.some(
     (path) => normalized === path || normalized.startsWith(`${path}/`),
   );
+}
+
+export function useMenusQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: menuKeys.all,
+    queryFn: async () => {
+      const { menus } = await getMenusAction();
+      return resolveMenuPaths(menus);
+    },
+    enabled,
+    staleTime: 30 * 60 * 1000,
+    gcTime: Infinity,
+  });
 }

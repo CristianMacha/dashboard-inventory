@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import { useAuthStore } from "@/auth/store/auth.store";
-import { useMenusStore } from "@/auth/store/menus.store";
+import { useMenusQuery } from "@/auth/store/menus.store";
 import type { MenuItem } from "@/interfaces/menu-item";
 import {
   DropdownMenu,
@@ -353,7 +353,7 @@ const SidebarNav = memo(function SidebarNav({
 export const AppSidebar = () => {
   const { pathname } = useLocation();
   const { logout, user } = useAuthStore();
-  const { items: menuItems, status: menusStatus } = useMenusStore();
+  const { data: menuItems } = useMenusQuery(true);
 
   const items = menuItems ?? [];
 
@@ -387,7 +387,7 @@ export const AppSidebar = () => {
         </SidebarHeader>
 
         <SidebarContent>
-          {menusStatus === "success" && items.length > 0 ? (
+          {items.length > 0 ? (
             <SidebarNav items={items} pathname={pathname} />
           ) : (
             <SidebarGroup>

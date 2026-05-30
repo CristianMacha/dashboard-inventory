@@ -10,6 +10,9 @@ const envSchema = z.object({
     .string()
     .min(1, "VITE_FIREBASE_PROJECT_ID is required"),
   VITE_FIREBASE_APP_ID: z.string().min(1, "VITE_FIREBASE_APP_ID is required"),
+  VITE_CLOUDINARY_CLOUD_NAME: z
+    .string()
+    .min(1, "VITE_CLOUDINARY_CLOUD_NAME is required"),
 });
 
 // import.meta.env is typed as any by Vite — cast to a safe Record before parsing
@@ -21,6 +24,7 @@ const parsed = envSchema.safeParse({
   VITE_FIREBASE_AUTH_DOMAIN: rawEnv["VITE_FIREBASE_AUTH_DOMAIN"],
   VITE_FIREBASE_PROJECT_ID: rawEnv["VITE_FIREBASE_PROJECT_ID"],
   VITE_FIREBASE_APP_ID: rawEnv["VITE_FIREBASE_APP_ID"],
+  VITE_CLOUDINARY_CLOUD_NAME: rawEnv["VITE_CLOUDINARY_CLOUD_NAME"],
 });
 
 if (!parsed.success) {

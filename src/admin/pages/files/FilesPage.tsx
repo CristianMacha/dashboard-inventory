@@ -104,30 +104,56 @@ interface RenameInputProps {
   onCancel: () => void;
 }
 
-function RenameInput({ initialValue, isPending, inputClassName = "h-7 text-sm", buttonSize = "sm", onCommit, onCancel }: RenameInputProps) {
+function RenameInput({
+  initialValue,
+  isPending,
+  inputClassName = "h-7 text-sm",
+  buttonSize = "sm",
+  onCommit,
+  onCancel,
+}: RenameInputProps) {
   const [value, setValue] = useState(initialValue);
   const sz = buttonSize === "xs" ? "size-6" : "size-7";
   const iconSz = buttonSize === "xs" ? "size-3" : "size-3.5";
+  const trimmed = value.trim();
+  const isValid = trimmed.length > 0 && trimmed.length <= 255;
   return (
     <div className="flex items-center gap-1 flex-1 min-w-0">
       <Input
         className={inputClassName}
         value={value}
+        maxLength={255}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { const t = value.trim(); if (t) onCommit(t); else onCancel(); }
+          if (e.key === "Enter") {
+            if (isValid) onCommit(trimmed);
+            else if (!trimmed) onCancel();
+          }
           if (e.key === "Escape") onCancel();
         }}
         autoFocus
       />
       <Button
-        variant="ghost" size="icon" className={`${sz} text-green-600 hover:text-green-600 shrink-0`}
-        onClick={() => { const t = value.trim(); if (t) onCommit(t); }}
-        disabled={isPending}
+        variant="ghost"
+        size="icon"
+        className={`${sz} text-green-600 hover:text-green-600 shrink-0`}
+        onClick={() => {
+          if (isValid) onCommit(trimmed);
+        }}
+        disabled={isPending || !isValid}
       >
-        {isPending ? <Loader2 className={`${iconSz} animate-spin`} /> : <Check className={iconSz} />}
+        {isPending ? (
+          <Loader2 className={`${iconSz} animate-spin`} />
+        ) : (
+          <Check className={iconSz} />
+        )}
       </Button>
-      <Button variant="ghost" size="icon" className={`${sz} shrink-0`} onClick={onCancel}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={`${sz} shrink-0`}
+        onClick={onCancel}
+      >
         <X className={iconSz} />
       </Button>
     </div>
@@ -150,7 +176,16 @@ interface FileActionsProps {
   deleting: boolean;
 }
 
-function FileActions({ onPreview, onRename, onTags, onMove, onDownload, onDelete, downloading, deleting }: FileActionsProps) {
+function FileActions({
+  onPreview,
+  onRename,
+  onTags,
+  onMove,
+  onDownload,
+  onDelete,
+  downloading,
+  deleting,
+}: FileActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -175,7 +210,11 @@ function FileActions({ onPreview, onRename, onTags, onMove, onDownload, onDelete
           <Download className="size-4" /> Download
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onDelete} disabled={deleting} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={onDelete}
+          disabled={deleting}
+          className="text-destructive focus:text-destructive"
+        >
           <Trash2 className="size-4" /> Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -190,7 +229,7 @@ export const FilesPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [organizationId, setOrganizationId] = useState<string>("");
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const page = Number(searchParams.get("page") ?? "1");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -198,27 +237,29 @@ export const FilesPage = () => {
   const [tagsFile, setTagsFile] = useState<FileRecordDto | null>(null);
   const [previewFile, setPreviewFile] = useState<FileRecordDto | null>(null);
   const [moveFile, setMoveFile] = useState<FileRecordDto | null>(null);
-  const [moveFolderTarget, setMoveFolderTarget] = useState<FolderDto | null>(null);
+  const [moveFolderTarget, setMoveFolderTarget] = useState<FolderDto | null>(
+    null,
+  );
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
-  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
 
   const currentFolderId = searchParams.get("folderId");
   const isAtRoot = !currentFolderId;
 
-  const { stack: folderStack, isLoading: ancestorsLoading } =
-    useFolderAncestors(currentFolderId, organizationId);
-  const currentFolder = folderStack[folderStack.length - 1] ?? null;
-
   const { data: orgs, isLoading: orgsLoading } = useQuery({
     queryKey: organizationKeys.all,
     queryFn: getOrganizationsAction,
-    select: (data) => {
-      if (!organizationId && data.length > 0) setOrganizationId(data[0].id);
-      return data;
-    },
   });
+
+  const organizationId = selectedOrgId || (orgs?.[0]?.id ?? "");
+
+  const { stack: folderStack, isLoading: ancestorsLoading } =
+    useFolderAncestors(currentFolderId, organizationId);
+  const currentFolder = folderStack[folderStack.length - 1] ?? null;
 
   const { data: rootFolders, isLoading: rootFoldersLoading } = useQuery({
     queryKey: fileKeys.rootFolders(organizationId),
@@ -255,7 +296,7 @@ export const FilesPage = () => {
       void queryClient.invalidateQueries({
         queryKey: isAtRoot
           ? fileKeys.rootFolders(organizationId)
-          : fileKeys.folderContents(currentFolderId!, organizationId, page),
+          : fileKeys.folderContents(currentFolderId, organizationId, page),
       });
       toast.success(`Folder "${name}" created`);
       setNewFolderOpen(false);
@@ -271,14 +312,25 @@ export const FilesPage = () => {
     onMutate: ({ folderId, name }) => {
       setRenamingFolderId(null);
       if (isAtRoot) {
-        queryClient.setQueryData<import("@/interfaces/file.response").FolderDto[]>(
-          fileKeys.rootFolders(organizationId),
-          (old) => old?.map((f) => f.id === folderId ? { ...f, name } : f),
+        queryClient.setQueryData<
+          import("@/interfaces/file.response").FolderDto[]
+        >(fileKeys.rootFolders(organizationId), (old) =>
+          old?.map((f) => (f.id === folderId ? { ...f, name } : f)),
         );
       } else if (currentFolderId) {
-        queryClient.setQueryData<import("@/interfaces/file.response").FolderContentsDto>(
+        queryClient.setQueryData<
+          import("@/interfaces/file.response").FolderContentsDto
+        >(
           fileKeys.folderContents(currentFolderId, organizationId, page),
-          (old) => old ? { ...old, subfolders: old.subfolders.map((f) => f.id === folderId ? { ...f, name } : f) } : old,
+          (old) =>
+            old
+              ? {
+                  ...old,
+                  subfolders: old.subfolders.map((f) =>
+                    f.id === folderId ? { ...f, name } : f,
+                  ),
+                }
+              : old,
         );
       }
     },
@@ -291,7 +343,7 @@ export const FilesPage = () => {
       void queryClient.invalidateQueries({
         queryKey: isAtRoot
           ? fileKeys.rootFolders(organizationId)
-          : [...fileKeys.all, "folder", currentFolderId!, organizationId],
+          : [...fileKeys.all, "folder", currentFolderId, organizationId],
       });
     },
   });
@@ -302,22 +354,25 @@ export const FilesPage = () => {
     onMutate: ({ fileId, name }) => {
       setRenamingFileId(null);
       if (!currentFolderId) return;
-      const queryKey = fileKeys.folderContents(currentFolderId, organizationId, page);
-      queryClient.setQueryData<import("@/interfaces/file.response").FolderContentsDto>(
-        queryKey,
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            files: {
-              ...old.files,
-              data: old.files.data.map((f) =>
-                f.id === fileId ? { ...f, name } : f,
-              ),
-            },
-          };
-        },
+      const queryKey = fileKeys.folderContents(
+        currentFolderId,
+        organizationId,
+        page,
       );
+      queryClient.setQueryData<
+        import("@/interfaces/file.response").FolderContentsDto
+      >(queryKey, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          files: {
+            ...old.files,
+            data: old.files.data.map((f) =>
+              f.id === fileId ? { ...f, name } : f,
+            ),
+          },
+        };
+      });
     },
     onSuccess: (_data, { name }) => {
       toast.success(`File renamed to "${name}"`);
@@ -397,7 +452,7 @@ export const FilesPage = () => {
     clearSelection();
   };
   const handleOrgChange = (v: string) => {
-    setOrganizationId(v);
+    setSelectedOrgId(v);
     setSearchParams({});
   };
   const handlePageChange = (newPage: number) => {
@@ -429,7 +484,9 @@ export const FilesPage = () => {
           <RenameInput
             initialValue={folder.name}
             isPending={renameFolderMutation.isPending}
-            onCommit={(name) => renameFolderMutation.mutate({ folderId: folder.id, name })}
+            onCommit={(name) =>
+              renameFolderMutation.mutate({ folderId: folder.id, name })
+            }
             onCancel={() => setRenamingFolderId(null)}
           />
         </div>
@@ -443,17 +500,25 @@ export const FilesPage = () => {
             {folder.name}
           </button>
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
             className="size-7 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
-            onClick={(e) => { e.stopPropagation(); setRenamingFolderId(folder.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setRenamingFolderId(folder.id);
+            }}
             title="Rename"
           >
             <Pencil className="size-3.5" />
           </Button>
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
             className="size-7 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
-            onClick={(e) => { e.stopPropagation(); setMoveFolderTarget(folder); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMoveFolderTarget(folder);
+            }}
             title="Move to folder"
           >
             <FolderInput className="size-3.5" />
@@ -475,7 +540,9 @@ export const FilesPage = () => {
             isPending={renameFolderMutation.isPending}
             inputClassName="h-6 text-xs px-1"
             buttonSize="xs"
-            onCommit={(name) => renameFolderMutation.mutate({ folderId: folder.id, name })}
+            onCommit={(name) =>
+              renameFolderMutation.mutate({ folderId: folder.id, name })
+            }
             onCancel={() => setRenamingFolderId(null)}
           />
         </div>
@@ -490,22 +557,32 @@ export const FilesPage = () => {
             <FolderOpen className="size-12 text-amber-500" />
           </div>
           <div className="p-2 border-t">
-            <span className="text-xs font-medium truncate block w-full">{folder.name}</span>
+            <span className="text-xs font-medium truncate block w-full">
+              {folder.name}
+            </span>
           </div>
         </button>
         <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
             className="size-6 bg-background/80 hover:bg-background"
-            onClick={(e) => { e.stopPropagation(); setRenamingFolderId(folder.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setRenamingFolderId(folder.id);
+            }}
             title="Rename"
           >
             <Pencil className="size-3" />
           </Button>
           <Button
-            variant="ghost" size="icon"
+            variant="ghost"
+            size="icon"
             className="size-6 bg-background/80 hover:bg-background"
-            onClick={(e) => { e.stopPropagation(); setMoveFolderTarget(folder); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMoveFolderTarget(folder);
+            }}
             title="Move to folder"
           >
             <FolderInput className="size-3" />
@@ -520,13 +597,19 @@ export const FilesPage = () => {
     const isRenaming = renamingFileId === file.id;
     const isSelected = selectedFileIds.has(file.id);
     return (
-      <div className={`flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}>
+      <div
+        className={`flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors ${isSelected ? "bg-primary/5" : ""}`}
+      >
         <button
           onClick={() => toggleFileSelection(file.id)}
           className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
           title={isSelected ? "Deselect" : "Select"}
         >
-          {isSelected ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4" />}
+          {isSelected ? (
+            <CheckSquare className="size-4 text-primary" />
+          ) : (
+            <Square className="size-4" />
+          )}
         </button>
         <FileHoverPreview file={file} organizationId={organizationId}>
           <File className="size-5 text-blue-500 shrink-0 cursor-pointer" />
@@ -536,7 +619,9 @@ export const FilesPage = () => {
             <FileRenameInput
               initialValue={file.name}
               isPending={renameFileMutation.isPending}
-              onCommit={(name) => renameFileMutation.mutate({ fileId: file.id, name })}
+              onCommit={(name) =>
+                renameFileMutation.mutate({ fileId: file.id, name })
+              }
               onCancel={() => setRenamingFileId(null)}
             />
           ) : (
@@ -547,7 +632,10 @@ export const FilesPage = () => {
                 {file.tags.length > 0 && (
                   <span className="ml-2">
                     {file.tags.map((t) => (
-                      <span key={t} className="inline-block bg-secondary text-secondary-foreground rounded px-1 py-0 text-xs mr-1">
+                      <span
+                        key={t}
+                        className="inline-block bg-secondary text-secondary-foreground rounded px-1 py-0 text-xs mr-1"
+                      >
                         {t}
                       </span>
                     ))}
@@ -564,7 +652,12 @@ export const FilesPage = () => {
               onRename={() => setRenamingFileId(file.id)}
               onTags={() => setTagsFile(file)}
               onMove={() => setMoveFile(file)}
-              onDownload={() => downloadMutation.mutate({ fileId: file.id, filename: file.name })}
+              onDownload={() =>
+                downloadMutation.mutate({
+                  fileId: file.id,
+                  filename: file.name,
+                })
+              }
               onDelete={() => deleteMutation.mutate(file.id)}
               downloading={downloadMutation.isPending}
               deleting={deleteMutation.isPending}
@@ -585,7 +678,9 @@ export const FilesPage = () => {
       onRename={() => setRenamingFileId(file.id)}
       onTags={() => setTagsFile(file)}
       onMove={() => setMoveFile(file)}
-      onDownload={() => downloadMutation.mutate({ fileId: file.id, filename: file.name })}
+      onDownload={() =>
+        downloadMutation.mutate({ fileId: file.id, filename: file.name })
+      }
       onDelete={() => deleteMutation.mutate(file.id)}
       downloading={downloadMutation.isPending}
       deleting={deleteMutation.isPending}
@@ -659,55 +754,68 @@ export const FilesPage = () => {
                 <ChevronRight className="size-3 shrink-0" />
                 <Skeleton className="h-4 w-24" />
               </span>
-            ) : (() => {
-              // On mobile show at most last 2 segments; on desktop show all
-              const hidden = folderStack.slice(0, Math.max(0, folderStack.length - 2));
-              const visible = folderStack.slice(Math.max(0, folderStack.length - 2));
-              return (
-                <>
-                  {hidden.length > 0 && (
-                    <span className="flex items-center gap-1 sm:hidden">
-                      <ChevronRight className="size-3 shrink-0" />
-                      <span className="text-muted-foreground">…</span>
-                    </span>
-                  )}
-                  {/* Desktop: show all */}
-                  {hidden.map((folder) => (
-                    <span key={folder.id} className="hidden sm:flex items-center gap-1">
-                      <ChevronRight className="size-3 shrink-0" />
-                      <button
-                        onClick={() => navigateTo(folder)}
-                        className="hover:text-foreground max-w-[120px] truncate"
-                      >
-                        {folder.name}
-                      </button>
-                    </span>
-                  ))}
-                  {/* Always visible: last 2 segments */}
-                  {visible.map((folder, i) => {
-                    const globalIndex = hidden.length + i;
-                    const isLast = globalIndex === folderStack.length - 1;
-                    return (
-                      <span key={folder.id} className="flex items-center gap-1 min-w-0">
+            ) : (
+              (() => {
+                // On mobile show at most last 2 segments; on desktop show all
+                const hidden = folderStack.slice(
+                  0,
+                  Math.max(0, folderStack.length - 2),
+                );
+                const visible = folderStack.slice(
+                  Math.max(0, folderStack.length - 2),
+                );
+                return (
+                  <>
+                    {hidden.length > 0 && (
+                      <span className="flex items-center gap-1 sm:hidden">
                         <ChevronRight className="size-3 shrink-0" />
-                        {isLast ? (
-                          <span className="text-foreground font-medium truncate max-w-[120px] sm:max-w-none">
-                            {folder.name}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => navigateTo(folder)}
-                            className="hover:text-foreground truncate max-w-[120px] sm:max-w-none"
-                          >
-                            {folder.name}
-                          </button>
-                        )}
+                        <span className="text-muted-foreground">…</span>
                       </span>
-                    );
-                  })}
-                </>
-              );
-            })()}
+                    )}
+                    {/* Desktop: show all */}
+                    {hidden.map((folder) => (
+                      <span
+                        key={folder.id}
+                        className="hidden sm:flex items-center gap-1"
+                      >
+                        <ChevronRight className="size-3 shrink-0" />
+                        <button
+                          onClick={() => navigateTo(folder)}
+                          className="hover:text-foreground max-w-[120px] truncate"
+                        >
+                          {folder.name}
+                        </button>
+                      </span>
+                    ))}
+                    {/* Always visible: last 2 segments */}
+                    {visible.map((folder, i) => {
+                      const globalIndex = hidden.length + i;
+                      const isLast = globalIndex === folderStack.length - 1;
+                      return (
+                        <span
+                          key={folder.id}
+                          className="flex items-center gap-1 min-w-0"
+                        >
+                          <ChevronRight className="size-3 shrink-0" />
+                          {isLast ? (
+                            <span className="text-foreground font-medium truncate max-w-[120px] sm:max-w-none">
+                              {folder.name}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => navigateTo(folder)}
+                              className="hover:text-foreground truncate max-w-[120px] sm:max-w-none"
+                            >
+                              {folder.name}
+                            </button>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </>
+                );
+              })()
+            )}
           </div>
 
           {/* Action bar */}
@@ -772,7 +880,8 @@ export const FilesPage = () => {
           {selectedFileIds.size > 0 && (
             <div className="flex items-center gap-3 rounded-md border bg-primary/5 px-3 py-2">
               <span className="text-sm font-medium">
-                {selectedFileIds.size} file{selectedFileIds.size !== 1 ? "s" : ""} selected
+                {selectedFileIds.size} file
+                {selectedFileIds.size !== 1 ? "s" : ""} selected
               </span>
               <Button
                 size="sm"
@@ -782,11 +891,7 @@ export const FilesPage = () => {
                 <FolderInput className="size-4" />
                 Move selected
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={clearSelection}
-              >
+              <Button size="sm" variant="ghost" onClick={clearSelection}>
                 <X className="size-4" />
                 Clear
               </Button>

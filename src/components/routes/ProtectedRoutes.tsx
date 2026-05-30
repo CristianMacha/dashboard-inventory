@@ -5,7 +5,7 @@ import { useAuthStore } from "@/auth/store/auth.store";
 import {
   getAllowedPaths,
   isPathAllowed,
-  useMenusStore,
+  useMenusQuery,
 } from "@/auth/store/menus.store";
 import { MenusErrorScreen } from "./MenusErrorScreen";
 import { CustomFullScreenLoading } from "../ui/custom/CustomFullScreenLoading";
@@ -45,21 +45,15 @@ export const NotAuthenticatedRoute = ({ children }: PropsWithChildren) => {
  */
 export const MenuProtectedRoute = ({ children }: PropsWithChildren) => {
   const { pathname } = useLocation();
-  const { items, status: menusStatus } = useMenusStore();
+  const { data: items, isLoading, isError } = useMenusQuery(true);
 
-  if (menusStatus === "loading" || menusStatus === "idle") {
-    return <CustomFullScreenLoading />;
-  }
+  if (isLoading) return <CustomFullScreenLoading />;
 
   const allowedPaths = getAllowedPaths(items);
 
-  if (menusStatus === "error") {
-    return <MenusErrorScreen variant="error" />;
-  }
+  if (isError) return <MenusErrorScreen variant="error" />;
 
-  if (allowedPaths.length === 0) {
-    return <MenusErrorScreen variant="empty" />;
-  }
+  if (allowedPaths.length === 0) return <MenusErrorScreen variant="empty" />;
 
   const allowed = isPathAllowed(pathname, allowedPaths);
 
