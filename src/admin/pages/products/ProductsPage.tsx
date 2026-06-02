@@ -69,7 +69,7 @@ export const ProductsPage = () => {
   const handleFiltersChange = useCallback((next: ProductFiltersValue) => {
     setFilters(next);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleAddBundle = useCallback((product: ProductResponse) => {
     setSelectedProduct(product);

@@ -81,9 +81,11 @@ export const SlabFormSheet = ({
   // Reset state and forms whenever the sheet opens or the editing slab changes
   useEffect(() => {
     if (open) {
-      setMode("view");
       resetUpdate({ description: editingSlab?.description ?? "" });
       resetRemnant({ code: "", widthCm: 0, heightCm: 0, description: "" });
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMode("view");
     }
   }, [open, editingSlab, resetUpdate, resetRemnant]);
 

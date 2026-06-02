@@ -188,27 +188,27 @@ export const GeneralPaymentsPage = () => {
     setType(value);
     setCategory("");
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleCategoryChange = useCallback((value: string) => {
     setCategory(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handlePaymentMethodChange = useCallback((value: string) => {
     setPaymentMethod(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleFromDateChange = useCallback((value: string) => {
     setFromDate(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleToDateChange = useCallback((value: string) => {
     setToDate(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const clearFilters = useCallback(() => {
     setType("");
@@ -217,7 +217,7 @@ export const GeneralPaymentsPage = () => {
     setFromDate("");
     setToDate("");
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const hasFilters =
     !!type || !!category || !!paymentMethod || !!fromDate || !!toDate;

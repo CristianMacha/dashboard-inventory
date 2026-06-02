@@ -121,24 +121,24 @@ export const InvoicePaymentsPage = () => {
   const handlePaymentMethodChange = useCallback((value: string) => {
     setPaymentMethod(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleFromDateChange = useCallback((value: string) => {
     setFromDate(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleToDateChange = useCallback((value: string) => {
     setToDate(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const clearFilters = useCallback(() => {
     setPaymentMethod("");
     setFromDate("");
     setToDate("");
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const hasFilters = !!paymentMethod || !!fromDate || !!toDate;
 

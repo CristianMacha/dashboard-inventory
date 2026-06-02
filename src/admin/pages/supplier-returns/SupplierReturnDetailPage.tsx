@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -666,7 +666,7 @@ function AddSlabSheet({
 
   // Auto-fill bundleId when slab is selected
   const selectedSlabId = useWatch({ control, name: "slabId" });
-  const slabs = slabsData ?? [];
+  const slabs = useMemo(() => slabsData ?? [], [slabsData]);
 
   useEffect(() => {
     if (selectedSlabId) {

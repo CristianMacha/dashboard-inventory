@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
 
+// eslint-disable-next-line react-refresh/only-export-components
 const QtyCell = ({ quantity, approvedQuantity }: { quantity: number | null; approvedQuantity: number | null }) => {
   if (quantity == null) return <span className="text-muted-foreground">—</span>;
   if (approvedQuantity != null && approvedQuantity !== quantity) {

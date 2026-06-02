@@ -292,7 +292,7 @@ export const FilesPage = () => {
       });
       return { id: result.id, name };
     },
-    onSuccess: ({ id: _id, name }) => {
+    onSuccess: ({ name }) => {
       void queryClient.invalidateQueries({
         queryKey: isAtRoot
           ? fileKeys.rootFolders(organizationId)

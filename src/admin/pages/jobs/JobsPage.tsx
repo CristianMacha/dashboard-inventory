@@ -57,18 +57,18 @@ export const JobsPage = () => {
   const handleSearchChange = useCallback((value: string) => {
     setSearchInput(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleStatusChange = useCallback((value: string) => {
     setStatus(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const clearFilters = useCallback(() => {
     setSearchInput("");
     setStatus("");
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const hasFilters = !!debouncedSearch || !!status;
 

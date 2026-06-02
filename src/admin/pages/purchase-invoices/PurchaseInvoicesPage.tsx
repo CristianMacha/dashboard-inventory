@@ -65,24 +65,24 @@ export const PurchaseInvoicesPage = () => {
   const handleSearchChange = useCallback((value: string) => {
     setSearchInput(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleSupplierChange = useCallback((value: string) => {
     setSupplierId(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const handleStatusChange = useCallback((value: string) => {
     setStatus(value);
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const clearFilters = useCallback(() => {
     setSearchInput("");
     setSupplierId("");
     setStatus("");
     setPage(1);
-  }, []);
+  }, [setPage]);
 
   const hasFilters = !!debouncedSearch || !!supplierId || !!status;
 

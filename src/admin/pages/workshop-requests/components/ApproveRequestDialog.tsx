@@ -31,8 +31,10 @@ export const ApproveRequestDialog = ({
   const [quantityStr, setQuantityStr] = useState("");
 
   useEffect(() => {
-    if (open) setQuantityStr(request?.quantity?.toString() ?? "");
-  }, [open, request]);
+    if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuantityStr(request?.quantity?.toString() ?? "");
+  }, [open, request?.quantity]);
 
   const isMaterial = request?.requestType === "material";
   const parsedQty = quantityStr.trim() !== "" ? Number(quantityStr) : undefined;

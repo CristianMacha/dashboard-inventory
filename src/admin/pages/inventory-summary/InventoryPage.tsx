@@ -107,7 +107,7 @@ export const InventoryPage = () => {
     queryFn: () => getInventorySummaryAction(),
   });
 
-  const products = data?.products ?? [];
+  const products = useMemo(() => data?.products ?? [], [data]);
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products;
